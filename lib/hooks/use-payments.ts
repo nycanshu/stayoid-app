@@ -26,7 +26,7 @@ export function useRecordPayment() {
 export function useDeletePayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => paymentsApi.delete(id),
+    mutationFn: (id: string) => paymentsApi.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['payments'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });

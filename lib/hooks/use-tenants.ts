@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { tenantsApi, type TenantFilters, type CreateTenantInput } from '../api/tenants';
+import { tenantsApi, type TenantFilters } from '../api/tenants';
+import type { CreateTenantInput } from '../../types/tenant';
 
 export function useTenants(filters?: TenantFilters) {
   return useQuery({
@@ -34,7 +35,7 @@ export function useCreateTenant() {
 export function useExitTenant() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, exit_date }: { id: number; exit_date: string }) =>
+    mutationFn: ({ id, exit_date }: { id: string; exit_date: string }) =>
       tenantsApi.exit(id, exit_date),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tenants'] });

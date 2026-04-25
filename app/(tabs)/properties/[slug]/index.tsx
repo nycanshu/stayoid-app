@@ -2,20 +2,18 @@ import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState } from 'react';
+import { ArrowLeftIcon } from 'phosphor-react-native';
 import { useProperty, useSlots } from '../../../../lib/hooks/use-properties';
 import { useTenants } from '../../../../lib/hooks/use-tenants';
 import { formatFloorName } from '../../../../lib/utils/formatters';
+import { Badge, Avatar } from '../../../../components/ui';
 import type { Slot } from '../../../../types/property';
 
 type Tab = 'floors' | 'tenants' | 'payments';
 
 function RoomChip({ slot }: { slot: Slot }) {
-  const bgColor = slot.is_occupied
-    ? (slot.active_tenant?.has_unpaid ? 'rgba(239,68,68,0.1)' : 'rgba(79,157,126,0.15)')
-    : '#272727';
-  const borderColor = slot.is_occupied
-    ? (slot.active_tenant?.has_unpaid ? 'rgba(239,68,68,0.3)' : 'rgba(79,157,126,0.4)')
-    : '#272727';
+  const bgColor = slot.is_occupied ? 'rgba(79,157,126,0.15)' : '#1C1C1C';
+  const borderColor = slot.is_occupied ? 'rgba(79,157,126,0.4)' : '#272727';
 
   return (
     <TouchableOpacity
@@ -25,11 +23,21 @@ function RoomChip({ slot }: { slot: Slot }) {
         alignItems: 'center', justifyContent: 'center', margin: 4,
       }}
       onPress={() => {
-        if (slot.active_tenant) router.push(`/(tabs)/more/tenants/${slot.active_tenant.slug}`);
+        if (slot.active_tenant) {
+          router.push(`/(tabs)/more/tenants/${slot.active_tenant.slug}`);
+        }
       }}
     >
-      <Text style={{ color: '#A3A3A3', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>{slot.unit_number}</Text>
-      <Text style={{ color: slot.is_occupied ? '#FAFAFA' : '#A3A3A3', fontSize: 11, marginTop: 2, textAlign: 'center', paddingHorizontal: 2 }} numberOfLines={1}>
+      <Text style={{ color: '#A3A3A3', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+        {slot.unit_number}
+      </Text>
+      <Text
+        style={{
+          color: slot.is_occupied ? '#FAFAFA' : '#A3A3A3',
+          fontSize: 11, marginTop: 2, textAlign: 'center', paddingHorizontal: 4,
+        }}
+        numberOfLines={1}
+      >
         {slot.active_tenant?.name.split(' ')[0] ?? 'Vacant'}
       </Text>
     </TouchableOpacity>
@@ -40,7 +48,7 @@ export default function PropertyDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [activeTab, setActiveTab] = useState<Tab>('floors');
 
-  const { data: property, isLoading, refetch, isRefetching } = useProperty(slug);
+  const { data: property, refetch, isRefetching } = useProperty(slug);
   const { data: slots } = useSlots(property?.id);
   const { data: tenants } = useTenants({ property_id: property?.id, active: true });
 
@@ -48,9 +56,7 @@ export default function PropertyDetailScreen() {
     (acc[slot.floor_number] ??= []).push(slot);
     return acc;
   }, {});
-  const sortedFloors = Object.keys(floorGroups)
-    .map(Number)
-    .sort((a, b) => a - b);
+  const sortedFloors = Object.keys(floorGroups).map(Number).sort((a, b) => a - b);
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'floors', label: 'Floors' },
@@ -60,15 +66,17 @@ export default function PropertyDetailScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0F0F0F' }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>
-          <Text style={{ color: '#4F9D7E', fontSize: 15 }}>←</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, gap: 12 }}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <ArrowLeftIcon size={22} color="#4F9D7E" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={{ color: '#FAFAFA', fontSize: 18, fontFamily: 'PlayfairDisplay_600SemiBold' }}>
             {property?.name ?? '…'}
           </Text>
-          <Text style={{ color: '#A3A3A3', fontSize: 12 }}>{property?.type} · {property?.address}</Text>
+          <Text style={{ color: '#A3A3A3', fontSize: 12 }}>
+            {property?.property_type_display} · {property?.address}
+          </Text>
         </View>
       </View>
 
@@ -104,7 +112,10 @@ export default function PropertyDetailScreen() {
           <>
             {sortedFloors.map((floorNum) => (
               <View key={floorNum} style={{ marginBottom: 20 }}>
-                <Text style={{ color: '#A3A3A3', fontSize: 12, fontFamily: 'Inter_600SemiBold', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                <Text style={{
+                  color: '#A3A3A3', fontSize: 12, fontFamily: 'Inter_600SemiBold',
+                  marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1,
+                }}>
                   {formatFloorName(floorNum)}
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -114,19 +125,43 @@ export default function PropertyDetailScreen() {
                 </View>
               </View>
             ))}
+            {sortedFloors.length === 0 && (
+              <View style={{ alignItems: 'center', paddingTop: 40 }}>
+                <Text style={{ color: '#A3A3A3' }}>No rooms added yet.</Text>
+              </View>
+            )}
           </>
         )}
 
-        {activeTab === 'tenants' && (tenants ?? []).map((tenant) => (
-          <TouchableOpacity
-            key={tenant.id}
-            style={{ backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727', borderRadius: 12, padding: 16, marginBottom: 8 }}
-            onPress={() => router.push(`/(tabs)/more/tenants/${tenant.slug}`)}
-          >
-            <Text style={{ color: '#FAFAFA', fontSize: 15 }}>{tenant.name}</Text>
-            <Text style={{ color: '#A3A3A3', fontSize: 12, marginTop: 2 }}>Room {tenant.slot_detail.unit_number}</Text>
-          </TouchableOpacity>
-        ))}
+        {activeTab === 'tenants' && (
+          <>
+            {(tenants ?? []).map((tenant) => (
+              <TouchableOpacity
+                key={tenant.id}
+                style={{
+                  backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727',
+                  borderRadius: 12, padding: 14, marginBottom: 8,
+                  flexDirection: 'row', alignItems: 'center', gap: 12,
+                }}
+                onPress={() => router.push(`/(tabs)/more/tenants/${tenant.slug}`)}
+              >
+                <Avatar name={tenant.name} size="sm" bg="#272727" />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: '#FAFAFA', fontSize: 15 }}>{tenant.name}</Text>
+                  <Text style={{ color: '#A3A3A3', fontSize: 12, marginTop: 2 }}>
+                    Room {tenant.unit_number}
+                  </Text>
+                </View>
+                <Badge variant="success">Active</Badge>
+              </TouchableOpacity>
+            ))}
+            {(tenants ?? []).length === 0 && (
+              <View style={{ alignItems: 'center', paddingTop: 40 }}>
+                <Text style={{ color: '#A3A3A3' }}>No tenants in this property.</Text>
+              </View>
+            )}
+          </>
+        )}
 
         {activeTab === 'payments' && (
           <View style={{ alignItems: 'center', paddingTop: 40 }}>

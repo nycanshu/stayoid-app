@@ -7,20 +7,20 @@ export interface AuthUser { id: number; name: string; email: string; date_joined
 
 export const authApi = {
   login: (data: LoginInput) =>
-    apiClient.post<AuthTokens>('/auth/login', data).then((r) => r.data),
+    apiClient.post<AuthTokens>('/auth/login/', data).then((r) => r.data),
 
   signup: (data: SignupInput) =>
-    apiClient.post<AuthTokens>('/auth/signup', data).then((r) => r.data),
+    apiClient.post<AuthTokens>('/auth/signup/', data).then((r) => r.data),
 
   me: () =>
-    apiClient.get<AuthUser>('/auth/me').then((r) => r.data),
+    apiClient.get<AuthUser>('/auth/me/').then((r) => r.data),
 
   updateMe: (data: Partial<Pick<AuthUser, 'name'>>) =>
-    apiClient.patch<AuthUser>('/auth/me', data).then((r) => r.data),
+    apiClient.patch<AuthUser>('/auth/me/', data).then((r) => r.data),
 
   logout: (refresh: string) =>
-    apiClient.post('/auth/logout', { refresh }),
+    apiClient.post('/auth/logout/', { refresh }),
 
   forgotPassword: (email: string) =>
-    apiClient.post('/auth/forgot-password', { email }),
+    apiClient.post('/auth/forgot-password/', { email }),
 };

@@ -1,19 +1,29 @@
 import { Redirect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
+type State = 'loading' | 'onboarding' | 'login' | 'app';
+
 export default function Index() {
-  const [checked, setChecked] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
+  const [state, setState] = useState<State>('loading');
 
   useEffect(() => {
-    SecureStore.getItemAsync('access_token').then((token) => {
-      setHasToken(!!token);
-      setChecked(true);
-    });
+    (async () => {
+      const [token, seen] = await Promise.all([
+        SecureStore.getItemAsync('access_token'),
+        AsyncStorage.getItem('onboarding_seen'),
+      ]);
+
+      if (token) setState('app');
+      else if (seen) setState('login');
+      else setState('onboarding');
+    })();
   }, []);
 
-  if (!checked) return <View className="flex-1 bg-[#0F0F0F]" />;
-  return <Redirect href={hasToken ? '/(tabs)/' : '/(auth)/login'} />;
+  if (state === 'loading') return <View style={{ flex: 1, backgroundColor: '#0F0F0F' }} />;
+  if (state === 'onboarding') return <Redirect href="/onboarding" />;
+  if (state === 'app') return <Redirect href="/(tabs)" />;
+  return <Redirect href="/(auth)/login" />;
 }

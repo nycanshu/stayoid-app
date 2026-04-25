@@ -1,72 +1,103 @@
-export type PropertyType = 'PG' | 'HOSTEL' | 'APARTMENT';
+export type PropertyType = 'PG' | 'FLAT';
+export type UnitType = 'ROOM' | 'FLAT';
+export type SlotType = 'BED' | 'MEMBER';
 
 export interface Property {
-  id: number;
+  id: string;
   slug: string;
   name: string;
-  type: PropertyType;
+  property_type: PropertyType;
+  property_type_display: string;
   address: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Floor {
-  id: number;
-  property: number;
+  id: string;
+  slug: string;
   floor_number: number;
-  floor_name: string;
+  name: string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface Unit {
-  id: number;
-  floor: number;
+  id: string;
+  slug: string;
+  unit_type: UnitType;
   unit_number: string;
+  name: string;
   capacity: number;
-  created_at: string;
 }
 
-export type SlotType = 'ROOM' | 'BED';
-
 export interface Slot {
-  id: number;
-  unit: number;
-  slot_number: string;
+  id: string;
+  slug: string;
   slot_type: SlotType;
-  monthly_rent: number;
+  slot_number: string;
+  monthly_rent: string;
   is_occupied: boolean;
+  unit_number: string;
+  unit_slug: string;
   floor_number: number;
   floor_name: string;
-  unit_number: string;
+  floor_slug: string;
+  property_id: string;
+  property_name: string;
+  property_slug: string;
+  property_type: PropertyType;
   active_tenant: {
-    id: number;
+    id: string;
     slug: string;
     name: string;
-    has_unpaid: boolean;
+    phone: string;
   } | null;
 }
 
-export interface DashboardProperty {
-  id: number;
-  slug: string;
-  name: string;
-  type: PropertyType;
-  total_slots: number;
-  occupied_slots: number;
-  vacant_slots: number;
-  expected_rent: number;
-  collected_rent: number;
-}
-
-export interface Dashboard {
-  month: number;
-  year: number;
+export interface DashboardSummary {
   total_properties: number;
   total_slots: number;
   occupied_slots: number;
   vacant_slots: number;
   occupancy_rate: number;
-  expected_rent: number;
-  collected_rent: number;
+  active_tenants: number;
+}
+
+export interface DashboardCurrentMonth {
+  month: number;
+  year: number;
+  display: string;
+  expected_rent: string;
+  collected_rent: string;
+  pending_rent: string;
   collection_rate: number;
+  paid_count: number;
+  pending_count: number;
+}
+
+export interface DashboardProperty {
+  id: string;
+  name: string;
+  total_slots: number;
+  occupied: number;
+  vacant: number;
+  expected_rent: string;
+  collected_rent: string;
+}
+
+export interface DashboardRecentPayment {
+  id: string;
+  tenant_name: string;
+  amount: string;
+  payment_date: string;
+  payment_method: string;
+  property_name: string;
+}
+
+export interface Dashboard {
+  summary: DashboardSummary;
+  current_month: DashboardCurrentMonth;
   properties: DashboardProperty[];
+  recent_payments: DashboardRecentPayment[];
 }

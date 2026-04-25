@@ -1,34 +1,40 @@
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useState } from 'react';
+import { MagnifyingGlassIcon, PlusIcon, WarningCircleIcon } from 'phosphor-react-native';
 import { useTenants } from '../../../../lib/hooks/use-tenants';
+import { Input, Badge, Avatar, Button } from '../../../../components/ui';
 import type { Tenant } from '../../../../types/tenant';
 
 function TenantRow({ tenant }: { tenant: Tenant }) {
-  const initials = tenant.name.split(' ').slice(0, 2).map((n) => n[0]).join('');
   return (
     <TouchableOpacity
-      style={{ backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727', borderRadius: 12, padding: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}
+      style={{
+        backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727',
+        borderRadius: 12, padding: 14, marginBottom: 8,
+        flexDirection: 'row', alignItems: 'center', gap: 12,
+      }}
       onPress={() => router.push(`/(tabs)/more/tenants/${tenant.slug}`)}
     >
-      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#272727', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#FAFAFA', fontFamily: 'Inter_600SemiBold' }}>{initials}</Text>
-      </View>
+      <Avatar name={tenant.name} size="md" bg="#272727" />
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#FAFAFA', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>{tenant.name}</Text>
+        <Text style={{ color: '#FAFAFA', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>
+          {tenant.name}
+        </Text>
         <Text style={{ color: '#A3A3A3', fontSize: 12, marginTop: 2 }}>
-          {tenant.slot_detail.property_name} · Room {tenant.slot_detail.unit_number}
+          {tenant.property_name} · Room {tenant.unit_number}
         </Text>
         {tenant.has_unpaid && (
-          <Text style={{ color: '#F59E0B', fontSize: 11, marginTop: 2 }}>⚠ Unpaid this month</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+            <WarningCircleIcon size={12} color="#F59E0B" weight="fill" />
+            <Text style={{ color: '#F59E0B', fontSize: 11 }}>Unpaid this month</Text>
+          </View>
         )}
       </View>
-      <View style={{ backgroundColor: tenant.is_active ? '#1E3C28' : '#272727', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3 }}>
-        <Text style={{ color: tenant.is_active ? '#22C55E' : '#A3A3A3', fontSize: 11 }}>
-          {tenant.is_active ? 'Active' : 'Exited'}
-        </Text>
-      </View>
+      <Badge variant={tenant.is_active ? 'success' : 'muted'}>
+        {tenant.is_active ? 'Active' : 'Exited'}
+      </Badge>
     </TouchableOpacity>
   );
 }
@@ -41,19 +47,14 @@ export default function TenantsScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0F0F0F' }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
         <Text style={{ color: '#FAFAFA', fontSize: 20, fontFamily: 'Inter_600SemiBold' }}>Tenants</Text>
-        <TouchableOpacity
-          style={{ backgroundColor: '#4F9D7E', borderRadius: 99, paddingHorizontal: 16, paddingVertical: 8 }}
-          onPress={() => router.push('/(tabs)/more/tenants/new')}
-        >
-          <Text style={{ color: '#fff', fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>+ Add</Text>
-        </TouchableOpacity>
+        <Button size="sm" onPress={() => router.push('/(tabs)/more/tenants/new')}>
+          + Add
+        </Button>
       </View>
 
       <View style={{ marginHorizontal: 16, marginBottom: 12 }}>
-        <TextInput
-          style={{ backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: '#FAFAFA', fontSize: 14 }}
-          placeholder="🔍 Search tenants"
-          placeholderTextColor="#A3A3A3"
+        <Input
+          placeholder="Search tenants"
           value={query}
           onChangeText={setQuery}
         />
@@ -61,7 +62,7 @@ export default function TenantsScreen() {
 
       <FlatList
         data={tenants ?? []}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: 16 }}>
             <TenantRow tenant={item} />

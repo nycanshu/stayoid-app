@@ -25,15 +25,24 @@ export default function LoginScreen() {
 
   const onSubmit = async (data: FormData) => {
     setError(null);
+    console.log('[login] submitting to', process.env.EXPO_PUBLIC_API_URL);
     try {
       const tokens = await authApi.login(data);
       await SecureStore.setItemAsync('access_token', tokens.access);
       await SecureStore.setItemAsync('refresh_token', tokens.refresh);
       const me = await authApi.me();
       setUser(me);
-      router.replace('/(tabs)/');
-    } catch {
-      setError('Invalid email or password.');
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      console.error('[login] error', err?.response?.status, err?.message, err?.code);
+      const status = err?.response?.status;
+      if (status === 401 || status === 400) {
+        setError('Invalid email or password.');
+      } else if (err?.code === 'ECONNREFUSED' || err?.code === 'ERR_NETWORK') {
+        setError(`Cannot reach server at ${process.env.EXPO_PUBLIC_API_URL}. Is Django running?`);
+      } else {
+        setError(err?.message ?? 'Something went wrong.');
+      }
     }
   };
 

@@ -1,7 +1,8 @@
 const INR = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
 
-export function formatCurrency(amount: number): string {
-  return INR.format(amount);
+export function formatCurrency(amount: number | string): string {
+  const n = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return INR.format(isNaN(n) ? 0 : n);
 }
 
 export function formatFloorName(floorNumber: number): string {

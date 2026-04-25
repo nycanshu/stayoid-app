@@ -20,7 +20,7 @@ export function useProperty(slug: string) {
   });
 }
 
-export function useSlots(propertyId?: number, vacant?: boolean) {
+export function useSlots(propertyId?: string, vacant?: boolean) {
   return useQuery({
     queryKey: ['slots', propertyId, vacant],
     queryFn: () => slotsApi.list({ property_id: propertyId, vacant }),
@@ -32,7 +32,7 @@ export function useSlots(propertyId?: number, vacant?: boolean) {
 export function useCreateProperty() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Property>) => propertiesApi.create(data),
+    mutationFn: (data: { name: string; property_type: string; address: string }) => propertiesApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['properties'] });
       qc.invalidateQueries({ queryKey: ['dashboard'] });

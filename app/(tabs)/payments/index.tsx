@@ -1,50 +1,63 @@
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
+import { CaretLeftIcon, CaretRightIcon, WarningCircleIcon } from 'phosphor-react-native';
 import { usePayments } from '../../../lib/hooks/use-payments';
 import { useTenants } from '../../../lib/hooks/use-tenants';
 import { formatCurrency, formatMonthYear } from '../../../lib/utils/formatters';
+import { Badge, Avatar } from '../../../components/ui';
 import type { Payment } from '../../../types/payment';
 import type { Tenant } from '../../../types/tenant';
 
 function PaymentRow({ payment }: { payment: Payment }) {
-  const initials = payment.tenant_detail.name.split(' ').slice(0, 2).map((n) => n[0]).join('');
   return (
-    <View style={{ backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727', borderRadius: 12, padding: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#4F9D7E', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#fff', fontFamily: 'Inter_600SemiBold', fontSize: 13 }}>{initials}</Text>
-      </View>
+    <View style={{
+      backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727',
+      borderRadius: 12, padding: 14, marginBottom: 8,
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+    }}>
+      <Avatar name={payment.tenant_name} size="sm" />
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#FAFAFA', fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>{payment.tenant_detail.name}</Text>
-        <Text style={{ color: '#A3A3A3', fontSize: 12 }}>
-          {payment.tenant_detail.slot_detail.property_name} · Room {payment.tenant_detail.slot_detail.unit_number}
+        <Text style={{ color: '#FAFAFA', fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+          {payment.tenant_name}
         </Text>
-        <Text style={{ color: '#A3A3A3', fontSize: 11, marginTop: 2 }}>{payment.payment_method}</Text>
+        <Text style={{ color: '#A3A3A3', fontSize: 12, marginTop: 2 }}>
+          {payment.property_name} · Room {payment.unit_number}
+        </Text>
+        <Text style={{ color: '#A3A3A3', fontSize: 11, marginTop: 2 }}>
+          {payment.payment_method}
+        </Text>
       </View>
-      <View style={{ alignItems: 'flex-end' }}>
-        <Text style={{ color: '#FAFAFA', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>{formatCurrency(payment.amount)}</Text>
-        <View style={{ backgroundColor: '#1E3C28', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2, marginTop: 4 }}>
-          <Text style={{ color: '#22C55E', fontSize: 11 }}>Paid ✓</Text>
-        </View>
+      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+        <Text style={{ color: '#FAFAFA', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>
+          {formatCurrency(payment.amount)}
+        </Text>
+        <Badge variant="success">Paid</Badge>
       </View>
     </View>
   );
 }
 
 function UnpaidRow({ tenant }: { tenant: Tenant }) {
-  const initials = tenant.name.split(' ').slice(0, 2).map((n) => n[0]).join('');
   return (
-    <View style={{ backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727', borderLeftWidth: 3, borderLeftColor: '#F59E0B', borderRadius: 12, padding: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#3C2D0F', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#F59E0B', fontFamily: 'Inter_600SemiBold', fontSize: 13 }}>{initials}</Text>
+    <View style={{
+      backgroundColor: '#181818', borderWidth: 1, borderColor: '#272727',
+      borderLeftWidth: 3, borderLeftColor: '#F59E0B',
+      borderRadius: 12, padding: 14, marginBottom: 8,
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+    }}>
+      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#3C2D0F', alignItems: 'center', justifyContent: 'center' }}>
+        <WarningCircleIcon size={18} color="#F59E0B" weight="fill" />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ color: '#FAFAFA', fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>{tenant.name}</Text>
-        <Text style={{ color: '#A3A3A3', fontSize: 12 }}>{tenant.slot_detail.property_name} · Room {tenant.slot_detail.unit_number}</Text>
+        <Text style={{ color: '#FAFAFA', fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+          {tenant.name}
+        </Text>
+        <Text style={{ color: '#A3A3A3', fontSize: 12 }}>
+          {tenant.property_name} · Room {tenant.unit_number}
+        </Text>
       </View>
-      <View style={{ backgroundColor: '#3C2D0F', borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2 }}>
-        <Text style={{ color: '#F59E0B', fontSize: 11 }}>Unpaid</Text>
-      </View>
+      <Badge variant="warning">Unpaid</Badge>
     </View>
   );
 }
@@ -83,14 +96,20 @@ export default function PaymentsScreen() {
 
       {/* Month navigator */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, paddingBottom: 12 }}>
-        <TouchableOpacity onPress={prev}><Text style={{ color: '#4F9D7E', fontSize: 20 }}>‹</Text></TouchableOpacity>
-        <Text style={{ color: '#FAFAFA', fontSize: 16, fontFamily: 'Inter_600SemiBold', minWidth: 140, textAlign: 'center' }}>{formatMonthYear(month, year)}</Text>
-        <TouchableOpacity onPress={next}><Text style={{ color: '#4F9D7E', fontSize: 20 }}>›</Text></TouchableOpacity>
+        <TouchableOpacity onPress={prev} style={{ padding: 4 }}>
+          <CaretLeftIcon size={20} color="#4F9D7E" />
+        </TouchableOpacity>
+        <Text style={{ color: '#FAFAFA', fontSize: 16, fontFamily: 'Inter_600SemiBold', minWidth: 140, textAlign: 'center' }}>
+          {formatMonthYear(month, year)}
+        </Text>
+        <TouchableOpacity onPress={next} style={{ padding: 4 }}>
+          <CaretRightIcon size={20} color="#4F9D7E" />
+        </TouchableOpacity>
       </View>
 
       <FlatList
         data={listData}
-        keyExtractor={(item, i) =>
+        keyExtractor={(item) =>
           item.kind === 'unpaid' ? `u-${item.tenant.id}` : `p-${item.payment.id}`
         }
         renderItem={({ item }) =>
@@ -102,7 +121,9 @@ export default function PaymentsScreen() {
         ListEmptyComponent={
           isLoading ? null : (
             <View style={{ alignItems: 'center', paddingTop: 60 }}>
-              <Text style={{ color: '#22C55E', fontSize: 16 }}>All clear for {formatMonthYear(month, year)} 🎉</Text>
+              <Text style={{ color: '#22C55E', fontSize: 16 }}>
+                All clear for {formatMonthYear(month, year)}
+              </Text>
             </View>
           )
         }

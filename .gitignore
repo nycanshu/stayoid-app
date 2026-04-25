@@ -1,16 +1,45 @@
+# Dependencies
 node_modules/
+
+# Expo
 .expo/
 dist/
 web-build/
+expo-env.d.ts
+
+# Environment
 .env
 .env.local
-expo-env.d.ts
+.env*.local
+
+# Native build artifacts
+android/
+ios/
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
 *.orig.*
-web-build/
-# macOS
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code internal
+.claude/
+.mcp.json
+/memory/*
+
+CLAUDE.md
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

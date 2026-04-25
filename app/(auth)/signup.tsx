@@ -43,7 +43,7 @@ export default function SignupScreen() {
       await SecureStore.setItemAsync('refresh_token', tokens.refresh);
       const me = await authApi.me();
       setUser(me);
-      router.replace('/(tabs)/');
+      router.replace('/(tabs)');
     } catch {
       setError('Could not create account. Email may already be in use.');
     }
