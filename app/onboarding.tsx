@@ -3,6 +3,7 @@ import {
   NativeSyntheticEvent, NativeScrollEvent,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useRef, useState, useEffect } from 'react';
 import {
@@ -215,7 +216,7 @@ function AnimatedSlide({ item, isActive }: { item: Slide; isActive: boolean }) {
       <Animated.Text style={[{
         color: '#FAFAFA', fontSize: 28,
         fontFamily: 'SpaceGrotesk_700Bold',
-        textAlign: 'center', lineHeight: 34, marginBottom: 14, letterSpacing: -0.5,
+        textAlign: 'center', lineHeight: 34, marginBottom: 14, letterSpacing: -0.5, paddingRight: 0.5,
       }, titleStyle]}>
         {item.title}
       </Animated.Text>
@@ -269,6 +270,7 @@ function AnimatedButton({
         onPress={onPress}
         onPressIn={() => { scale.value = withSpring(0.96, { damping: 14, stiffness: 220 }); }}
         onPressOut={() => { scale.value = withSpring(1.0, { damping: 12, stiffness: 180 }); }}
+        android_ripple={null}
         style={style}
       >
         {children}
@@ -308,16 +310,17 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0F0F0F' }}>
+      <StatusBar style="light" />
       {/* Top bar */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <StayoidLogo size={28} />
-          <Text style={{ color: '#FAFAFA', fontSize: 16, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.3 }}>
+          <Text style={{ color: '#FAFAFA', fontSize: 16, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.3, paddingRight: 0.3 }}>
             Stayoid
           </Text>
         </View>
         {!isLast && (
-          <Pressable onPress={goToLogin}>
+          <Pressable onPress={goToLogin} android_ripple={null}>
             <Text style={{ color: '#A3A3A3', fontSize: 14, fontFamily: 'Inter_400Regular' }}>Skip</Text>
           </Pressable>
         )}

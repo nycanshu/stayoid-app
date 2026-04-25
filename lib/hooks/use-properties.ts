@@ -39,3 +39,31 @@ export function useCreateProperty() {
     },
   });
 }
+
+export function useUpdateProperty() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      slug, data,
+    }: {
+      slug: string;
+      data: Partial<{ name: string; property_type: string; address: string }>;
+    }) => propertiesApi.update(slug, data),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['properties'] });
+      qc.invalidateQueries({ queryKey: ['properties', variables.slug] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
+export function useDeleteProperty() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (slug: string) => propertiesApi.delete(slug),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['properties'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}

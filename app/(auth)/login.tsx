@@ -1,8 +1,9 @@
 import {
   View, Text, KeyboardAvoidingView, Platform,
-  ScrollView, Pressable, ActivityIndicator,
+  ScrollView, Pressable, ActivityIndicator, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Link, router } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
@@ -19,9 +20,8 @@ import { useAuthStore } from '../../lib/stores/auth-store';
 import { useColors } from '../../lib/hooks/use-colors';
 import { StayoidLogo } from '../../components/shared/StayoidLogo';
 import type { TextInputProps } from 'react-native';
-import { TextInput } from 'react-native';
 
-// ─── Shared local components ──────────────────────────────────────────────────
+// ─── Local components ─────────────────────────────────────────────────────────
 
 function FocusableInput({
   label, error, showToggle, onToggle, secureTextEntry, colors, ...props
@@ -62,6 +62,7 @@ function FocusableInput({
           <Pressable
             onPress={onToggle}
             hitSlop={8}
+            android_ripple={null}
             style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
           >
             {secureTextEntry
@@ -98,6 +99,7 @@ function AnimatedButton({
         disabled={disabled}
         onPressIn={() => { if (!disabled) scale.value = withSpring(0.97, { damping: 14, stiffness: 220 }); }}
         onPressOut={() => { scale.value = withSpring(1.0, { damping: 12, stiffness: 180 }); }}
+        android_ripple={null}
         style={{
           backgroundColor: variant === 'primary' ? colors.primary : 'transparent',
           borderWidth: variant === 'outline' ? 1.5 : 0,
@@ -135,7 +137,6 @@ export default function LoginScreen() {
     resolver: zodResolver(schema),
   });
 
-  // Entrance animations
   const logoOpacity = useSharedValue(0);
   const logoY = useSharedValue(20);
   const formOpacity = useSharedValue(0);
@@ -188,16 +189,16 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar style="auto" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 48 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo + heading */}
           <Animated.View style={[{ alignItems: 'center', marginBottom: 40 }, logoStyle]}>
             <StayoidLogo size={48} />
-            <Text style={{ color: colors.foreground, fontSize: 26, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.5, marginTop: 14 }}>
+            <Text style={{ color: colors.foreground, fontSize: 26, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.5, paddingRight: 0.5, marginTop: 14 }}>
               Stayoid
             </Text>
             <Text style={{ color: colors.mutedFg, fontSize: 15, fontFamily: 'Inter_400Regular', marginTop: 4 }}>
@@ -205,14 +206,12 @@ export default function LoginScreen() {
             </Text>
           </Animated.View>
 
-          {/* API error banner */}
-          {apiError && (
+          {!!apiError && (
             <View style={{ backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: colors.danger + '50', borderRadius: 12, padding: 12, marginBottom: 16 }}>
               <Text style={{ color: colors.danger, fontSize: 13, fontFamily: 'Inter_400Regular' }}>{apiError}</Text>
             </View>
           )}
 
-          {/* Form fields */}
           <Animated.View style={formStyle}>
             <Controller
               control={control}
@@ -251,7 +250,10 @@ export default function LoginScreen() {
             />
 
             <Link href="/(auth)/forgot-password" asChild>
-              <Pressable style={{ alignSelf: 'flex-end', marginTop: -8, marginBottom: 28 }}>
+              <Pressable
+                android_ripple={null}
+                style={{ alignSelf: 'flex-end', marginTop: -8, marginBottom: 28 }}
+              >
                 <Text style={{ color: colors.primary, fontSize: 13, fontFamily: 'Inter_400Regular' }}>
                   Forgot Password?
                 </Text>
@@ -259,13 +261,8 @@ export default function LoginScreen() {
             </Link>
           </Animated.View>
 
-          {/* CTA */}
           <Animated.View style={[{ gap: 12 }, ctaStyle]}>
-            <AnimatedButton
-              onPress={handleSubmit(onSubmit)}
-              disabled={isSubmitting}
-              colors={colors}
-            >
+            <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting} colors={colors}>
               {isSubmitting
                 ? <ActivityIndicator color="#fff" size="small" />
                 : <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Log In</Text>
@@ -277,7 +274,7 @@ export default function LoginScreen() {
                 Don't have an account?{' '}
               </Text>
               <Link href="/(auth)/signup" asChild>
-                <Pressable>
+                <Pressable android_ripple={null}>
                   <Text style={{ color: colors.primary, fontSize: 14, fontFamily: 'Inter_500Medium' }}>Sign up</Text>
                 </Pressable>
               </Link>

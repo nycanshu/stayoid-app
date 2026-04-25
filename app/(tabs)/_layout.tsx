@@ -1,69 +1,165 @@
 import { Tabs } from 'expo-router';
-import { View, Text, Platform } from 'react-native';
-import { HouseIcon, BuildingsIcon, CreditCardIcon, GearSixIcon } from 'phosphor-react-native';
-import type { Icon } from 'phosphor-react-native';
+import { View, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  HouseIcon, BuildingsIcon, CreditCardIcon, GearSixIcon,
+} from 'phosphor-react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withSpring, withTiming,
+} from 'react-native-reanimated';
+import { useEffect } from 'react';
 import { useColors } from '../../lib/hooks/use-colors';
 
-const TABS: { name: string; label: string; Icon: Icon }[] = [
-  { name: 'index',      label: 'Dashboard',  Icon: HouseIcon },
-  { name: 'properties', label: 'Properties', Icon: BuildingsIcon },
-  { name: 'payments',   label: 'Payments',   Icon: CreditCardIcon },
-  { name: 'settings',   label: 'Settings',   Icon: GearSixIcon },
-];
+// ─── Icon map ─────────────────────────────────────────────────────────────────
 
-function TabIcon({ label, Icon, focused, colors }: {
-  label: string;
-  Icon: Icon;
-  focused: boolean;
+const TAB_ICONS: Record<string, any> = {
+  index:      HouseIcon,
+  properties: BuildingsIcon,
+  payments:   CreditCardIcon,
+  settings:   GearSixIcon,
+};
+
+// ─── Single tab item ──────────────────────────────────────────────────────────
+
+function TabItem({
+  routeName, isFocused, onPress, colors,
+}: {
+  routeName: string;
+  isFocused: boolean;
+  onPress: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
-  const color = focused ? colors.primary : colors.mutedFg;
+  const Icon = TAB_ICONS[routeName] ?? HouseIcon;
+
+  const scale = useSharedValue(1);
+  const bgOpacity = useSharedValue(isFocused ? 1 : 0);
+  const iconColor = useSharedValue(isFocused ? 1 : 0);
+
+  useEffect(() => {
+    bgOpacity.value = withTiming(isFocused ? 1 : 0, { duration: 220 });
+    iconColor.value = withTiming(isFocused ? 1 : 0, { duration: 180 });
+  }, [isFocused]);
+
+  const scaleStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const highlightStyle = useAnimatedStyle(() => ({
+    opacity: bgOpacity.value,
+  }));
+
   return (
-    <View style={{ alignItems: 'center', gap: 3, paddingTop: 4 }}>
-      <Icon size={22} color={color} weight={focused ? 'fill' : 'regular'} />
-      <Text style={{
-        fontSize: 10,
-        color,
-        fontFamily: focused ? 'Inter_600SemiBold' : 'Inter_400Regular',
-        letterSpacing: 0.2,
+    <Pressable
+      onPress={onPress}
+      onPressIn={() => { scale.value = withSpring(0.86, { damping: 14, stiffness: 280 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 12, stiffness: 200 }); }}
+      android_ripple={null}
+      hitSlop={6}
+    >
+      <Animated.View style={[{ alignItems: 'center', justifyContent: 'center' }, scaleStyle]}>
+        {/* Pill highlight */}
+        <Animated.View style={[{
+          position: 'absolute',
+          width: 58, height: 44,
+          borderRadius: 22,
+          backgroundColor: colors.primary,
+        }, highlightStyle]} />
+
+        {/* Icon */}
+        <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+          <Icon
+            size={21}
+            color={isFocused ? '#fff' : colors.mutedFg}
+            weight={isFocused ? 'fill' : 'regular'}
+          />
+        </View>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+// ─── Floating tab bar ─────────────────────────────────────────────────────────
+
+function FloatingTabBar({ state, navigation }: any) {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  const bottom = Math.max(insets.bottom, 12) + 12;
+
+  return (
+    <View
+      pointerEvents="box-none"
+      style={{
+        position: 'absolute',
+        bottom,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+      }}
+    >
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.card,
+        borderRadius: 32,
+        borderWidth: 1,
+        borderColor: colors.border,
+        paddingHorizontal: 8,
+        paddingVertical: 8,
+        gap: 4,
+        // iOS shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.15,
+        shadowRadius: 28,
+        // Android elevation
+        elevation: 20,
       }}>
-        {label}
-      </Text>
+        {state.routes.map((route: any) => {
+          if (!TAB_ICONS[route.name]) return null;
+
+          const isFocused = state.routes[state.index].name === route.name;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name, route.params);
+            }
+          };
+
+          return (
+            <TabItem
+              key={route.key}
+              routeName={route.name}
+              isFocused={isFocused}
+              onPress={onPress}
+              colors={colors}
+            />
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-export default function TabsLayout() {
-  const colors = useColors();
+// ─── Layout ───────────────────────────────────────────────────────────────────
 
+export default function TabsLayout() {
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: colors.card,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          height: Platform.OS === 'ios' ? 84 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-          paddingTop: 8,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-      }}
+      tabBar={(props) => <FloatingTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
-      {TABS.map(({ name, label, Icon }) => (
-        <Tabs.Screen
-          key={name}
-          name={name}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <TabIcon label={label} Icon={Icon} focused={focused} colors={colors} />
-            ),
-          }}
-        />
-      ))}
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="properties" />
+      <Tabs.Screen name="payments" />
+      <Tabs.Screen name="settings" />
+      {/* Hide 'more' from the tab bar — still navigable via deep links */}
+      <Tabs.Screen name="more" options={{ href: null }} />
     </Tabs>
   );
 }

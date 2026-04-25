@@ -36,4 +36,4 @@ export const DARK = {
   infoBg:      '#192841',
 } as const;
 
-export type AppColors = typeof LIGHT;
+export type AppColors = { readonly [K in keyof typeof LIGHT]: string };

@@ -1,9 +1,9 @@
 import {
   View, Text, KeyboardAvoidingView, Platform,
-  ScrollView, Pressable, ActivityIndicator,
-  TextInput,
+  ScrollView, Pressable, ActivityIndicator, TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Link, router } from 'expo-router';
 import { useForm, Controller, useWatch } from 'react-hook-form';
 import { z } from 'zod';
@@ -22,7 +22,7 @@ import { useColors } from '../../lib/hooks/use-colors';
 import { StayoidLogo } from '../../components/shared/StayoidLogo';
 import type { TextInputProps } from 'react-native';
 
-// ─── Shared local components ──────────────────────────────────────────────────
+// ─── Local components ─────────────────────────────────────────────────────────
 
 function FocusableInput({
   label, error, showToggle, onToggle, secureTextEntry, colors, ...props
@@ -63,6 +63,7 @@ function FocusableInput({
           <Pressable
             onPress={onToggle}
             hitSlop={8}
+            android_ripple={null}
             style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
           >
             {secureTextEntry
@@ -98,6 +99,7 @@ function AnimatedButton({
         disabled={disabled}
         onPressIn={() => { if (!disabled) scale.value = withSpring(0.97, { damping: 14, stiffness: 220 }); }}
         onPressOut={() => { scale.value = withSpring(1.0, { damping: 12, stiffness: 180 }); }}
+        android_ripple={null}
         style={{
           backgroundColor: colors.primary,
           borderRadius: 14,
@@ -175,7 +177,6 @@ export default function SignupScreen() {
     number: /[0-9]/.test(password),
   };
 
-  // Entrance animations
   const headerOpacity = useSharedValue(0);
   const headerY = useSharedValue(20);
   const formOpacity = useSharedValue(0);
@@ -221,11 +222,12 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Back button */}
+      <StatusBar style="auto" />
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
         <Pressable
           onPress={() => router.replace('/(auth)/login')}
           hitSlop={8}
+          android_ripple={null}
           style={{ width: 36, height: 36, borderRadius: 99, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
         >
           <ArrowLeftIcon size={16} color={colors.foreground} />
@@ -238,10 +240,9 @@ export default function SignupScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo + heading */}
           <Animated.View style={[{ alignItems: 'center', marginBottom: 36 }, headerStyle]}>
             <StayoidLogo size={48} />
-            <Text style={{ color: colors.foreground, fontSize: 26, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.5, marginTop: 14 }}>
+            <Text style={{ color: colors.foreground, fontSize: 26, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.5, paddingRight: 0.5, marginTop: 14 }}>
               Stayoid
             </Text>
             <Text style={{ color: colors.mutedFg, fontSize: 15, fontFamily: 'Inter_400Regular', marginTop: 4 }}>
@@ -249,14 +250,12 @@ export default function SignupScreen() {
             </Text>
           </Animated.View>
 
-          {/* API error banner */}
-          {apiError && (
+          {!!apiError && (
             <View style={{ backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: colors.danger + '50', borderRadius: 12, padding: 12, marginBottom: 16 }}>
               <Text style={{ color: colors.danger, fontSize: 13, fontFamily: 'Inter_400Regular' }}>{apiError}</Text>
             </View>
           )}
 
-          {/* Form fields */}
           <Animated.View style={formStyle}>
             <Controller
               control={control}
@@ -311,7 +310,6 @@ export default function SignupScreen() {
               )}
             />
 
-            {/* Password strength pills */}
             {password.length > 0 && (
               <View style={{ flexDirection: 'row', gap: 8, marginTop: -4, marginBottom: 16, flexWrap: 'wrap' }}>
                 <StrengthPill passed={checks.length} label="8+ characters" colors={colors} />
@@ -321,13 +319,8 @@ export default function SignupScreen() {
             )}
           </Animated.View>
 
-          {/* CTA */}
           <Animated.View style={[{ gap: 12 }, ctaStyle]}>
-            <AnimatedButton
-              onPress={handleSubmit(onSubmit)}
-              disabled={isSubmitting}
-              colors={colors}
-            >
+            <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting} colors={colors}>
               {isSubmitting
                 ? <ActivityIndicator color="#fff" size="small" />
                 : <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Create Account</Text>
@@ -339,7 +332,7 @@ export default function SignupScreen() {
                 Already have an account?{' '}
               </Text>
               <Link href="/(auth)/login" asChild>
-                <Pressable>
+                <Pressable android_ripple={null}>
                   <Text style={{ color: colors.primary, fontSize: 14, fontFamily: 'Inter_500Medium' }}>Log in</Text>
                 </Pressable>
               </Link>
