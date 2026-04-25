@@ -1,0 +1,16 @@
+export const ROUTES = {
+  home: '/(tabs)/',
+  properties: '/(tabs)/properties',
+  propertyNew: '/(tabs)/properties/new',
+  propertyDetail: (slug: string) => `/(tabs)/properties/${slug}` as const,
+  propertyEdit: (slug: string) => `/(tabs)/properties/${slug}/edit` as const,
+  payments: '/(tabs)/payments',
+  more: '/(tabs)/more',
+  tenants: '/(tabs)/more/tenants',
+  tenantNew: '/(tabs)/more/tenants/new',
+  tenantDetail: (slug: string) => `/(tabs)/more/tenants/${slug}` as const,
+  settings: '/(tabs)/more/settings',
+  login: '/(auth)/login',
+  signup: '/(auth)/signup',
+  forgotPassword: '/(auth)/forgot-password',
+} as const;
