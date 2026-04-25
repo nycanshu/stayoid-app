@@ -9,9 +9,10 @@ import {
   useFonts as useInterFonts,
 } from '@expo-google-fonts/inter';
 import {
-  PlayfairDisplay_600SemiBold,
-  useFonts as usePlayfairFonts,
-} from '@expo-google-fonts/playfair-display';
+  SpaceGrotesk_600SemiBold,
+  SpaceGrotesk_700Bold,
+  useFonts as useSpaceGroteskFonts,
+} from '@expo-google-fonts/space-grotesk';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -26,11 +27,12 @@ export default function RootLayout() {
     Inter_600SemiBold,
   });
 
-  const [playfairLoaded] = usePlayfairFonts({
-    PlayfairDisplay_600SemiBold,
+  const [spaceGroteskLoaded] = useSpaceGroteskFonts({
+    SpaceGrotesk_600SemiBold,
+    SpaceGrotesk_700Bold,
   });
 
-  const fontsLoaded = interLoaded && playfairLoaded;
+  const fontsLoaded = interLoaded && spaceGroteskLoaded;
 
   useEffect(() => {
     if (fontsLoaded) SplashScreen.hideAsync();

@@ -71,7 +71,7 @@ export default function PropertyDetailScreen() {
           <ArrowLeftIcon size={22} color="#4F9D7E" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: '#FAFAFA', fontSize: 18, fontFamily: 'PlayfairDisplay_600SemiBold' }}>
+          <Text style={{ color: '#FAFAFA', fontSize: 18, fontFamily: 'SpaceGrotesk_700Bold' }}>
             {property?.name ?? '…'}
           </Text>
           <Text style={{ color: '#A3A3A3', fontSize: 12 }}>

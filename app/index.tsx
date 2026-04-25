@@ -17,7 +17,7 @@ export default function Index() {
       ]);
 
       if (token) setState('app');
-      else if (seen) setState('login');
+      else if (seen && !__DEV__) setState('login');
       else setState('onboarding');
     })();
   }, []);

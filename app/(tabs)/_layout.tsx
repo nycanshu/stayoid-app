@@ -1,17 +1,23 @@
 import { Tabs } from 'expo-router';
 import { View, Text, Platform } from 'react-native';
-import { HouseIcon, BuildingsIcon, CreditCardIcon, ListIcon } from 'phosphor-react-native';
+import { HouseIcon, BuildingsIcon, CreditCardIcon, GearSixIcon } from 'phosphor-react-native';
 import type { Icon } from 'phosphor-react-native';
+import { useColors } from '../../lib/hooks/use-colors';
 
 const TABS: { name: string; label: string; Icon: Icon }[] = [
-  { name: 'index',      label: 'Home',       Icon: HouseIcon },
+  { name: 'index',      label: 'Dashboard',  Icon: HouseIcon },
   { name: 'properties', label: 'Properties', Icon: BuildingsIcon },
   { name: 'payments',   label: 'Payments',   Icon: CreditCardIcon },
-  { name: 'more',       label: 'More',       Icon: ListIcon },
+  { name: 'settings',   label: 'Settings',   Icon: GearSixIcon },
 ];
 
-function TabIcon({ label, Icon, focused }: { label: string; Icon: Icon; focused: boolean }) {
-  const color = focused ? '#4F9D7E' : '#A3A3A3';
+function TabIcon({ label, Icon, focused, colors }: {
+  label: string;
+  Icon: Icon;
+  focused: boolean;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const color = focused ? colors.primary : colors.mutedFg;
   return (
     <View style={{ alignItems: 'center', gap: 3, paddingTop: 4 }}>
       <Icon size={22} color={color} weight={focused ? 'fill' : 'regular'} />
@@ -28,15 +34,17 @@ function TabIcon({ label, Icon, focused }: { label: string; Icon: Icon; focused:
 }
 
 export default function TabsLayout() {
+  const colors = useColors();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: '#181818',
+          backgroundColor: colors.card,
           borderTopWidth: 1,
-          borderTopColor: '#272727',
+          borderTopColor: colors.border,
           height: Platform.OS === 'ios' ? 84 : 64,
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 8,
@@ -51,7 +59,7 @@ export default function TabsLayout() {
           name={name}
           options={{
             tabBarIcon: ({ focused }) => (
-              <TabIcon label={label} Icon={Icon} focused={focused} />
+              <TabIcon label={label} Icon={Icon} focused={focused} colors={colors} />
             ),
           }}
         />

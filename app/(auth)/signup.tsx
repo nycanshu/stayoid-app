@@ -58,7 +58,7 @@ export default function SignupScreen() {
         contentContainerClassName="flex-grow justify-center px-6 py-12"
         keyboardShouldPersistTaps="handled"
       >
-        <Text className="text-[#FAFAFA] text-3xl font-semibold text-center mb-1" style={{ fontFamily: 'PlayfairDisplay_600SemiBold' }}>
+        <Text className="text-[#FAFAFA] text-3xl font-semibold text-center mb-1" style={{ fontFamily: 'SpaceGrotesk_700Bold' }}>
           Stayoid
         </Text>
         <Text className="text-[#A3A3A3] text-base text-center mb-10">Create your account</Text>

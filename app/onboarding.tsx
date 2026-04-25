@@ -5,34 +5,38 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  HouseIcon, UsersIcon, CurrencyInrIcon, ArrowRightIcon,
+} from 'phosphor-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import { StayoidLogo } from '../components/shared/StayoidLogo';
 
 const { width } = Dimensions.get('window');
 
 const SLIDES = [
   {
     id: '1',
-    icon: 'checkmark-circle' as const,
-    iconColor: '#4F9D7E',
-    title: 'Know who\'s paid\nat a glance',
-    subtitle: 'See every tenant\'s payment status instantly. No spreadsheets, no guessing.',
+    Icon: HouseIcon,
+    color: '#4F9D7E',
+    label: 'PROPERTY MANAGEMENT',
+    title: 'One Dashboard.\nZero Confusion.',
+    subtitle: 'Manage rooms, tenants, rent & dues — all in one place. Built for PG owners, hoteliers and landlords across India.',
   },
   {
     id: '2',
-    icon: 'business' as const,
-    iconColor: '#9B9FCE',
-    title: 'All your properties\nin one place',
-    subtitle: 'Manage rooms, floors, and tenants across every PG or flat you own.',
+    Icon: UsersIcon,
+    color: '#9B9FCE',
+    label: 'TENANT MANAGEMENT',
+    title: 'Onboard tenants\nthe right way.',
+    subtitle: 'Invite tenants digitally, store documents, and track every move-in & move-out. No paperwork. No WhatsApp chaos.',
   },
   {
     id: '3',
-    icon: 'rocket' as const,
-    iconColor: '#E8D4B8',
-    title: 'Get started free.\nNo setup fee.',
-    subtitle: 'Create your account and add your first property in under 2 minutes.',
-    isLast: true,
+    Icon: CurrencyInrIcon,
+    color: '#E8D4B8',
+    label: 'RENT COLLECTION',
+    title: 'Collect rent\non autopilot.',
+    subtitle: 'Track who paid, who hasn\'t. Generate receipts and monthly reports instantly. Free to start, no setup fee.',
   },
 ];
 
@@ -69,16 +73,20 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0F0F0F' }}>
-      {/* Skip */}
-      {!isLast && (
-        <TouchableOpacity
-          onPress={goToLogin}
-          style={{ alignSelf: 'flex-end', paddingHorizontal: 20, paddingVertical: 12 }}
-        >
-          <Text style={{ color: '#A3A3A3', fontSize: 14, fontFamily: 'Inter_500Medium' }}>Skip</Text>
-        </TouchableOpacity>
-      )}
-      {isLast && <View style={{ height: 44 }} />}
+      {/* Top bar */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <StayoidLogo size={28} />
+          <Text style={{ color: '#FAFAFA', fontSize: 16, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.3 }}>
+            Stayoid
+          </Text>
+        </View>
+        {!isLast && (
+          <TouchableOpacity onPress={goToLogin}>
+            <Text style={{ color: '#A3A3A3', fontSize: 14, fontFamily: 'Inter_400Regular' }}>Skip</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Slides */}
       <FlatList
@@ -90,54 +98,54 @@ export default function OnboardingScreen() {
         showsHorizontalScrollIndicator={false}
         onScroll={onScroll}
         scrollEventThrottle={16}
-        renderItem={({ item }) => (
-          <View style={{ width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-            {/* Icon circle */}
-            <Animated.View
-              entering={FadeInUp.duration(500).delay(100)}
-              style={{
-                width: 120, height: 120, borderRadius: 60,
-                backgroundColor: `${item.iconColor}18`,
-                borderWidth: 1, borderColor: `${item.iconColor}30`,
-                alignItems: 'center', justifyContent: 'center',
-                marginBottom: 48,
-              }}
-            >
-              <Ionicons name={item.icon} size={52} color={item.iconColor} />
-            </Animated.View>
+        style={{ flex: 1 }}
+        renderItem={({ item }) => {
+          const { Icon } = item;
+          return (
+            <View style={{ width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+              {/* Icon with concentric glow rings */}
+              <View style={{ alignItems: 'center', justifyContent: 'center', marginBottom: 44 }}>
+                <View style={{ width: 196, height: 196, borderRadius: 98, backgroundColor: `${item.color}08`, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 152, height: 152, borderRadius: 76, backgroundColor: `${item.color}12`, alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{
+                      width: 112, height: 112, borderRadius: 56,
+                      backgroundColor: `${item.color}20`,
+                      borderWidth: 1, borderColor: `${item.color}40`,
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon size={44} color={item.color} weight="duotone" />
+                    </View>
+                  </View>
+                </View>
+              </View>
 
-            <Animated.Text
-              entering={FadeInUp.duration(500).delay(200)}
-              style={{
-                color: '#FAFAFA',
-                fontSize: 30,
-                fontFamily: 'PlayfairDisplay_600SemiBold',
-                textAlign: 'center',
-                lineHeight: 38,
-                marginBottom: 16,
-              }}
-            >
-              {item.title}
-            </Animated.Text>
-
-            <Animated.Text
-              entering={FadeInUp.duration(500).delay(300)}
-              style={{
-                color: '#A3A3A3',
-                fontSize: 16,
+              <Text style={{
+                color: item.color, fontSize: 10, fontFamily: 'Inter_600SemiBold',
+                letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12,
+              }}>
+                {item.label}
+              </Text>
+              <Text style={{
+                color: '#FAFAFA', fontSize: 28,
+                fontFamily: 'SpaceGrotesk_700Bold',
+                textAlign: 'center', lineHeight: 34, marginBottom: 14, letterSpacing: -0.5,
+              }}>
+                {item.title}
+              </Text>
+              <Text style={{
+                color: '#A3A3A3', fontSize: 15,
                 fontFamily: 'Inter_400Regular',
-                textAlign: 'center',
-                lineHeight: 24,
-              }}
-            >
-              {item.subtitle}
-            </Animated.Text>
-          </View>
-        )}
+                textAlign: 'center', lineHeight: 23,
+              }}>
+                {item.subtitle}
+              </Text>
+            </View>
+          );
+        }}
       />
 
-      {/* Dots */}
-      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 32 }}>
+      {/* Dot indicator */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
         {SLIDES.map((_, i) => (
           <View
             key={i}
@@ -151,30 +159,32 @@ export default function OnboardingScreen() {
         ))}
       </View>
 
+      {/* Stats strip */}
+      <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <Text style={{ color: '#525252', fontSize: 11, fontFamily: 'Inter_400Regular' }}>500+ Owners</Text>
+        <View style={{ width: 1, height: 10, backgroundColor: '#272727' }} />
+        <Text style={{ color: '#525252', fontSize: 11, fontFamily: 'Inter_400Regular' }}>Across India</Text>
+        <View style={{ width: 1, height: 10, backgroundColor: '#272727' }} />
+        <Text style={{ color: '#525252', fontSize: 11, fontFamily: 'Inter_400Regular' }}>Free to Start</Text>
+      </View>
+
       {/* CTA */}
-      <View style={{ paddingHorizontal: 24, paddingBottom: 24, gap: 12 }}>
+      <View style={{ paddingHorizontal: 24, paddingBottom: 24, gap: 10 }}>
         {isLast ? (
           <>
             <TouchableOpacity
               onPress={goToSignup}
-              style={{
-                backgroundColor: '#4F9D7E', borderRadius: 14,
-                paddingVertical: 16, alignItems: 'center',
-              }}
+              style={{ backgroundColor: '#4F9D7E', borderRadius: 14, paddingVertical: 15, alignItems: 'center' }}
             >
-              <Text style={{ color: '#fff', fontSize: 16, fontFamily: 'Inter_600SemiBold' }}>
-                Create Account
+              <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>
+                Create Account — It's Free
               </Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               onPress={goToLogin}
-              style={{
-                backgroundColor: '#181818', borderRadius: 14, borderWidth: 1,
-                borderColor: '#272727', paddingVertical: 16, alignItems: 'center',
-              }}
+              style={{ backgroundColor: 'transparent', borderRadius: 14, borderWidth: 1, borderColor: '#272727', paddingVertical: 15, alignItems: 'center' }}
             >
-              <Text style={{ color: '#FAFAFA', fontSize: 16, fontFamily: 'Inter_600SemiBold' }}>
+              <Text style={{ color: '#FAFAFA', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>
                 Log In
               </Text>
             </TouchableOpacity>
@@ -183,15 +193,12 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             onPress={goNext}
             style={{
-              backgroundColor: '#4F9D7E', borderRadius: 14,
-              paddingVertical: 16, alignItems: 'center',
-              flexDirection: 'row', justifyContent: 'center', gap: 8,
+              backgroundColor: '#4F9D7E', borderRadius: 14, paddingVertical: 15,
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 16, fontFamily: 'Inter_600SemiBold' }}>
-              Next
-            </Text>
-            <Ionicons name="arrow-forward" size={18} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Next</Text>
+            <ArrowRightIcon size={16} color="#fff" />
           </TouchableOpacity>
         )}
       </View>
