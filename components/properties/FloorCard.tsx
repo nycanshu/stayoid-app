@@ -38,7 +38,7 @@ function SlotRow({ slot, colors }: { slot: Slot; colors: AppColors }) {
   return (
     <Pressable
       onPress={() => {
-        if (tenant) router.push(`/(tabs)/more/tenants/${tenant.slug}`);
+        if (tenant) router.push(`/(tabs)/tenants/${tenant.slug}`);
       }}
       android_ripple={null}
       disabled={!tenant}

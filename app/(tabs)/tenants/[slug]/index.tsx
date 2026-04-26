@@ -12,17 +12,17 @@ import {
   PlusIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
-import { useTenant, useExitTenant } from '../../../../../lib/hooks/use-tenants';
-import { usePayments } from '../../../../../lib/hooks/use-payments';
-import { useColors } from '../../../../../lib/hooks/use-colors';
+import { useTenant, useExitTenant } from '../../../../lib/hooks/use-tenants';
+import { usePayments } from '../../../../lib/hooks/use-payments';
+import { useColors } from '../../../../lib/hooks/use-colors';
 import {
   formatCurrency, formatTenure, formatLongDate,
   GENDER_LABELS, WORK_TYPE_LABELS, ID_PROOF_LABELS, getInitials,
-} from '../../../../../lib/utils/formatters';
-import { PaymentRow } from '../../../../../components/properties/PaymentRow';
-import { Skeleton } from '../../../../../components/ui/skeleton';
-import { Entrance } from '../../../../../components/animations';
-import type { AppColors } from '../../../../../lib/theme/colors';
+} from '../../../../lib/utils/formatters';
+import { PaymentRow } from '../../../../components/properties/PaymentRow';
+import { Skeleton } from '../../../../components/ui/skeleton';
+import { Entrance } from '../../../../components/animations';
+import type { AppColors } from '../../../../lib/theme/colors';
 
 // ── Section card wrapper ──────────────────────────────────────────────────────
 function SectionCard({
@@ -160,7 +160,7 @@ function NotFound({ colors }: { colors: AppColors }) {
         This tenant doesn't exist or has been deleted.
       </Text>
       <Pressable
-        onPress={() => router.replace('/(tabs)/more/tenants')}
+        onPress={() => router.replace('/(tabs)/tenants')}
         android_ripple={null}
         style={{
           backgroundColor: colors.primary, borderRadius: 10,
@@ -307,7 +307,7 @@ export default function TenantDetailScreen() {
             <View style={{ flex: 1 }} />
             {tenant && isActive && (
               <Pressable
-                onPress={() => router.push(`/(tabs)/more/tenants/${slug}/edit` as never)}
+                onPress={() => router.push(`/(tabs)/tenants/${slug}/edit` as never)}
                 android_ripple={null}
                 hitSlop={8}
                 style={{

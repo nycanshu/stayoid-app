@@ -243,7 +243,7 @@ export default function PropertyDetailScreen() {
   const openMoreActions = useCallback(() => {
     Alert.alert(property?.name ?? 'Property', undefined, [
       { text: 'Edit Property',     onPress: () => router.push(`/(tabs)/properties/${slug}/edit` as never) },
-      { text: 'Add Tenant Here',   onPress: () => router.push(`/(tabs)/more/tenants/new?property=${slug}` as never) },
+      { text: 'Add Tenant Here',   onPress: () => router.push(`/(tabs)/tenants/new?property=${slug}` as never) },
       { text: 'Record Payment',    onPress: () => router.push(`/(tabs)/payments/new?property=${slug}` as never) },
       {
         text: 'Delete Property', style: 'destructive',
@@ -465,7 +465,7 @@ export default function PropertyDetailScreen() {
                   count={(tenants ?? []).length}
                   label={(tenants ?? []).length === 1 ? 'active tenant' : 'active tenants'}
                   actionLabel="Add Tenant"
-                  onAction={() => router.push(`/(tabs)/more/tenants/new?property=${slug}` as never)}
+                  onAction={() => router.push(`/(tabs)/tenants/new?property=${slug}` as never)}
                   colors={colors}
                 />
                 <View style={{ gap: 10 }}>

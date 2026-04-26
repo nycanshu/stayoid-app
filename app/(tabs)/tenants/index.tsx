@@ -8,12 +8,12 @@ import { useState, useCallback, useMemo } from 'react';
 import {
   PlusIcon, MagnifyingGlassIcon, UsersIcon, ArrowLeftIcon,
 } from 'phosphor-react-native';
-import { useTenants } from '../../../../lib/hooks/use-tenants';
-import { useColors } from '../../../../lib/hooks/use-colors';
-import { TenantCard } from '../../../../components/tenants/TenantCard';
-import { Skeleton } from '../../../../components/ui/skeleton';
-import { Entrance } from '../../../../components/animations';
-import type { AppColors } from '../../../../lib/theme/colors';
+import { useTenants } from '../../../lib/hooks/use-tenants';
+import { useColors } from '../../../lib/hooks/use-colors';
+import { TenantCard } from '../../../components/tenants/TenantCard';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { Entrance } from '../../../components/animations';
+import type { AppColors } from '../../../lib/theme/colors';
 
 type FilterKey = 'all' | 'active' | 'exited' | 'unpaid';
 const FILTER_LABELS: Record<FilterKey, string> = {
@@ -260,7 +260,7 @@ export default function TenantsScreen() {
                   </Text>
                 </View>
                 <Pressable
-                  onPress={() => router.push('/(tabs)/more/tenants/new')}
+                  onPress={() => router.push('/(tabs)/tenants/new')}
                   android_ripple={null}
                   hitSlop={8}
                   style={{

@@ -10,7 +10,7 @@ export function TenantRow({ tenant, colors }: { tenant: Tenant; colors: AppColor
 
   return (
     <Pressable
-      onPress={() => router.push(`/(tabs)/more/tenants/${tenant.slug}`)}
+      onPress={() => router.push(`/(tabs)/tenants/${tenant.slug}`)}
       android_ripple={null}
       style={{
         backgroundColor: colors.card,

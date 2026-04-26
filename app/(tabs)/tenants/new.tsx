@@ -6,9 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeftIcon } from 'phosphor-react-native';
-import { useColors } from '../../../../lib/hooks/use-colors';
-import { TenantForm } from '../../../../components/tenants/TenantForm';
-import { Entrance } from '../../../../components/animations';
+import { useColors } from '../../../lib/hooks/use-colors';
+import { TenantForm } from '../../../components/tenants/TenantForm';
+import { Entrance } from '../../../components/animations';
 
 export default function NewTenantScreen() {
   const colors = useColors();
@@ -65,7 +65,7 @@ export default function NewTenantScreen() {
           <TenantForm
             mode="create"
             lockedPropertySlug={propertySlug}
-            onSuccess={(slug) => router.replace(`/(tabs)/more/tenants/${slug}` as never)}
+            onSuccess={(slug) => router.replace(`/(tabs)/tenants/${slug}` as never)}
             onCancel={() => router.back()}
             colors={colors}
           />

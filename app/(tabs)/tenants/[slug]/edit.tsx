@@ -6,12 +6,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeftIcon, UserIcon } from 'phosphor-react-native';
-import { useColors } from '../../../../../lib/hooks/use-colors';
-import { useTenant } from '../../../../../lib/hooks/use-tenants';
-import { TenantForm } from '../../../../../components/tenants/TenantForm';
-import { Skeleton } from '../../../../../components/ui/skeleton';
-import { Entrance } from '../../../../../components/animations';
-import type { AppColors } from '../../../../../lib/theme/colors';
+import { useColors } from '../../../../lib/hooks/use-colors';
+import { useTenant } from '../../../../lib/hooks/use-tenants';
+import { TenantForm } from '../../../../components/tenants/TenantForm';
+import { Skeleton } from '../../../../components/ui/skeleton';
+import { Entrance } from '../../../../components/animations';
+import type { AppColors } from '../../../../lib/theme/colors';
 
 // ── Edit form skeleton — matches TenantForm shape ─────────────────────────────
 function EditFormSkeleton({ colors }: { colors: AppColors }) {
@@ -66,7 +66,7 @@ function NotFound({ colors }: { colors: AppColors }) {
         The tenant you're trying to edit doesn't exist or has been deleted.
       </Text>
       <Pressable
-        onPress={() => router.replace('/(tabs)/more/tenants')}
+        onPress={() => router.replace('/(tabs)/tenants')}
         android_ripple={null}
         style={{
           backgroundColor: colors.primary, borderRadius: 10,
@@ -159,7 +159,7 @@ export default function EditTenantScreen() {
             <TenantForm
               mode="edit"
               tenant={tenant}
-              onSuccess={(newSlug) => router.replace(`/(tabs)/more/tenants/${newSlug}` as never)}
+              onSuccess={(newSlug) => router.replace(`/(tabs)/tenants/${newSlug}` as never)}
               onCancel={() => router.back()}
               colors={colors}
             />

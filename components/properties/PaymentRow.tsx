@@ -18,7 +18,7 @@ export function PaymentRow({ payment, colors }: { payment: Payment; colors: AppC
 
   return (
     <Pressable
-      onPress={() => router.push(`/(tabs)/more/tenants/${payment.tenant_slug}`)}
+      onPress={() => router.push(`/(tabs)/tenants/${payment.tenant_slug}`)}
       android_ripple={null}
       style={{
         backgroundColor: colors.card,

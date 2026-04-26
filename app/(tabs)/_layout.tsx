@@ -158,8 +158,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="properties" />
       <Tabs.Screen name="payments" />
       <Tabs.Screen name="settings" />
-      {/* Hide 'more' from the tab bar — still navigable via deep links */}
-      <Tabs.Screen name="more" options={{ href: null }} />
+      {/* Tenants is reachable via deep links + the Settings hub, not the tab bar */}
+      <Tabs.Screen name="tenants" options={{ href: null }} />
     </Tabs>
   );
 }
