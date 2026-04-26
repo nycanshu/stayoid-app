@@ -45,5 +45,11 @@ export interface CreateTenantInput {
   deposit_amount: string;
   email?: string;
   work_type?: WorkType;
+  work_location?: string;
   date_of_birth?: string;
+  id_proof_type?: IdProofType;
+  id_proof_number?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  description?: string;
 }
