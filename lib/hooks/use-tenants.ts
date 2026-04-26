@@ -32,6 +32,24 @@ export function useCreateTenant() {
   });
 }
 
+export function useUpdateTenant() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id, data,
+    }: {
+      id: string;
+      data: Partial<CreateTenantInput>;
+    }) => tenantsApi.update(id, data),
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: ['tenants'] });
+      qc.invalidateQueries({ queryKey: ['tenants', updated.slug] });
+      qc.invalidateQueries({ queryKey: ['slots'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}
+
 export function useExitTenant() {
   const qc = useQueryClient();
   return useMutation({
