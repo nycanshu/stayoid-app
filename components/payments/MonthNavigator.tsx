@@ -1,6 +1,7 @@
-import { View, Text, Pressable, Alert } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { CaretLeftIcon, CaretRightIcon, CalendarIcon } from 'phosphor-react-native';
 import { formatMonthYear } from '../../lib/utils/formatters';
+import { useActionSheet } from '../ui/ActionSheet';
 import type { AppColors } from '../../lib/theme/colors';
 
 interface MonthNavigatorProps {
@@ -11,6 +12,7 @@ interface MonthNavigatorProps {
 }
 
 export function MonthNavigator({ month, year, onChange, colors }: MonthNavigatorProps) {
+  const { show: showActionSheet } = useActionSheet();
   const now = new Date();
   const isCurrent = month === now.getMonth() + 1 && year === now.getFullYear();
 
@@ -25,23 +27,28 @@ export function MonthNavigator({ month, year, onChange, colors }: MonthNavigator
   };
 
   const openMonthPicker = () => {
-    const buttons = [
-      { text: 'This month', onPress: () => onChange(now.getMonth() + 1, now.getFullYear()) },
-      { text: 'Last month', onPress: () => {
-        const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        onChange(d.getMonth() + 1, d.getFullYear());
-      } },
-      { text: '2 months ago', onPress: () => {
-        const d = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-        onChange(d.getMonth() + 1, d.getFullYear());
-      } },
-      { text: '3 months ago', onPress: () => {
-        const d = new Date(now.getFullYear(), now.getMonth() - 3, 1);
-        onChange(d.getMonth() + 1, d.getFullYear());
-      } },
-      { text: 'Cancel', style: 'cancel' as const },
-    ];
-    Alert.alert('Jump to month', undefined, buttons);
+    // Build last 12 months — most-recent first
+    const months: { label: string; m: number; y: number; isCurrent: boolean }[] = [];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const m = d.getMonth() + 1;
+      const y = d.getFullYear();
+      months.push({
+        label: i === 0 ? `${formatMonthYear(m, y)} · This month`
+             : i === 1 ? `${formatMonthYear(m, y)} · Last month`
+             : formatMonthYear(m, y),
+        m, y,
+        isCurrent: m === month && y === year,
+      });
+    }
+    showActionSheet({
+      title: 'Jump to month',
+      options: months.map((mo) => ({
+        label: mo.label,
+        selected: mo.isCurrent,
+        onPress: () => onChange(mo.m, mo.y),
+      })),
+    });
   };
 
   return (

@@ -15,6 +15,9 @@ import {
 } from '@expo-google-fonts/space-grotesk';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ActionSheetProvider } from '../components/ui/ActionSheet';
+import { ConfirmDialogProvider } from '../components/ui/ConfirmDialog';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,9 +45,15 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <Stack screenOptions={{ headerShown: false }} />
-      </QueryClientProvider>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <ActionSheetProvider>
+            <ConfirmDialogProvider>
+              <Stack screenOptions={{ headerShown: false }} />
+            </ConfirmDialogProvider>
+          </ActionSheetProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

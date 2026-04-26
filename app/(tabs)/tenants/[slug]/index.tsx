@@ -1,5 +1,5 @@
 import {
-  View, Text, ScrollView, Pressable, RefreshControl, Alert, Linking,
+  View, Text, ScrollView, Pressable, RefreshControl, Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -15,6 +15,8 @@ import * as Haptics from 'expo-haptics';
 import { useTenant, useExitTenant } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useColors } from '../../../../lib/hooks/use-colors';
+import { useActionSheet } from '../../../../components/ui/ActionSheet';
+import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 import {
   formatCurrency, formatTenure, formatLongDate,
   GENDER_LABELS, WORK_TYPE_LABELS, ID_PROOF_LABELS, getInitials,
@@ -178,6 +180,8 @@ function NotFound({ colors }: { colors: AppColors }) {
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function TenantDetailScreen() {
   const colors = useColors();
+  const { show: showActionSheet } = useActionSheet();
+  const { confirm }               = useConfirmDialog();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [focusTick, setFocusTick] = useState(0);
 
@@ -231,44 +235,43 @@ export default function TenantDetailScreen() {
         iso:   `${y}-${m}-${dd}`,
       };
     });
-    Alert.alert(
-      'Mark as exited',
-      `When did ${tenant.name} move out? This will free up their slot.`,
-      [
-        ...opts.map((o) => ({
-          text: o.label,
-          onPress: async () => {
-            try {
-              await exitTenant.mutateAsync({ id: tenant.id, exit_date: o.iso });
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              refetchTenant();
-            } catch {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            }
-          },
-        })),
-        { text: 'Cancel', style: 'cancel' as const },
-      ],
-    );
-  }, [tenant, exitTenant, refetchTenant]);
+    showActionSheet({
+      title:   'Mark as exited',
+      message: `When did ${tenant.name} move out? This will free up their slot.`,
+      options: opts.map((o) => ({
+        label: o.label,
+        destructive: true,
+        onPress: async () => {
+          try {
+            await exitTenant.mutateAsync({ id: tenant.id, exit_date: o.iso });
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            refetchTenant();
+          } catch {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          }
+        },
+      })),
+    });
+  }, [tenant, exitTenant, refetchTenant, showActionSheet]);
 
   const openMoreActions = useCallback(() => {
     if (!tenant) return;
-    const buttons: any[] = [];
+    const opts: { label: string; destructive?: boolean; onPress: () => void }[] = [];
     if (tenant.is_active) {
-      buttons.push({
-        text: 'Record Payment',
+      opts.push({
+        label: 'Record Payment',
         onPress: () => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never),
       });
-      buttons.push({
-        text: 'Mark as Exited',
-        style: 'destructive' as const,
+      opts.push({
+        label: 'Mark as Exited',
+        destructive: true,
         onPress: confirmExit,
       });
     }
-    buttons.push({ text: 'Cancel', style: 'cancel' as const });
-    Alert.alert(tenant.name, undefined, buttons);
-  }, [tenant, confirmExit]);
+    showActionSheet({ title: tenant.name, options: opts });
+    // `confirm` reference kept in deps so any future destructive confirms here pick up provider changes
+    void confirm;
+  }, [tenant, confirmExit, showActionSheet, confirm]);
 
   const isActive = tenant?.is_active;
 

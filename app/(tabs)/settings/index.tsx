@@ -1,6 +1,6 @@
 import {
-  View, Text, ScrollView, Pressable, TextInput, Linking, Alert, Share,
-  Platform, ActivityIndicator,
+  View, Text, ScrollView, Pressable, TextInput, Linking, Share,
+  Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -296,6 +296,7 @@ export default function SettingsScreen() {
     } catch {/* ignore */}
   };
 
+  // Native Alert.alert for destructive confirms — guaranteed cross-platform rendering
   const confirmSignOut = () => {
     Alert.alert(
       'Sign out?',
@@ -303,7 +304,8 @@ export default function SettingsScreen() {
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Sign Out', style: 'destructive',
+          text: 'Sign Out',
+          style: 'destructive',
           onPress: async () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             queryClient.clear();
@@ -312,6 +314,7 @@ export default function SettingsScreen() {
           },
         },
       ],
+      { cancelable: true },
     );
   };
 
@@ -323,11 +326,13 @@ export default function SettingsScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Request via email',
+          style: 'destructive',
           onPress: () => Linking.openURL(
             `mailto:${SUPPORT_EMAIL}?subject=Stayoid%20Account%20Deletion%20Request`,
           ),
         },
       ],
+      { cancelable: true },
     );
   };
 

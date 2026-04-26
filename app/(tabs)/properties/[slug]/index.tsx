@@ -10,11 +10,13 @@ import {
   StackIcon, UsersIcon, CurrencyCircleDollarIcon, HouseIcon,
   PlusIcon,
 } from 'phosphor-react-native';
-import { useProperty, useSlots } from '../../../../lib/hooks/use-properties';
+import * as Haptics from 'expo-haptics';
+import { useProperty, useSlots, useDeleteProperty } from '../../../../lib/hooks/use-properties';
 import { useTenants } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useDashboard } from '../../../../lib/hooks/use-dashboard';
 import { useColors } from '../../../../lib/hooks/use-colors';
+import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { getPropertyTypeMeta } from '../../../../lib/constants/property-type-meta';
 import { PropertyStatsStrip } from '../../../../components/properties/PropertyStatsStrip';
 import { FloorCard } from '../../../../components/properties/FloorCard';
@@ -195,6 +197,7 @@ function HeaderSkeleton({ colors }: { colors: AppColors }) {
 // ── Screen ────────────────────────────────────────────────────────────────────
 export default function PropertyDetailScreen() {
   const colors = useColors();
+  const { show: showActionSheet } = useActionSheet();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [activeTab, setActiveTab] = useState<Tab>('floors');
   const [focusTick, setFocusTick] = useState(0);
@@ -208,6 +211,7 @@ export default function PropertyDetailScreen() {
   const { data: tenants,  isLoading: tenantsLoading,  refetch: refetchTenants }            = useTenants({ property_id: property?.id, active: true });
   const { data: payments, isLoading: paymentsLoading, refetch: refetchPayments }           = usePayments({ property_id: property?.id });
   const { data: dashboard }                                                                 = useDashboard();
+  const deleteProperty = useDeleteProperty();
 
   const handleRefresh = useCallback(() => {
     refetchProp(); refetchSlots(); refetchTenants(); refetchPayments();
@@ -241,24 +245,55 @@ export default function PropertyDetailScreen() {
     new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
   const openMoreActions = useCallback(() => {
-    Alert.alert(property?.name ?? 'Property', undefined, [
-      { text: 'Edit Property',     onPress: () => router.push(`/(tabs)/properties/${slug}/edit` as never) },
-      { text: 'Add Tenant Here',   onPress: () => router.push(`/(tabs)/tenants/new?property=${slug}` as never) },
-      { text: 'Record Payment',    onPress: () => router.push(`/(tabs)/payments/new?property=${slug}` as never) },
-      {
-        text: 'Delete Property', style: 'destructive',
-        onPress: () => Alert.alert(
-          'Delete Property',
-          `Delete "${property?.name}"? This cannot be undone.`,
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Delete', style: 'destructive', onPress: () => {} },
-          ],
-        ),
-      },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
-  }, [property, slug]);
+    if (!property) return;
+    showActionSheet({
+      title: property.name,
+      options: [
+        {
+          label: 'Edit Property',
+          onPress: () => router.push(`/(tabs)/properties/${slug}/edit` as never),
+        },
+        {
+          label: 'Add Tenant Here',
+          onPress: () => router.push(`/(tabs)/tenants/new?property=${slug}` as never),
+        },
+        {
+          label: 'Record Payment',
+          onPress: () => router.push(`/(tabs)/payments/new?property=${slug}` as never),
+        },
+        {
+          label: 'Delete Property',
+          destructive: true,
+          // Native Alert.alert for destructive confirms — guaranteed correct
+          // rendering on iOS (shows red Delete) and Android (Material dialog).
+          // The custom ConfirmDialog has rendering edge cases we couldn't fully
+          // resolve, so for critical/destructive flows we fall back to native.
+          onPress: () => Alert.alert(
+            'Delete property?',
+            `"${property.name}" will be permanently deleted along with its floors, units, and tenant records. This cannot be undone.`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: async () => {
+                  try {
+                    await deleteProperty.mutateAsync(property.slug);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    router.replace('/(tabs)/properties');
+                  } catch {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                    Alert.alert('Could not delete', 'Please check your connection and try again.');
+                  }
+                },
+              },
+            ],
+            { cancelable: true },
+          ),
+        },
+      ],
+    });
+  }, [property, slug, showActionSheet, deleteProperty]);
 
   const isLoading = propertyLoading;
 

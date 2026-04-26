@@ -4,6 +4,9 @@ import * as SecureStore from 'expo-secure-store';
 const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL,
   timeout: 30_000,
+  headers: {
+    'ngrok-skip-browser-warning': 'true',
+  },
 });
 
 apiClient.interceptors.request.use(async (config) => {

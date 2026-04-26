@@ -1,5 +1,5 @@
 import {
-  View, Text, TextInput, Pressable, FlatList, RefreshControl, Alert,
+  View, Text, TextInput, Pressable, FlatList, RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -16,6 +16,7 @@ import { Skeleton } from '../../../components/ui/skeleton';
 import { useProperties } from '../../../lib/hooks/use-properties';
 import { useDashboard } from '../../../lib/hooks/use-dashboard';
 import { useColors } from '../../../lib/hooks/use-colors';
+import { useActionSheet } from '../../../components/ui/ActionSheet';
 import { Entrance } from '../../../components/animations';
 
 type SortKey = 'newest' | 'name' | 'occupancy';
@@ -28,6 +29,7 @@ const SORT_LABELS: Record<SortKey, string> = {
 
 export default function PropertiesScreen() {
   const colors = useColors();
+  const { show: showActionSheet } = useActionSheet();
   const { data: properties, isLoading, refetch, isRefetching } = useProperties();
   const { data: dashboard } = useDashboard();
 
@@ -73,13 +75,15 @@ export default function PropertiesScreen() {
   }, [properties, query, sort, statsMap]);
 
   const openSortPicker = useCallback(() => {
-    Alert.alert('Sort properties', undefined, [
-      { text: 'Newest first',     onPress: () => setSort('newest') },
-      { text: 'Name (A–Z)',       onPress: () => setSort('name') },
-      { text: 'Occupancy (high)', onPress: () => setSort('occupancy') },
-      { text: 'Cancel',           style: 'cancel' },
-    ]);
-  }, []);
+    showActionSheet({
+      title: 'Sort properties',
+      options: [
+        { label: 'Newest first',     selected: sort === 'newest',    onPress: () => setSort('newest')    },
+        { label: 'Name (A–Z)',       selected: sort === 'name',      onPress: () => setSort('name')      },
+        { label: 'Occupancy (high)', selected: sort === 'occupancy', onPress: () => setSort('occupancy') },
+      ],
+    });
+  }, [sort, showActionSheet]);
 
   const total = properties?.length ?? 0;
 

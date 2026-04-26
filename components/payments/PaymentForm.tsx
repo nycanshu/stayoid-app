@@ -1,5 +1,5 @@
 import {
-  View, Text, TextInput, Pressable, ActivityIndicator, Alert,
+  View, Text, TextInput, Pressable, ActivityIndicator,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -25,6 +25,7 @@ import {
   formatCurrency, formatMonthYear, getInitials,
 } from '../../lib/utils/formatters';
 import { TenantPickerModal } from './TenantPickerModal';
+import { useActionSheet } from '../ui/ActionSheet';
 import type { AppColors } from '../../lib/theme/colors';
 import type { PaymentMethod, PaymentStatus } from '../../types/payment';
 import type { Tenant } from '../../types/tenant';
@@ -133,6 +134,7 @@ interface PaymentFormProps {
 export function PaymentForm({
   preselectedTenantSlug, onSuccess, onCancel, colors,
 }: PaymentFormProps) {
+  const { show: showActionSheet } = useActionSheet();
   const recordPayment = useRecordPayment();
 
   // Pull active tenants (used for resolving the preselected slug → ID)
@@ -204,16 +206,18 @@ export function PaymentForm({
 
   const openPeriodPicker = () => {
     const opts = buildLast12Months();
-    Alert.alert('Period', 'For which month is this payment?', [
-      ...opts.map((o) => ({
-        text: o.label,
-        onPress: () => {
+    showActionSheet({
+      title:   'Period',
+      message: 'For which month is this payment?',
+      options: opts.map((o) => ({
+        label:    o.label,
+        selected: o.month === month && o.year === year,
+        onPress:  () => {
           setValue('payment_for_month', o.month);
-          setValue('payment_for_year', o.year);
+          setValue('payment_for_year',  o.year);
         },
       })),
-      { text: 'Cancel', style: 'cancel' as const },
-    ]);
+    });
   };
 
   const openDatePicker = () => {
@@ -225,10 +229,15 @@ export function PaymentForm({
         iso:   toISO(dt),
       };
     });
-    Alert.alert('Paid on', 'When was the payment received?', [
-      ...opts.map((o) => ({ text: o.label, onPress: () => setValue('payment_date', o.iso) })),
-      { text: 'Cancel', style: 'cancel' as const },
-    ]);
+    showActionSheet({
+      title:   'Paid on',
+      message: 'When was the payment received?',
+      options: opts.map((o) => ({
+        label:    o.label,
+        selected: o.iso === paymentDate,
+        onPress:  () => setValue('payment_date', o.iso),
+      })),
+    });
   };
 
   const onSubmit = async (values: PaymentFormValues) => {

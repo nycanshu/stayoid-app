@@ -1,5 +1,5 @@
 import {
-  View, Text, TextInput, Pressable, ActivityIndicator, Alert,
+  View, Text, TextInput, Pressable, ActivityIndicator,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
@@ -22,6 +22,7 @@ import {
   GENDER_LABELS, WORK_TYPE_LABELS, ID_PROOF_LABELS,
 } from '../../lib/utils/formatters';
 import { SlotPickerModal } from './SlotPickerModal';
+import { useActionSheet } from '../ui/ActionSheet';
 import { Entrance } from '../animations';
 import type { AppColors } from '../../lib/theme/colors';
 import type {
@@ -216,9 +217,13 @@ function SubmitButton({
   );
 }
 
+type ShowActionSheet = ReturnType<typeof useActionSheet>['show'];
+
 function pickDate(
   title: string,
+  selected: string | undefined,
   onPick: (iso: string) => void,
+  show: ShowActionSheet,
 ) {
   const today = new Date();
   const days = [0, 7, 14, 30, 60, 90, 180, 365];
@@ -233,10 +238,14 @@ function pickDate(
       iso: toISO(dt),
     };
   });
-  Alert.alert(title, undefined, [
-    ...opts.map((o) => ({ text: o.label, onPress: () => onPick(o.iso) })),
-    { text: 'Cancel', style: 'cancel' as const },
-  ]);
+  show({
+    title,
+    options: opts.map((o) => ({
+      label:    o.label,
+      selected: o.iso === selected,
+      onPress:  () => onPick(o.iso),
+    })),
+  });
 }
 
 // ── Form props ────────────────────────────────────────────────────────────────
@@ -254,6 +263,7 @@ interface TenantFormProps {
 export function TenantForm({
   mode, tenant, lockedPropertySlug, onSuccess, onCancel, colors,
 }: TenantFormProps) {
+  const { show: showActionSheet } = useActionSheet();
   const createTenant = useCreateTenant();
   const updateTenant = useUpdateTenant();
 
@@ -705,7 +715,12 @@ export function TenantForm({
           <View style={{ marginBottom: 16 }}>
             <FieldLabel required colors={colors}>Join date</FieldLabel>
             <Pressable
-              onPress={() => pickDate('Join date', (iso) => setValue('join_date', iso, { shouldValidate: true, shouldDirty: true }))}
+              onPress={() => pickDate(
+                'Join date',
+                joinDate,
+                (iso) => setValue('join_date', iso, { shouldValidate: true, shouldDirty: true }),
+                showActionSheet,
+              )}
               android_ripple={null}
               style={{
                 flexDirection: 'row', alignItems: 'center', gap: 10,
