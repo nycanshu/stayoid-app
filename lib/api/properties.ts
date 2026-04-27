@@ -37,9 +37,28 @@ export const floorsApi = {
 };
 
 export const unitsApi = {
-  create: (propertyId: string, floorId: string, data: { unit_number: string; capacity?: number }) =>
+  list: (propertyId: string, floorId: string) =>
+    apiClient
+      .get<{ results: Unit[] } | Unit[]>(`/properties/${propertyId}/floors/${floorId}/units/`)
+      .then((r) => (Array.isArray(r.data) ? r.data : r.data.results)),
+
+  create: (
+    propertyId: string,
+    floorId: string,
+    data: { unit_number: string; name?: string; capacity?: number },
+  ) =>
     apiClient
       .post<Unit>(`/properties/${propertyId}/floors/${floorId}/units/`, data)
+      .then((r) => r.data),
+
+  update: (
+    propertyId: string,
+    floorId: string,
+    unitId: string,
+    data: Partial<{ unit_number: string; name: string; capacity: number }>,
+  ) =>
+    apiClient
+      .patch<Unit>(`/properties/${propertyId}/floors/${floorId}/units/${unitId}/`, data)
       .then((r) => r.data),
 };
 
@@ -53,9 +72,20 @@ export const slotsApi = {
     propertyId: string,
     floorId: string,
     unitId: string,
-    data: { slot_number: string; monthly_rent: string },
+    data: { slot_number: string; name?: string; monthly_rent: string },
   ) =>
     apiClient
       .post<Slot>(`/properties/${propertyId}/floors/${floorId}/units/${unitId}/slots/`, data)
+      .then((r) => r.data),
+
+  update: (
+    propertyId: string,
+    floorId: string,
+    unitId: string,
+    slotId: string,
+    data: Partial<{ slot_number: string; name: string; monthly_rent: string }>,
+  ) =>
+    apiClient
+      .patch<Slot>(`/properties/${propertyId}/floors/${floorId}/units/${unitId}/slots/${slotId}/`, data)
       .then((r) => r.data),
 };

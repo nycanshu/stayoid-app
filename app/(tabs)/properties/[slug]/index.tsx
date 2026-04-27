@@ -7,7 +7,7 @@ import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useMemo, useState, useCallback } from 'react';
 import {
   ArrowLeftIcon, MapPinIcon, DotsThreeVerticalIcon, PencilIcon,
-  StackIcon, UsersIcon, CurrencyCircleDollarIcon, HouseIcon,
+  StackIcon, UsersIcon, CurrencyCircleDollarIcon,
   PlusIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
@@ -474,14 +474,20 @@ export default function PropertyDetailScreen() {
                 </View>
 
                 <View className="gap-2.5">
-                  {sortedFloors.map((floorNum, i) => (
-                    <Entrance key={floorNum} delay={i * 55} trigger={`floors-${focusTick}`}>
-                      <FloorCard
-                        floorNumber={floorNum}
-                        slots={slotsByFloor[floorNum] ?? []}
-                      />
-                    </Entrance>
-                  ))}
+                  {sortedFloors.map((floorNum, i) => {
+                    const floor = floors?.find((f) => f.floor_number === floorNum);
+                    if (!floor || !property) return null;
+                    return (
+                      <Entrance key={floorNum} delay={i * 55} trigger={`floors-${focusTick}`}>
+                        <FloorCard
+                          floorNumber={floorNum}
+                          slots={slotsByFloor[floorNum] ?? []}
+                          propertyId={property.id}
+                          floorId={floor.id}
+                        />
+                      </Entrance>
+                    );
+                  })}
                 </View>
               </>
             )}

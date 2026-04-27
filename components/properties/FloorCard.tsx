@@ -1,12 +1,15 @@
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   CaretDownIcon, CaretUpIcon,
-  DoorOpenIcon, UsersIcon, BedIcon,
+  DoorOpenIcon, UsersIcon, BedIcon, PlusIcon,
 } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { OccupancyBar } from './OccupancyBar';
+import { UnitFormModal } from './UnitFormModal';
+import { SlotFormModal } from './SlotFormModal';
+import { useUnits } from '../../lib/hooks/use-units';
 import { formatFloorName, formatCurrency } from '../../lib/utils/formatters';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
@@ -21,6 +24,8 @@ interface UnitGroup {
 interface FloorCardProps {
   floorNumber: number;
   slots: Slot[];
+  propertyId: string;
+  floorId: string;
 }
 
 function getFloorBadgeClasses(floorNumber: number): { bg: string; fg: string } {
@@ -87,12 +92,21 @@ function SlotRow({ slot }: { slot: Slot }) {
   );
 }
 
-function UnitSection({ unit }: { unit: UnitGroup }) {
+function UnitSection({
+  unit,
+  unitId,
+  onAddSlot,
+}: {
+  unit: UnitGroup;
+  unitId: string | undefined;
+  onAddSlot: (unitId: string, unitLabel: string) => void;
+}) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
 
   const occupied = unit.slots.filter((s) => s.is_occupied).length;
   const total    = unit.slots.length;
+  const unitLabel = `Unit ${unit.unit_number}`;
 
   return (
     <View className="bg-background border border-border rounded-[10px] mt-2.5 overflow-hidden">
@@ -105,26 +119,59 @@ function UnitSection({ unit }: { unit: UnitGroup }) {
             className="text-foreground text-[13px]"
             style={{ fontFamily: 'Inter_600SemiBold' }}
           >
-            Unit {unit.unit_number}
+            {unitLabel}
           </Text>
           <Text
             className="text-muted-foreground text-[11px] mt-px"
             style={{ fontFamily: 'Inter_400Regular' }}
           >
-            {occupied}/{total} occupied
+            {total === 0 ? 'No slots yet' : `${occupied}/${total} occupied`}
           </Text>
         </View>
+        {unitId && (
+          <Pressable
+            onPress={() => onAddSlot(unitId, unitLabel)}
+            android_ripple={null}
+            hitSlop={6}
+            className="flex-row items-center gap-1 bg-primary rounded-lg px-2 py-1.5"
+          >
+            <PlusIcon size={11} color="#fff" weight="bold" />
+            <Text
+              className="text-white text-[11px]"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
+              Slot
+            </Text>
+          </Pressable>
+        )}
       </View>
       {unit.slots.map((s) => <SlotRow key={s.id} slot={s} />)}
     </View>
   );
 }
 
-export function FloorCard({ floorNumber, slots }: FloorCardProps) {
+export function FloorCard({ floorNumber, slots, propertyId, floorId }: FloorCardProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const [expanded, setExpanded] = useState(false);
+  const [unitFormOpen, setUnitFormOpen] = useState(false);
+  const [slotFormState, setSlotFormState] = useState<
+    { open: boolean; unitId: string; unitLabel: string }
+  >({ open: false, unitId: '', unitLabel: '' });
   const badge = getFloorBadgeClasses(floorNumber);
+
+  // Fetch units for this floor only when expanded — avoids preloading every floor on screen mount
+  const { data: units } = useUnits(
+    expanded ? propertyId : undefined,
+    expanded ? floorId : undefined,
+  );
+
+  // Map unit_slug → unit_id so slot-add can look up the right unit
+  const unitIdBySlug = useMemo(() => {
+    const m = new Map<string, string>();
+    (units ?? []).forEach((u) => m.set(u.slug, u.id));
+    return m;
+  }, [units]);
 
   const unitGroups: UnitGroup[] = Object.values(
     slots.reduce<Record<string, UnitGroup>>((acc, s) => {
@@ -134,10 +181,26 @@ export function FloorCard({ floorNumber, slots }: FloorCardProps) {
     }, {}),
   ).sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
 
+  // Include any units that have zero slots yet (not in `slots` flat list)
+  const unitsWithoutSlots = useMemo(() => {
+    if (!units) return [];
+    const slottedSlugs = new Set(unitGroups.map((u) => u.unit_slug));
+    return units
+      .filter((u) => !slottedSlugs.has(u.slug))
+      .map((u) => ({ unit_number: u.unit_number, unit_slug: u.slug, slots: [] as Slot[] }))
+      .sort((a, b) => a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true }));
+  }, [units, unitGroups]);
+
+  const allUnits = [...unitGroups, ...unitsWithoutSlots];
+
   const totalSlots = slots.length;
   const occupied   = slots.filter((s) => s.is_occupied).length;
-  const unitsCount = unitGroups.length;
+  const unitsCount = (units?.length ?? unitGroups.length);
   const occupancyPct = totalSlots > 0 ? Math.round((occupied / totalSlots) * 100) : 0;
+
+  const openSlotModal = (unitId: string, unitLabel: string) => {
+    setSlotFormState({ open: true, unitId, unitLabel });
+  };
 
   return (
     <View className="bg-card border border-border rounded-xl overflow-hidden">
@@ -216,11 +279,46 @@ export function FloorCard({ floorNumber, slots }: FloorCardProps) {
             <OccupancyBar occupied={occupied} total={totalSlots} />
           </View>
 
-          {unitGroups.map((unit) => (
-            <UnitSection key={unit.unit_slug} unit={unit} />
+          {allUnits.map((unit) => (
+            <UnitSection
+              key={unit.unit_slug}
+              unit={unit}
+              unitId={unitIdBySlug.get(unit.unit_slug)}
+              onAddSlot={openSlotModal}
+            />
           ))}
+
+          <Pressable
+            onPress={() => setUnitFormOpen(true)}
+            android_ripple={null}
+            className="mt-2.5 flex-row items-center justify-center gap-2 border-[1.5px] border-dashed border-border rounded-[10px] py-3"
+          >
+            <PlusIcon size={13} color={palette.primary} weight="bold" />
+            <Text
+              className="text-primary text-[13px]"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
+              Add Unit
+            </Text>
+          </Pressable>
         </View>
       )}
+
+      <UnitFormModal
+        visible={unitFormOpen}
+        propertyId={propertyId}
+        floorId={floorId}
+        onClose={() => setUnitFormOpen(false)}
+      />
+
+      <SlotFormModal
+        visible={slotFormState.open}
+        propertyId={propertyId}
+        floorId={floorId}
+        unitId={slotFormState.unitId}
+        unitLabel={slotFormState.unitLabel}
+        onClose={() => setSlotFormState((s) => ({ ...s, open: false }))}
+      />
     </View>
   );
 }
