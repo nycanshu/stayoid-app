@@ -8,12 +8,13 @@ import { useState, useCallback, useMemo } from 'react';
 import {
   PlusIcon, MagnifyingGlassIcon, UsersIcon, ArrowLeftIcon,
 } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { useTenants } from '../../../lib/hooks/use-tenants';
-import { useColors } from '../../../lib/hooks/use-colors';
 import { TenantCard } from '../../../components/tenants/TenantCard';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Entrance } from '../../../components/animations';
-import type { AppColors } from '../../../lib/theme/colors';
+import { THEME } from '../../../lib/theme';
+import { cn } from '../../../lib/utils';
 
 type FilterKey = 'all' | 'active' | 'exited' | 'unpaid';
 const FILTER_LABELS: Record<FilterKey, string> = {
@@ -23,54 +24,61 @@ const FILTER_LABELS: Record<FilterKey, string> = {
   unpaid: 'Unpaid',
 };
 
-// ── Filter chip row ────────────────────────────────────────────────────────────
 function FilterChips({
-  active, counts, onChange, colors,
+  active, counts, onChange,
 }: {
   active: FilterKey;
   counts: Record<FilterKey, number | undefined>;
   onChange: (k: FilterKey) => void;
-  colors: AppColors;
 }) {
   const keys: FilterKey[] = ['all', 'active', 'exited', 'unpaid'];
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+    <View className="flex-row flex-wrap gap-2">
       {keys.map((k) => {
         const isActive = active === k;
         const count = counts[k];
         const isUnpaid = k === 'unpaid';
-        const accent = isUnpaid ? colors.warning : colors.primary;
-        const accentBg = isUnpaid ? colors.warningBg : colors.primaryBg;
+        const accentClass = isUnpaid ? 'text-warning' : 'text-primary';
+        const accentBgClass = isUnpaid ? 'bg-warning-bg' : 'bg-primary-bg';
+        const accentBorderClass = isUnpaid ? 'border-warning' : 'border-primary';
+        const countBgClass = isActive
+          ? (isUnpaid ? 'bg-warning/20' : 'bg-primary/20')
+          : 'bg-muted';
         return (
           <Pressable
             key={k}
             onPress={() => onChange(k)}
             android_ripple={null}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 6,
-              borderWidth: 1,
-              borderColor: isActive ? accent : colors.border,
-              backgroundColor: isActive ? accentBg : colors.card,
-              borderRadius: 99,
-              paddingHorizontal: 12, paddingVertical: 7,
-            }}
+            className={cn(
+              'flex-row items-center gap-1.5 border rounded-full px-3 py-1.5',
+              isActive
+                ? `${accentBorderClass} ${accentBgClass}`
+                : 'border-border bg-card',
+            )}
           >
-            <Text style={{
-              color: isActive ? accent : colors.foreground,
-              fontSize: 12, fontFamily: 'Inter_600SemiBold',
-            }}>
+            <Text
+              className={cn(
+                'text-xs',
+                isActive ? accentClass : 'text-foreground',
+              )}
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               {FILTER_LABELS[k]}
             </Text>
             {count !== undefined && (
-              <View style={{
-                backgroundColor: isActive ? `${accent}30` : colors.mutedBg,
-                borderRadius: 99, paddingHorizontal: 6, paddingVertical: 1,
-                minWidth: 18, alignItems: 'center',
-              }}>
-                <Text style={{
-                  color: isActive ? accent : colors.mutedFg,
-                  fontSize: 10, fontFamily: 'Inter_600SemiBold',
-                }}>
+              <View
+                className={cn(
+                  'rounded-full px-1.5 py-px min-w-[18px] items-center',
+                  countBgClass,
+                )}
+              >
+                <Text
+                  className={cn(
+                    'text-[10px]',
+                    isActive ? accentClass : 'text-muted-foreground',
+                  )}
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
+                >
                   {count}
                 </Text>
               </View>
@@ -82,10 +90,9 @@ function FilterChips({
   );
 }
 
-// ── Empty / no-results state ──────────────────────────────────────────────────
 function EmptyState({
-  query, filter, colors,
-}: { query: string; filter: FilterKey; colors: AppColors }) {
+  query, filter, mutedFg,
+}: { query: string; filter: FilterKey; mutedFg: string }) {
   const title = query
     ? `No matches for "${query}"`
     : filter === 'unpaid'
@@ -103,48 +110,36 @@ function EmptyState({
     ? 'Tenants who have moved out will appear here.'
     : 'Add your first tenant to start managing.';
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, padding: 28,
-      alignItems: 'center',
-    }}>
-      <View style={{
-        width: 52, height: 52, borderRadius: 16,
-        backgroundColor: colors.mutedBg,
-        alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-      }}>
-        <UsersIcon size={24} color={colors.mutedFg} weight="duotone" />
+    <View className="bg-card border border-border rounded-xl p-7 items-center">
+      <View className="size-[52px] rounded-2xl bg-muted items-center justify-center mb-3">
+        <UsersIcon size={24} color={mutedFg} weight="duotone" />
       </View>
-      <Text style={{
-        color: colors.foreground, fontSize: 14,
-        fontFamily: 'Inter_600SemiBold', marginBottom: 4, textAlign: 'center',
-      }}>
+      <Text
+        className="text-foreground text-sm mb-1 text-center"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         {title}
       </Text>
-      <Text style={{
-        color: colors.mutedFg, fontSize: 12,
-        fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 18,
-      }}>
+      <Text
+        className="text-muted-foreground text-xs text-center leading-[18px]"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         {description}
       </Text>
     </View>
   );
 }
 
-// ── List skeleton ─────────────────────────────────────────────────────────────
-function ListSkeleton({ colors }: { colors: AppColors }) {
+function ListSkeleton() {
   return (
-    <View style={{ gap: 10 }}>
+    <View className="gap-2.5">
       {[0, 1, 2, 3].map((i) => (
-        <View key={i} style={{
-          backgroundColor: colors.card,
-          borderWidth: 1, borderColor: colors.border,
-          borderRadius: 12, padding: 14,
-          flexDirection: 'row', alignItems: 'center', gap: 12,
-        }}>
+        <View
+          key={i}
+          className="bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3"
+        >
           <Skeleton width={40} height={40} radius={20} />
-          <View style={{ flex: 1, gap: 6 }}>
+          <View className="flex-1 gap-1.5">
             <Skeleton width="55%" height={13} />
             <Skeleton width="80%" height={11} />
             <Skeleton width="40%" height={11} />
@@ -156,9 +151,9 @@ function ListSkeleton({ colors }: { colors: AppColors }) {
   );
 }
 
-// ── Screen ────────────────────────────────────────────────────────────────────
 export default function TenantsScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const [query, setQuery]         = useState('');
   const [filter, setFilter]       = useState<FilterKey>('all');
   const [focusTick, setFocusTick] = useState(0);
@@ -167,8 +162,6 @@ export default function TenantsScreen() {
     setFocusTick((t) => t + 1);
   }, []));
 
-  // We always fetch the full list and filter client-side so the chip counts can
-  // be calculated. For large datasets, switch to server-side filters here.
   const {
     data: allTenants, isLoading,
     refetch, isRefetching,
@@ -210,50 +203,41 @@ export default function TenantsScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ItemSeparatorComponent={() => <View className="h-2.5" />}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={handleRefresh}
-            tintColor={colors.primary}
+            tintColor={palette.primary}
           />
         }
 
         ListHeaderComponent={
           <View>
-            {/* ── Title row ── */}
             <Entrance trigger={focusTick} style={{ marginBottom: 20 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+              <View className="flex-row items-center mb-3.5">
                 <Pressable
                   onPress={() => router.back()}
                   android_ripple={null}
                   hitSlop={8}
-                  style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    borderWidth: 1, borderColor: colors.border,
-                    backgroundColor: colors.card,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}
+                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
                 >
-                  <ArrowLeftIcon size={18} color={colors.foreground} />
+                  <ArrowLeftIcon size={18} color={palette.foreground} />
                 </Pressable>
               </View>
 
-              <View style={{
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-              }}>
-                <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={{
-                    color: colors.foreground,
-                    fontSize: 22, fontFamily: 'Inter_600SemiBold',
-                    letterSpacing: -0.3, paddingRight: 0.3,
-                  }}>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 pr-3">
+                  <Text
+                    className="text-foreground text-[22px] tracking-tight"
+                    style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
+                  >
                     Tenants
                   </Text>
-                  <Text style={{
-                    color: colors.mutedFg, fontSize: 13,
-                    fontFamily: 'Inter_400Regular', marginTop: 2,
-                  }}>
+                  <Text
+                    className="text-muted-foreground text-[13px] mt-0.5"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     {total === 0
                       ? 'Manage your tenants'
                       : `${total} ${total === 1 ? 'tenant' : 'tenants'} on record`}
@@ -263,42 +247,33 @@ export default function TenantsScreen() {
                   onPress={() => router.push('/(tabs)/tenants/new')}
                   android_ripple={null}
                   hitSlop={8}
-                  style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    backgroundColor: colors.primary,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}
+                  className="size-10 rounded-[10px] bg-primary items-center justify-center"
                 >
                   <PlusIcon size={18} color="#fff" weight="bold" />
                 </Pressable>
               </View>
             </Entrance>
 
-            {/* ── Search ── */}
             <Entrance trigger={focusTick} delay={60} style={{ marginBottom: 12 }}>
-              <View style={{
-                flexDirection: 'row', alignItems: 'center', gap: 10,
-                backgroundColor: colors.card,
-                borderWidth: 1, borderColor: colors.border,
-                borderRadius: 12, padding: 14,
-              }}>
-                <MagnifyingGlassIcon size={16} color={colors.mutedFg} />
+              <View className="flex-row items-center gap-2.5 bg-card border border-border rounded-xl p-3.5">
+                <MagnifyingGlassIcon size={16} color={palette.mutedForeground} />
                 <TextInput
                   value={query}
                   onChangeText={setQuery}
                   placeholder="Search by name or phone"
-                  placeholderTextColor={colors.mutedFg}
-                  style={{
-                    flex: 1, color: colors.foreground,
-                    fontSize: 13, fontFamily: 'Inter_400Regular', padding: 0,
-                  }}
+                  placeholderTextColor={palette.mutedForeground}
+                  className="flex-1 text-foreground text-[13px] p-0"
+                  style={{ fontFamily: 'Inter_400Regular' }}
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="search"
                 />
                 {query.length > 0 && (
                   <Pressable onPress={() => setQuery('')} hitSlop={8} android_ripple={null}>
-                    <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+                    <Text
+                      className="text-muted-foreground text-xs"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       Clear
                     </Text>
                   </Pressable>
@@ -306,27 +281,24 @@ export default function TenantsScreen() {
               </View>
             </Entrance>
 
-            {/* ── Filter chips ── */}
             <Entrance trigger={focusTick} delay={100} style={{ marginBottom: 16 }}>
               <FilterChips
                 active={filter}
                 counts={counts}
                 onChange={setFilter}
-                colors={colors}
               />
             </Entrance>
 
-            {/* ── Loading or empty ── */}
-            {isLoading && <ListSkeleton colors={colors} />}
+            {isLoading && <ListSkeleton />}
             {!isLoading && filtered.length === 0 && (
-              <EmptyState query={query} filter={filter} colors={colors} />
+              <EmptyState query={query} filter={filter} mutedFg={palette.mutedForeground} />
             )}
           </View>
         }
 
         renderItem={({ item, index }) => (
           <Entrance delay={index * 45} trigger={focusTick}>
-            <TenantCard tenant={item} colors={colors} />
+            <TenantCard tenant={item} />
           </Entrance>
         )}
       />

@@ -6,19 +6,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { ArrowLeftIcon } from 'phosphor-react-native';
-import { useColors } from '../../../lib/hooks/use-colors';
+import { useColorScheme } from 'nativewind';
 import { PropertyForm } from '../../../components/properties/PropertyForm';
 import { Entrance } from '../../../components/animations';
+import { THEME } from '../../../lib/theme';
 
 export default function NewPropertyScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
@@ -27,46 +29,37 @@ export default function NewPropertyScreen() {
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Header ── */}
           <Entrance trigger={1} style={{ marginBottom: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+            <View className="flex-row items-center mb-3.5">
               <Pressable
                 onPress={() => router.back()}
                 android_ripple={null}
                 hitSlop={8}
-                style={{
-                  width: 40, height: 40, borderRadius: 10,
-                  borderWidth: 1, borderColor: colors.border,
-                  backgroundColor: colors.card,
-                  alignItems: 'center', justifyContent: 'center',
-                }}
+                className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
               >
-                <ArrowLeftIcon size={18} color={colors.foreground} />
+                <ArrowLeftIcon size={18} color={palette.foreground} />
               </Pressable>
             </View>
 
-            <Text style={{
-              color: colors.foreground,
-              fontSize: 22, fontFamily: 'Inter_600SemiBold',
-              letterSpacing: -0.3, paddingRight: 0.3,
-            }}>
+            <Text
+              className="text-foreground text-[22px] tracking-tight"
+              style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
+            >
               Add Property
             </Text>
-            <Text style={{
-              color: colors.mutedFg, fontSize: 13,
-              fontFamily: 'Inter_400Regular', marginTop: 2,
-            }}>
+            <Text
+              className="text-muted-foreground text-[13px] mt-0.5"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               Create a new PG or flat to manage
             </Text>
           </Entrance>
 
-          {/* ── Form (with built-in preview + actions) ── */}
           <Entrance trigger={1} delay={60}>
             <PropertyForm
               mode="create"
               onSuccess={(slug) => router.replace(`/(tabs)/properties/${slug}`)}
               onCancel={() => router.back()}
-              colors={colors}
             />
           </Entrance>
         </ScrollView>

@@ -8,17 +8,18 @@ import { useState, useCallback, useMemo } from 'react';
 import {
   PlusIcon, CheckCircleIcon, WarningCircleIcon, ReceiptIcon,
 } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { usePayments } from '../../../lib/hooks/use-payments';
 import { useTenants } from '../../../lib/hooks/use-tenants';
 import { useDashboard } from '../../../lib/hooks/use-dashboard';
-import { useColors } from '../../../lib/hooks/use-colors';
 import { PaymentRow } from '../../../components/properties/PaymentRow';
 import { UnpaidTenantCard } from '../../../components/payments/UnpaidTenantCard';
 import { PaymentStatsStrip } from '../../../components/payments/PaymentStatsStrip';
 import { MonthNavigator } from '../../../components/payments/MonthNavigator';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Entrance } from '../../../components/animations';
-import type { AppColors } from '../../../lib/theme/colors';
+import { THEME } from '../../../lib/theme';
+import { cn } from '../../../lib/utils';
 import type { Payment } from '../../../types/payment';
 import type { Tenant } from '../../../types/tenant';
 
@@ -33,18 +34,16 @@ type ListItem =
   | { kind: 'unpaid'; tenant: Tenant }
   | { kind: 'payment'; payment: Payment };
 
-// ── Filter chip row ────────────────────────────────────────────────────────────
 function FilterChips({
-  active, counts, onChange, colors,
+  active, counts, onChange,
 }: {
   active: FilterKey;
   counts: Record<FilterKey, number>;
   onChange: (k: FilterKey) => void;
-  colors: AppColors;
 }) {
   const keys: FilterKey[] = ['all', 'paid', 'pending'];
   return (
-    <View style={{ flexDirection: 'row', gap: 8 }}>
+    <View className="flex-row gap-2">
       {keys.map((k) => {
         const isActive = active === k;
         return (
@@ -52,30 +51,35 @@ function FilterChips({
             key={k}
             onPress={() => onChange(k)}
             android_ripple={null}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 6,
-              borderWidth: 1,
-              borderColor: isActive ? colors.primary : colors.border,
-              backgroundColor: isActive ? colors.primaryBg : colors.card,
-              borderRadius: 99,
-              paddingHorizontal: 12, paddingVertical: 7,
-            }}
+            className={cn(
+              'flex-row items-center gap-1.5 border rounded-full px-3 py-1.5',
+              isActive
+                ? 'border-primary bg-primary-bg'
+                : 'border-border bg-card',
+            )}
           >
-            <Text style={{
-              color: isActive ? colors.primary : colors.foreground,
-              fontSize: 12, fontFamily: 'Inter_600SemiBold',
-            }}>
+            <Text
+              className={cn(
+                'text-xs',
+                isActive ? 'text-primary' : 'text-foreground',
+              )}
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               {FILTER_LABELS[k]}
             </Text>
-            <View style={{
-              backgroundColor: isActive ? `${colors.primary}30` : colors.mutedBg,
-              borderRadius: 99, paddingHorizontal: 6, paddingVertical: 1,
-              minWidth: 18, alignItems: 'center',
-            }}>
-              <Text style={{
-                color: isActive ? colors.primary : colors.mutedFg,
-                fontSize: 10, fontFamily: 'Inter_600SemiBold',
-              }}>
+            <View
+              className={cn(
+                'rounded-full px-1.5 py-px min-w-[18px] items-center',
+                isActive ? 'bg-primary/20' : 'bg-muted',
+              )}
+            >
+              <Text
+                className={cn(
+                  'text-[10px]',
+                  isActive ? 'text-primary' : 'text-muted-foreground',
+                )}
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 {counts[k]}
               </Text>
             </View>
@@ -86,78 +90,69 @@ function FilterChips({
   );
 }
 
-// ── Empty / all-clear state ────────────────────────────────────────────────────
 function EmptyState({
-  filter, colors,
-}: { filter: FilterKey; colors: AppColors }) {
+  filter, palette,
+}: { filter: FilterKey; palette: typeof THEME['light'] }) {
   const config = filter === 'paid'
     ? {
         Icon: CheckCircleIcon,
         title: 'No payments yet',
         description: 'Payments recorded for this month will appear here.',
-        iconBg: colors.successBg, iconColor: colors.success,
+        iconBg: palette.successBg, iconColor: palette.success,
       }
     : filter === 'pending'
     ? {
         Icon: CheckCircleIcon,
         title: 'All caught up',
         description: 'No unpaid tenants for this month.',
-        iconBg: colors.successBg, iconColor: colors.success,
+        iconBg: palette.successBg, iconColor: palette.success,
       }
     : {
         Icon: ReceiptIcon,
         title: 'Nothing to show',
         description: 'No payments or unpaid tenants for this month yet.',
-        iconBg: colors.mutedBg, iconColor: colors.mutedFg,
+        iconBg: palette.muted, iconColor: palette.mutedForeground,
       };
   const { Icon } = config;
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, padding: 28,
-      alignItems: 'center',
-    }}>
-      <View style={{
-        width: 52, height: 52, borderRadius: 16,
-        backgroundColor: config.iconBg,
-        alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-      }}>
+    <View className="bg-card border border-border rounded-xl p-7 items-center">
+      <View
+        style={{ backgroundColor: config.iconBg }}
+        className="size-[52px] rounded-2xl items-center justify-center mb-3"
+      >
         <Icon size={24} color={config.iconColor} weight="duotone" />
       </View>
-      <Text style={{
-        color: colors.foreground, fontSize: 14,
-        fontFamily: 'Inter_600SemiBold', marginBottom: 4, textAlign: 'center',
-      }}>
+      <Text
+        className="text-foreground text-sm mb-1 text-center"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         {config.title}
       </Text>
-      <Text style={{
-        color: colors.mutedFg, fontSize: 12,
-        fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 18,
-      }}>
+      <Text
+        className="text-muted-foreground text-xs text-center leading-[18px]"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         {config.description}
       </Text>
     </View>
   );
 }
 
-// ── List item skeleton ────────────────────────────────────────────────────────
-function ListSkeleton({ colors }: { colors: AppColors }) {
+function ListSkeleton() {
   return (
-    <View style={{ gap: 10 }}>
+    <View className="gap-2.5">
       {[0, 1, 2].map((i) => (
-        <View key={i} style={{
-          backgroundColor: colors.card,
-          borderWidth: 1, borderColor: colors.border,
-          borderRadius: 12, padding: 14, gap: 8,
-        }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View
+          key={i}
+          className="bg-card border border-border rounded-xl p-3.5 gap-2"
+        >
+          <View className="flex-row justify-between">
             <Skeleton width="55%" height={13} />
             <Skeleton width={50} height={16} radius={99} />
           </View>
           <Skeleton width="40%" height={11} />
-          <View style={{ height: 1, backgroundColor: colors.border }} />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View className="h-px bg-border" />
+          <View className="flex-row justify-between">
             <Skeleton width="40%" height={11} />
             <Skeleton width={70} height={13} />
           </View>
@@ -167,9 +162,9 @@ function ListSkeleton({ colors }: { colors: AppColors }) {
   );
 }
 
-// ── Screen ────────────────────────────────────────────────────────────────────
 export default function PaymentsScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const now = new Date();
   const [month, setMonth]   = useState(now.getMonth() + 1);
   const [year, setYear]     = useState(now.getFullYear());
@@ -202,7 +197,6 @@ export default function PaymentsScreen() {
     if (isCurrentMonth && dashboard?.current_month) {
       return Number(dashboard.current_month.expected_rent);
     }
-    // fallback: collected + sum of unpaid tenants' monthly rent
     return collected + (unpaidTenants ?? []).reduce((s, t) => s + Number(t.monthly_rent), 0);
   }, [isCurrentMonth, dashboard?.current_month, collected, unpaidTenants]);
 
@@ -214,7 +208,6 @@ export default function PaymentsScreen() {
 
   const isLoading = paymentsLoading || unpaidLoading;
 
-  // Build list items based on filter
   const listData: ListItem[] = useMemo(() => {
     const items: ListItem[] = [];
     if (filter === 'all' || filter === 'pending') {
@@ -244,36 +237,30 @@ export default function PaymentsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ItemSeparatorComponent={() => <View className="h-2.5" />}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={handleRefresh}
-            tintColor={colors.primary}
+            tintColor={palette.primary}
           />
         }
 
-        // ── Header ─────────────────────────────────────────────────────────
         ListHeaderComponent={
           <View>
-            {/* Title row + record button */}
             <Entrance trigger={focusTick} style={{ marginBottom: 20 }}>
-              <View style={{
-                flexDirection: 'row', alignItems: 'center',
-                justifyContent: 'space-between',
-              }}>
-                <View style={{ flex: 1, paddingRight: 12 }}>
-                  <Text style={{
-                    color: colors.foreground,
-                    fontSize: 22, fontFamily: 'Inter_600SemiBold',
-                    letterSpacing: -0.3, paddingRight: 0.3,
-                  }}>
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 pr-3">
+                  <Text
+                    className="text-foreground text-[22px] tracking-tight"
+                    style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
+                  >
                     Payments
                   </Text>
-                  <Text style={{
-                    color: colors.mutedFg, fontSize: 13,
-                    fontFamily: 'Inter_400Regular', marginTop: 2,
-                  }}>
+                  <Text
+                    className="text-muted-foreground text-[13px] mt-0.5"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     Track and record rent payments
                   </Text>
                 </View>
@@ -281,28 +268,21 @@ export default function PaymentsScreen() {
                   onPress={() => router.push('/(tabs)/payments/new' as never)}
                   android_ripple={null}
                   hitSlop={8}
-                  style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    backgroundColor: colors.primary,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}
+                  className="size-10 rounded-[10px] bg-primary items-center justify-center"
                 >
                   <PlusIcon size={18} color="#fff" weight="bold" />
                 </Pressable>
               </View>
             </Entrance>
 
-            {/* Month navigator */}
             <Entrance trigger={focusTick} delay={60} style={{ marginBottom: 12 }}>
               <MonthNavigator
                 month={month}
                 year={year}
                 onChange={(m, y) => { setMonth(m); setYear(y); }}
-                colors={colors}
               />
             </Entrance>
 
-            {/* Stats strip */}
             <Entrance trigger={focusTick} delay={100} style={{ marginBottom: 12 }}>
               <PaymentStatsStrip
                 collected={collected}
@@ -310,33 +290,28 @@ export default function PaymentsScreen() {
                 paidCount={counts.paid}
                 unpaidCount={counts.pending}
                 isLoading={isLoading}
-                colors={colors}
               />
             </Entrance>
 
-            {/* Filter chips */}
             <Entrance trigger={focusTick} delay={140} style={{ marginBottom: 16 }}>
               <FilterChips
                 active={filter}
                 counts={counts}
                 onChange={setFilter}
-                colors={colors}
               />
             </Entrance>
 
-            {/* Loading or empty */}
-            {isLoading && <ListSkeleton colors={colors} />}
-            {!isLoading && listData.length === 0 && <EmptyState filter={filter} colors={colors} />}
+            {isLoading && <ListSkeleton />}
+            {!isLoading && listData.length === 0 && <EmptyState filter={filter} palette={palette} />}
           </View>
         }
 
-        // ── Items ──────────────────────────────────────────────────────────
         renderItem={({ item, index }) => (
           <Entrance delay={index * 45} trigger={focusTick}>
             {item.kind === 'unpaid' ? (
-              <UnpaidTenantCard tenant={item.tenant} colors={colors} />
+              <UnpaidTenantCard tenant={item.tenant} />
             ) : (
-              <PaymentRow payment={item.payment} colors={colors} />
+              <PaymentRow payment={item.payment} />
             )}
           </Entrance>
         )}

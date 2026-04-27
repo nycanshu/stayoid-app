@@ -11,12 +11,12 @@ import {
   PlusIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
+import { useColorScheme } from 'nativewind';
 import { useProperty, useSlots, useDeleteProperty } from '../../../../lib/hooks/use-properties';
 import { useFloors } from '../../../../lib/hooks/use-floors';
 import { useTenants } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useDashboard } from '../../../../lib/hooks/use-dashboard';
-import { useColors } from '../../../../lib/hooks/use-colors';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { getPropertyTypeMeta } from '../../../../lib/constants/property-type-meta';
 import { PropertyStatsStrip } from '../../../../components/properties/PropertyStatsStrip';
@@ -26,79 +26,65 @@ import { TenantRow } from '../../../../components/properties/TenantRow';
 import { PaymentRow } from '../../../../components/properties/PaymentRow';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { Entrance } from '../../../../components/animations';
-import type { AppColors } from '../../../../lib/theme/colors';
+import { THEME } from '../../../../lib/theme';
+import { cn } from '../../../../lib/utils';
 import type { Slot } from '../../../../types/property';
 
 type Tab = 'floors' | 'tenants' | 'payments';
 
-// ── Type badge — uses shared getPropertyTypeMeta ───────────────────────────────
-function TypeBadge({ type, colors }: { type: string; colors: AppColors }) {
-  const meta = getPropertyTypeMeta(type, colors);
+function TypeBadge({ type, palette }: { type: string; palette: typeof THEME['light'] }) {
+  const meta = getPropertyTypeMeta(type, palette);
   const Icon = meta.Icon;
   return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', gap: 5,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3,
-    }}>
-      <View style={{
-        width: 16, height: 16, borderRadius: 8,
-        backgroundColor: meta.iconBg,
-        alignItems: 'center', justifyContent: 'center',
-      }}>
+    <View className="flex-row items-center gap-1 border border-border rounded-full px-2 py-0.5">
+      <View
+        style={{ backgroundColor: meta.iconBg }}
+        className="size-4 rounded-full items-center justify-center"
+      >
         <Icon size={9} color={meta.iconColor} weight="fill" />
       </View>
-      <Text style={{ color: colors.foreground, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
+      <Text
+        className="text-foreground text-[11px]"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         {meta.shortLabel}
       </Text>
     </View>
   );
 }
 
-// ── Empty state card ──────────────────────────────────────────────────────────
 function EmptyCard({
-  Icon, title, description, colors,
+  Icon, title, description, mutedFg,
 }: {
   Icon: React.ComponentType<{ size: number; color: string; weight?: any }>;
-  title: string; description: string; colors: AppColors;
+  title: string; description: string; mutedFg: string;
 }) {
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, padding: 24,
-      alignItems: 'center',
-    }}>
-      <View style={{
-        width: 44, height: 44, borderRadius: 22,
-        backgroundColor: colors.mutedBg,
-        alignItems: 'center', justifyContent: 'center', marginBottom: 10,
-      }}>
-        <Icon size={20} color={colors.mutedFg} weight="duotone" />
+    <View className="bg-card border border-border rounded-xl p-6 items-center">
+      <View className="size-11 rounded-full bg-muted items-center justify-center mb-2.5">
+        <Icon size={20} color={mutedFg} weight="duotone" />
       </View>
-      <Text style={{
-        color: colors.foreground, fontSize: 13,
-        fontFamily: 'Inter_600SemiBold', marginBottom: 4, textAlign: 'center',
-      }}>
+      <Text
+        className="text-foreground text-[13px] mb-1 text-center"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         {title}
       </Text>
-      <Text style={{
-        color: colors.mutedFg, fontSize: 12,
-        fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 18,
-      }}>
+      <Text
+        className="text-muted-foreground text-xs text-center leading-[18px]"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         {description}
       </Text>
     </View>
   );
 }
 
-// ── Tab bar ───────────────────────────────────────────────────────────────────
 function TabBar({
-  active, onChange, counts, colors,
+  active, onChange, counts,
 }: {
   active: Tab; onChange: (t: Tab) => void;
   counts: { floors?: number; tenants?: number; payments?: number };
-  colors: AppColors;
 }) {
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'floors',   label: 'Floors',   count: counts.floors },
@@ -107,11 +93,7 @@ function TabBar({
   ];
 
   return (
-    <View style={{
-      flexDirection: 'row',
-      backgroundColor: colors.mutedBg,
-      borderRadius: 10, padding: 3,
-    }}>
+    <View className="flex-row bg-muted rounded-[10px] p-[3px]">
       {tabs.map((tab) => {
         const isActive = active === tab.key;
         return (
@@ -119,35 +101,35 @@ function TabBar({
             key={tab.key}
             onPress={() => onChange(tab.key)}
             android_ripple={null}
-            style={{
-              flex: 1, flexDirection: 'row',
-              alignItems: 'center', justifyContent: 'center',
-              gap: 5, paddingVertical: 8, borderRadius: 8,
-              // Active uses card bg + shadow — same pattern as the website's
-              // shadcn TabsList (data-[state=active]:bg-background shadow-sm).
-              // Without the shadow, white-on-light-gray is invisible in light mode.
-              backgroundColor: isActive ? colors.card : 'transparent',
-              ...(isActive && {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.12,
-                shadowRadius: 3,
-                elevation: 2,
-              }),
-            }}
+            style={isActive ? {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.12,
+              shadowRadius: 3,
+              elevation: 2,
+            } : undefined}
+            className={cn(
+              'flex-1 flex-row items-center justify-center gap-1.5 py-2 rounded-lg',
+              isActive && 'bg-card',
+            )}
           >
-            <Text style={{
-              color: isActive ? colors.foreground : colors.mutedFg,
-              fontSize: 13, fontFamily: 'Inter_600SemiBold',
-            }}>
+            <Text
+              className={cn(
+                'text-[13px]',
+                isActive ? 'text-foreground' : 'text-muted-foreground',
+              )}
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               {tab.label}
             </Text>
             {tab.count !== undefined && tab.count > 0 && (
-              <Text style={{
-                color: isActive ? colors.foreground : colors.mutedFg,
-                fontSize: 11, fontFamily: 'Inter_400Regular',
-                opacity: isActive ? 0.6 : 1,
-              }}>
+              <Text
+                className={cn(
+                  'text-[11px]',
+                  isActive ? 'text-foreground opacity-60' : 'text-muted-foreground',
+                )}
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 {tab.count}
               </Text>
             )}
@@ -158,33 +140,31 @@ function TabBar({
   );
 }
 
-// ── Tab content header (count + action button) ────────────────────────────────
 function TabHeader({
-  count, label, actionLabel, onAction, colors,
+  count, label, actionLabel, onAction,
 }: {
   count: number; label: string; actionLabel: string;
-  onAction: () => void; colors: AppColors;
+  onAction: () => void;
 }) {
   return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center',
-      justifyContent: 'space-between', marginBottom: 12,
-    }}>
-      <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular' }}>
+    <View className="flex-row items-center justify-between mb-3">
+      <Text
+        className="text-muted-foreground text-xs"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         {count} {label}
       </Text>
       <Pressable
         onPress={onAction}
         android_ripple={null}
         hitSlop={6}
-        style={{
-          flexDirection: 'row', alignItems: 'center', gap: 5,
-          backgroundColor: colors.primary, borderRadius: 10,
-          paddingHorizontal: 10, paddingVertical: 7,
-        }}
+        className="flex-row items-center gap-1 bg-primary rounded-[10px] px-2.5 py-1.5"
       >
         <PlusIcon size={12} color="#fff" weight="bold" />
-        <Text style={{ color: '#fff', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+        <Text
+          className="text-white text-xs"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {actionLabel}
         </Text>
       </Pressable>
@@ -192,16 +172,15 @@ function TabHeader({
   );
 }
 
-// ── Header skeleton ───────────────────────────────────────────────────────────
-function HeaderSkeleton({ colors }: { colors: AppColors }) {
+function HeaderSkeleton() {
   return (
     <View>
-      <View style={{ flexDirection: 'row', marginBottom: 14, gap: 10 }}>
+      <View className="flex-row mb-3.5 gap-2.5">
         <Skeleton width={40} height={40} radius={10} />
-        <View style={{ flex: 1 }} />
+        <View className="flex-1" />
         <Skeleton width={40} height={40} radius={10} />
       </View>
-      <View style={{ gap: 8 }}>
+      <View className="gap-2">
         <Skeleton width={180} height={26} />
         <Skeleton width={240} height={13} />
         <Skeleton width={100} height={11} />
@@ -210,9 +189,9 @@ function HeaderSkeleton({ colors }: { colors: AppColors }) {
   );
 }
 
-// ── Screen ────────────────────────────────────────────────────────────────────
 export default function PropertyDetailScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [activeTab, setActiveTab] = useState<Tab>('floors');
@@ -241,14 +220,12 @@ export default function PropertyDetailScreen() {
     [dashboard?.properties, property?.id],
   );
 
-  // Group slots by floor_number for in-floor display
   const slotsByFloor = useMemo(() => {
     const map: Record<number, Slot[]> = {};
     (slots ?? []).forEach((s) => { (map[s.floor_number] ??= []).push(s); });
     return map;
   }, [slots]);
 
-  // Use the actual floors list as source of truth — even floors with 0 slots show up
   const sortedFloors = useMemo(
     () => (floors ?? [])
       .map((f) => f.floor_number)
@@ -261,7 +238,7 @@ export default function PropertyDetailScreen() {
   const vacant      = totalSlots - occupied;
   const collected   = propertyStats ? Number(propertyStats.collected_rent) : 0;
   const expected    = propertyStats ? Number(propertyStats.expected_rent)  : 0;
-  const meta        = property ? getPropertyTypeMeta(property.property_type, colors) : null;
+  const meta        = property ? getPropertyTypeMeta(property.property_type, palette) : null;
 
   const formatShortDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -286,10 +263,6 @@ export default function PropertyDetailScreen() {
         {
           label: 'Delete Property',
           destructive: true,
-          // Native Alert.alert for destructive confirms — guaranteed correct
-          // rendering on iOS (shows red Delete) and Android (Material dialog).
-          // The custom ConfirmDialog has rendering edge cases we couldn't fully
-          // resolve, so for critical/destructive flows we fall back to native.
           onPress: () => Alert.alert(
             'Delete property?',
             `"${property.name}" will be permanently deleted along with its floors, units, and tenant records. This cannot be undone.`,
@@ -324,90 +297,75 @@ export default function PropertyDetailScreen() {
       <StatusBar style="auto" />
 
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={handleRefresh}
-            tintColor={colors.primary}
+            tintColor={palette.primary}
           />
         }
       >
-        {/* ── Header ─────────────────────────────────────────────────────── */}
         <Entrance trigger={focusTick} style={{ marginBottom: 20 }}>
           {isLoading || !property ? (
-            <HeaderSkeleton colors={colors} />
+            <HeaderSkeleton />
           ) : (
             <>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+              <View className="flex-row items-center mb-3.5">
                 <Pressable
                   onPress={() => router.back()}
                   android_ripple={null}
                   hitSlop={8}
-                  style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    borderWidth: 1, borderColor: colors.border,
-                    backgroundColor: colors.card,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}
+                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
                 >
-                  <ArrowLeftIcon size={18} color={colors.foreground} />
+                  <ArrowLeftIcon size={18} color={palette.foreground} />
                 </Pressable>
-                <View style={{ flex: 1 }} />
+                <View className="flex-1" />
                 <Pressable
                   onPress={() => router.push(`/(tabs)/properties/${slug}/edit` as never)}
                   android_ripple={null}
                   hitSlop={8}
-                  style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    borderWidth: 1, borderColor: colors.border,
-                    backgroundColor: colors.card,
-                    alignItems: 'center', justifyContent: 'center',
-                    marginRight: 8,
-                  }}
+                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center mr-2"
                 >
-                  <PencilIcon size={16} color={colors.foreground} />
+                  <PencilIcon size={16} color={palette.foreground} />
                 </Pressable>
                 <Pressable
                   onPress={openMoreActions}
                   android_ripple={null}
                   hitSlop={8}
-                  style={{
-                    width: 40, height: 40, borderRadius: 10,
-                    borderWidth: 1, borderColor: colors.border,
-                    backgroundColor: colors.card,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}
+                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
                 >
-                  <DotsThreeVerticalIcon size={18} color={colors.foreground} weight="bold" />
+                  <DotsThreeVerticalIcon size={18} color={palette.foreground} weight="bold" />
                 </Pressable>
               </View>
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
-                <Text style={{
-                  color: colors.foreground,
-                  fontSize: 22, fontFamily: 'Inter_600SemiBold',
-                  letterSpacing: -0.3, paddingRight: 0.3, flexShrink: 1,
-                }}>
+              <View className="flex-row items-center gap-2 flex-wrap mb-1.5">
+                <Text
+                  className="text-foreground text-[22px] tracking-tight shrink"
+                  style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
+                >
                   {property.name}
                 </Text>
-                <TypeBadge type={property.property_type} colors={colors} />
+                <TypeBadge type={property.property_type} palette={palette} />
               </View>
 
-              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 5 }}>
-                <MapPinIcon size={13} color={colors.mutedFg} style={{ marginTop: 2 }} />
-                <Text style={{
-                  color: colors.mutedFg, fontSize: 13,
-                  fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
-                }}>
+              <View className="flex-row items-start gap-1">
+                <MapPinIcon size={13} color={palette.mutedForeground} style={{ marginTop: 2 }} />
+                <Text
+                  className="text-muted-foreground text-[13px] flex-1 leading-[18px]"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
                   {property.address}
                 </Text>
               </View>
 
               {property.created_at && (
-                <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 4 }}>
+                <Text
+                  className="text-muted-foreground text-xs mt-1"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
                   Added {formatShortDate(property.created_at)}
                 </Text>
               )}
@@ -415,7 +373,6 @@ export default function PropertyDetailScreen() {
           )}
         </Entrance>
 
-        {/* ── Stats Strip ────────────────────────────────────────────────── */}
         <Entrance trigger={focusTick} delay={60} style={{ marginBottom: 12 }}>
           <PropertyStatsStrip
             occupied={occupied}
@@ -427,11 +384,9 @@ export default function PropertyDetailScreen() {
             slotLabel={meta?.slotLabelPlural ?? 'Beds'}
             slotLabelSingular={meta?.slotLabel ?? 'Bed'}
             isLoading={slotsLoading || isLoading}
-            colors={colors}
           />
         </Entrance>
 
-        {/* ── Tabs ───────────────────────────────────────────────────────── */}
         <Entrance trigger={focusTick} delay={100} style={{ marginBottom: 16 }}>
           <TabBar
             active={activeTab}
@@ -441,24 +396,20 @@ export default function PropertyDetailScreen() {
               tenants:  occupied || undefined,
               payments: payments?.length || undefined,
             }}
-            colors={colors}
           />
         </Entrance>
 
-        {/* ── Floors tab ─────────────────────────────────────────────────── */}
         {activeTab === 'floors' && (
           <Entrance trigger={`floors-${focusTick}`} delay={120}>
             {(floorsLoading || slotsLoading) ? (
-              <View style={{ gap: 10 }}>
+              <View className="gap-2.5">
                 {[0, 1, 2].map((i) => (
-                  <View key={i} style={{
-                    backgroundColor: colors.card,
-                    borderWidth: 1, borderColor: colors.border,
-                    borderRadius: 12, padding: 14,
-                    flexDirection: 'row', alignItems: 'center', gap: 12,
-                  }}>
+                  <View
+                    key={i}
+                    className="bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3"
+                  >
                     <Skeleton width={44} height={44} radius={22} />
-                    <View style={{ flex: 1, gap: 6 }}>
+                    <View className="flex-1 gap-1.5">
                       <Skeleton width={120} height={13} />
                       <Skeleton width={180} height={11} />
                     </View>
@@ -467,87 +418,67 @@ export default function PropertyDetailScreen() {
                 ))}
               </View>
             ) : sortedFloors.length === 0 ? (
-              // Empty state with prominent "Add Floor" CTA
-              <View style={{
-                backgroundColor: colors.card,
-                borderWidth: 1, borderColor: colors.border,
-                borderRadius: 12, padding: 28,
-                alignItems: 'center',
-              }}>
-                <View style={{
-                  width: 52, height: 52, borderRadius: 16,
-                  backgroundColor: colors.primaryBg,
-                  alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-                }}>
-                  <StackIcon size={24} color={colors.primary} weight="duotone" />
+              <View className="bg-card border border-border rounded-xl p-7 items-center">
+                <View className="size-[52px] rounded-2xl bg-primary-bg items-center justify-center mb-3">
+                  <StackIcon size={24} color={palette.primary} weight="duotone" />
                 </View>
-                <Text style={{
-                  color: colors.foreground, fontSize: 14,
-                  fontFamily: 'Inter_600SemiBold', marginBottom: 4, textAlign: 'center',
-                }}>
+                <Text
+                  className="text-foreground text-sm mb-1 text-center"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
+                >
                   No floors yet
                 </Text>
-                <Text style={{
-                  color: colors.mutedFg, fontSize: 12,
-                  fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 18,
-                  marginBottom: 14,
-                }}>
+                <Text
+                  className="text-muted-foreground text-xs text-center leading-[18px] mb-3.5"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
                   Add your first floor to start organising {meta?.unitLabelPlural.toLowerCase() ?? 'units'} and {meta?.slotLabelPlural.toLowerCase() ?? 'beds'}.
                 </Text>
                 <Pressable
                   onPress={() => setFloorFormOpen(true)}
                   android_ripple={null}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row', alignItems: 'center', gap: 6,
-                    backgroundColor: colors.primary,
-                    opacity: pressed ? 0.85 : 1,
-                    borderRadius: 10,
-                    paddingHorizontal: 14, paddingVertical: 10,
-                  })}
+                  className="flex-row items-center gap-1.5 bg-primary rounded-[10px] px-3.5 py-2.5"
                 >
                   <PlusIcon size={13} color="#fff" weight="bold" />
-                  <Text style={{ color: '#fff', fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+                  <Text
+                    className="text-white text-[13px]"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
                     Add Floor
                   </Text>
                 </Pressable>
               </View>
             ) : (
               <>
-                {/* Header row with count + Add Floor button */}
-                <View style={{
-                  flexDirection: 'row', alignItems: 'center',
-                  justifyContent: 'space-between', marginBottom: 12,
-                }}>
-                  <Text style={{
-                    color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular',
-                  }}>
+                <View className="flex-row items-center justify-between mb-3">
+                  <Text
+                    className="text-muted-foreground text-xs"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     {sortedFloors.length} {sortedFloors.length === 1 ? 'floor' : 'floors'}
                   </Text>
                   <Pressable
                     onPress={() => setFloorFormOpen(true)}
                     android_ripple={null}
                     hitSlop={6}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row', alignItems: 'center', gap: 5,
-                      backgroundColor: colors.primary,
-                      opacity: pressed ? 0.85 : 1,
-                      borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
-                    })}
+                    className="flex-row items-center gap-1 bg-primary rounded-[10px] px-2.5 py-1.5"
                   >
                     <PlusIcon size={12} color="#fff" weight="bold" />
-                    <Text style={{ color: '#fff', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+                    <Text
+                      className="text-white text-xs"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       Add Floor
                     </Text>
                   </Pressable>
                 </View>
 
-                <View style={{ gap: 10 }}>
+                <View className="gap-2.5">
                   {sortedFloors.map((floorNum, i) => (
                     <Entrance key={floorNum} delay={i * 55} trigger={`floors-${focusTick}`}>
                       <FloorCard
                         floorNumber={floorNum}
                         slots={slotsByFloor[floorNum] ?? []}
-                        colors={colors}
                       />
                     </Entrance>
                   ))}
@@ -557,20 +488,17 @@ export default function PropertyDetailScreen() {
           </Entrance>
         )}
 
-        {/* ── Tenants tab ────────────────────────────────────────────────── */}
         {activeTab === 'tenants' && (
           <Entrance trigger={`tenants-${focusTick}`} delay={120}>
             {tenantsLoading ? (
-              <View style={{ gap: 10 }}>
+              <View className="gap-2.5">
                 {[0, 1, 2].map((i) => (
-                  <View key={i} style={{
-                    backgroundColor: colors.card,
-                    borderWidth: 1, borderColor: colors.border,
-                    borderRadius: 12, padding: 14,
-                    flexDirection: 'row', alignItems: 'center', gap: 12,
-                  }}>
+                  <View
+                    key={i}
+                    className="bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3"
+                  >
                     <Skeleton width={40} height={40} radius={20} />
-                    <View style={{ flex: 1, gap: 6 }}>
+                    <View className="flex-1 gap-1.5">
                       <Skeleton width="60%" height={13} />
                       <Skeleton width="80%" height={11} />
                     </View>
@@ -582,7 +510,7 @@ export default function PropertyDetailScreen() {
                 Icon={UsersIcon}
                 title="No tenants yet"
                 description="Active tenants in this property will appear here."
-                colors={colors}
+                mutedFg={palette.mutedForeground}
               />
             ) : (
               <>
@@ -591,12 +519,11 @@ export default function PropertyDetailScreen() {
                   label={(tenants ?? []).length === 1 ? 'active tenant' : 'active tenants'}
                   actionLabel="Add Tenant"
                   onAction={() => router.push(`/(tabs)/tenants/new?property=${slug}` as never)}
-                  colors={colors}
                 />
-                <View style={{ gap: 10 }}>
+                <View className="gap-2.5">
                   {(tenants ?? []).map((tenant, i) => (
                     <Entrance key={tenant.id} delay={i * 50} trigger={`tenants-${focusTick}`}>
-                      <TenantRow tenant={tenant} colors={colors} />
+                      <TenantRow tenant={tenant} />
                     </Entrance>
                   ))}
                 </View>
@@ -605,24 +532,22 @@ export default function PropertyDetailScreen() {
           </Entrance>
         )}
 
-        {/* ── Payments tab ───────────────────────────────────────────────── */}
         {activeTab === 'payments' && (
           <Entrance trigger={`payments-${focusTick}`} delay={120}>
             {paymentsLoading ? (
-              <View style={{ gap: 10 }}>
+              <View className="gap-2.5">
                 {[0, 1, 2].map((i) => (
-                  <View key={i} style={{
-                    backgroundColor: colors.card,
-                    borderWidth: 1, borderColor: colors.border,
-                    borderRadius: 12, padding: 14, gap: 8,
-                  }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <View
+                    key={i}
+                    className="bg-card border border-border rounded-xl p-3.5 gap-2"
+                  >
+                    <View className="flex-row justify-between">
                       <Skeleton width="50%" height={13} />
                       <Skeleton width={50} height={16} radius={99} />
                     </View>
                     <Skeleton width="40%" height={11} />
-                    <View style={{ height: 1, backgroundColor: colors.border }} />
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <View className="h-px bg-border" />
+                    <View className="flex-row justify-between">
                       <Skeleton width="40%" height={11} />
                       <Skeleton width={70} height={13} />
                     </View>
@@ -634,7 +559,7 @@ export default function PropertyDetailScreen() {
                 Icon={CurrencyCircleDollarIcon}
                 title="No payments yet"
                 description="Record payments from the Payments tab and they'll appear here."
-                colors={colors}
+                mutedFg={palette.mutedForeground}
               />
             ) : (
               <>
@@ -643,12 +568,11 @@ export default function PropertyDetailScreen() {
                   label={(payments ?? []).length === 1 ? 'payment recorded' : 'payments recorded'}
                   actionLabel="Record"
                   onAction={() => router.push(`/(tabs)/payments/new?property=${slug}` as never)}
-                  colors={colors}
                 />
-                <View style={{ gap: 10 }}>
+                <View className="gap-2.5">
                   {(payments ?? []).map((payment, i) => (
                     <Entrance key={payment.id} delay={i * 50} trigger={`payments-${focusTick}`}>
-                      <PaymentRow payment={payment} colors={colors} />
+                      <PaymentRow payment={payment} />
                     </Entrance>
                   ))}
                 </View>
@@ -658,7 +582,6 @@ export default function PropertyDetailScreen() {
         )}
       </ScrollView>
 
-      {/* Floor add/edit modal */}
       {property && (
         <FloorFormModal
           visible={floorFormOpen}

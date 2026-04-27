@@ -12,9 +12,9 @@ import {
   PlusIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
+import { useColorScheme } from 'nativewind';
 import { useTenant, useExitTenant } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
-import { useColors } from '../../../../lib/hooks/use-colors';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 import {
@@ -24,31 +24,27 @@ import {
 import { PaymentRow } from '../../../../components/properties/PaymentRow';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { Entrance } from '../../../../components/animations';
-import type { AppColors } from '../../../../lib/theme/colors';
+import { THEME } from '../../../../lib/theme';
+import { cn } from '../../../../lib/utils';
 
-// ── Section card wrapper ──────────────────────────────────────────────────────
 function SectionCard({
-  title, Icon, action, colors, children,
+  title, Icon, action, mutedFg, children,
 }: {
   title: string;
   Icon: React.ComponentType<{ size: number; color: string; weight?: any }>;
   action?: React.ReactNode;
-  colors: AppColors;
+  mutedFg: string;
   children: React.ReactNode;
 }) {
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, padding: 16, marginBottom: 12,
-    }}>
-      <View style={{
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: 14, gap: 8,
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}>
-          <Icon size={16} color={colors.mutedFg} weight="duotone" />
-          <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+    <View className="bg-card border border-border rounded-xl p-4 mb-3">
+      <View className="flex-row items-center justify-between mb-3.5 gap-2">
+        <View className="flex-row items-center gap-2 shrink">
+          <Icon size={16} color={mutedFg} weight="duotone" />
+          <Text
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             {title}
           </Text>
         </View>
@@ -59,21 +55,20 @@ function SectionCard({
   );
 }
 
-// ── Single info row inside a section ──────────────────────────────────────────
 function InfoRow({
-  label, value, valueColor, colors,
-}: { label: string; value: string; valueColor?: string; colors: AppColors }) {
+  label, value, valueColor,
+}: { label: string; value: string; valueColor?: string }) {
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: 7 }}>
-      <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular', flex: 1 }}>
+    <View className="flex-row justify-between items-start py-1.5">
+      <Text
+        className="text-muted-foreground text-xs flex-1"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         {label}
       </Text>
       <Text
-        style={{
-          color: valueColor ?? colors.foreground,
-          fontSize: 12, fontFamily: 'Inter_600SemiBold',
-          flex: 1, textAlign: 'right',
-        }}
+        className="text-foreground text-xs flex-1 text-right"
+        style={{ color: valueColor, fontFamily: 'Inter_600SemiBold' }}
         numberOfLines={2}
       >
         {value}
@@ -82,48 +77,45 @@ function InfoRow({
   );
 }
 
-// ── 2x2 stat tiles ────────────────────────────────────────────────────────────
 function StatTile({
-  label, value, color, colors,
-}: { label: string; value: string; color: string; colors: AppColors }) {
+  label, value, color,
+}: { label: string; value: string; color: string }) {
   return (
-    <View style={{ flex: 1, padding: 12, gap: 4 }}>
-      <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+    <View className="flex-1 p-3 gap-1">
+      <Text
+        className="text-muted-foreground text-[11px]"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         {label}
       </Text>
-      <Text style={{ color, fontSize: 16, fontFamily: 'Inter_600SemiBold' }}>
+      <Text
+        className="text-base"
+        style={{ color, fontFamily: 'Inter_600SemiBold' }}
+      >
         {value}
       </Text>
     </View>
   );
 }
 
-// ── Hero skeleton ─────────────────────────────────────────────────────────────
-function DetailSkeleton({ colors }: { colors: AppColors }) {
+function DetailSkeleton() {
   return (
     <View>
-      {/* Hero */}
-      <View style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, padding: 16, marginBottom: 12,
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+      <View className="bg-card border border-border rounded-xl p-4 mb-3">
+        <View className="flex-row items-center gap-3.5 mb-3.5">
           <Skeleton width={56} height={56} radius={28} />
-          <View style={{ flex: 1, gap: 8 }}>
+          <View className="flex-1 gap-2">
             <Skeleton width="60%" height={16} />
             <Skeleton width={80} height={18} radius={99} />
           </View>
         </View>
         <Skeleton width="80%" height={11} />
       </View>
-      {/* Cards */}
       {[0, 1, 2].map((i) => (
-        <View key={i} style={{
-          backgroundColor: colors.card,
-          borderWidth: 1, borderColor: colors.border,
-          borderRadius: 12, padding: 16, marginBottom: 12, gap: 10,
-        }}>
+        <View
+          key={i}
+          className="bg-card border border-border rounded-xl p-4 mb-3 gap-2.5"
+        >
           <Skeleton width={140} height={14} />
           <Skeleton width="100%" height={11} />
           <Skeleton width="80%" height={11} />
@@ -134,42 +126,33 @@ function DetailSkeleton({ colors }: { colors: AppColors }) {
   );
 }
 
-// ── Not-found state ───────────────────────────────────────────────────────────
-function NotFound({ colors }: { colors: AppColors }) {
+function NotFound({ mutedFg }: { mutedFg: string }) {
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, padding: 32, alignItems: 'center',
-    }}>
-      <View style={{
-        width: 56, height: 56, borderRadius: 16,
-        backgroundColor: colors.mutedBg,
-        alignItems: 'center', justifyContent: 'center', marginBottom: 14,
-      }}>
-        <UserIcon size={26} color={colors.mutedFg} weight="duotone" />
+    <View className="bg-card border border-border rounded-xl p-8 items-center">
+      <View className="size-14 rounded-2xl bg-muted items-center justify-center mb-3.5">
+        <UserIcon size={26} color={mutedFg} weight="duotone" />
       </View>
-      <Text style={{
-        color: colors.foreground, fontSize: 15,
-        fontFamily: 'Inter_600SemiBold', marginBottom: 6, textAlign: 'center',
-      }}>
+      <Text
+        className="text-foreground text-[15px] mb-1.5 text-center"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         Tenant not found
       </Text>
-      <Text style={{
-        color: colors.mutedFg, fontSize: 13,
-        fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 20, marginBottom: 18,
-      }}>
+      <Text
+        className="text-muted-foreground text-[13px] text-center leading-5 mb-[18px]"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         This tenant doesn't exist or has been deleted.
       </Text>
       <Pressable
         onPress={() => router.replace('/(tabs)/tenants')}
         android_ripple={null}
-        style={{
-          backgroundColor: colors.primary, borderRadius: 10,
-          paddingHorizontal: 16, paddingVertical: 10,
-        }}
+        className="bg-primary rounded-[10px] px-4 py-2.5"
       >
-        <Text style={{ color: '#fff', fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+        <Text
+          className="text-white text-[13px]"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           Back to Tenants
         </Text>
       </Pressable>
@@ -177,9 +160,9 @@ function NotFound({ colors }: { colors: AppColors }) {
   );
 }
 
-// ── Screen ────────────────────────────────────────────────────────────────────
 export default function TenantDetailScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const { confirm }               = useConfirmDialog();
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -203,7 +186,6 @@ export default function TenantDetailScreen() {
     setFocusTick((t) => t + 1);
   }, [refetchTenant, refetchPayments]);
 
-  // Computed payment summary (mirrors website)
   const paymentSummary = useMemo(() => {
     const list = payments ?? [];
     let totalPaid = 0;
@@ -269,7 +251,6 @@ export default function TenantDetailScreen() {
       });
     }
     showActionSheet({ title: tenant.name, options: opts });
-    // `confirm` reference kept in deps so any future destructive confirms here pick up provider changes
     void confirm;
   }, [tenant, confirmExit, showActionSheet, confirm]);
 
@@ -280,48 +261,36 @@ export default function TenantDetailScreen() {
       <StatusBar style="auto" />
 
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={handleRefresh}
-            tintColor={colors.primary}
+            tintColor={palette.primary}
           />
         }
       >
-        {/* ── Header (back + actions) ─────────────────────────────── */}
         <Entrance trigger={focusTick} style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View className="flex-row items-center">
             <Pressable
               onPress={() => router.back()}
               android_ripple={null}
               hitSlop={8}
-              style={{
-                width: 40, height: 40, borderRadius: 10,
-                borderWidth: 1, borderColor: colors.border,
-                backgroundColor: colors.card,
-                alignItems: 'center', justifyContent: 'center',
-              }}
+              className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
             >
-              <ArrowLeftIcon size={18} color={colors.foreground} />
+              <ArrowLeftIcon size={18} color={palette.foreground} />
             </Pressable>
-            <View style={{ flex: 1 }} />
+            <View className="flex-1" />
             {tenant && isActive && (
               <Pressable
                 onPress={() => router.push(`/(tabs)/tenants/${slug}/edit` as never)}
                 android_ripple={null}
                 hitSlop={8}
-                style={{
-                  width: 40, height: 40, borderRadius: 10,
-                  borderWidth: 1, borderColor: colors.border,
-                  backgroundColor: colors.card,
-                  alignItems: 'center', justifyContent: 'center',
-                  marginRight: 8,
-                }}
+                className="size-10 rounded-[10px] border border-border bg-card items-center justify-center mr-2"
               >
-                <PencilIcon size={16} color={colors.foreground} />
+                <PencilIcon size={16} color={palette.foreground} />
               </Pressable>
             )}
             {tenant && (
@@ -329,85 +298,74 @@ export default function TenantDetailScreen() {
                 onPress={openMoreActions}
                 android_ripple={null}
                 hitSlop={8}
-                style={{
-                  width: 40, height: 40, borderRadius: 10,
-                  borderWidth: 1, borderColor: colors.border,
-                  backgroundColor: colors.card,
-                  alignItems: 'center', justifyContent: 'center',
-                }}
+                className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
               >
-                <DotsThreeVerticalIcon size={18} color={colors.foreground} weight="bold" />
+                <DotsThreeVerticalIcon size={18} color={palette.foreground} weight="bold" />
               </Pressable>
             )}
           </View>
         </Entrance>
 
-        {/* ── Body ──────────────────────────────────────────────── */}
         {isLoading ? (
-          <Entrance trigger={focusTick} delay={60}><DetailSkeleton colors={colors} /></Entrance>
+          <Entrance trigger={focusTick} delay={60}><DetailSkeleton /></Entrance>
         ) : !tenant ? (
-          <Entrance trigger={focusTick} delay={60}><NotFound colors={colors} /></Entrance>
+          <Entrance trigger={focusTick} delay={60}><NotFound mutedFg={palette.mutedForeground} /></Entrance>
         ) : (
           <>
-            {/* ── Hero card ── */}
             <Entrance trigger={focusTick} delay={60}>
-              <View style={{
-                backgroundColor: colors.card,
-                borderWidth: 1, borderColor: colors.border,
-                borderRadius: 12, padding: 16, marginBottom: 12,
-              }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                  <View style={{
-                    width: 56, height: 56, borderRadius: 28,
-                    backgroundColor: colors.mutedBg,
-                    alignItems: 'center', justifyContent: 'center',
-                    opacity: isActive ? 1 : 0.6,
-                  }}>
-                    <Text style={{ color: colors.foreground, fontSize: 18, fontFamily: 'Inter_600SemiBold' }}>
+              <View className="bg-card border border-border rounded-xl p-4 mb-3">
+                <View className="flex-row items-center gap-3.5">
+                  <View
+                    className={cn(
+                      'size-14 rounded-full bg-muted items-center justify-center',
+                      !isActive && 'opacity-60',
+                    )}
+                  >
+                    <Text
+                      className="text-foreground text-lg"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       {getInitials(tenant.name)}
                     </Text>
                   </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
+                  <View className="flex-1 min-w-0">
                     <Text
                       numberOfLines={1}
-                      style={{
-                        color: colors.foreground, fontSize: 18,
-                        fontFamily: 'Inter_600SemiBold', letterSpacing: -0.3, marginBottom: 6,
-                      }}
+                      className="text-foreground text-lg tracking-tight mb-1.5"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
                     >
                       {tenant.name}
                     </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <View style={{
-                        backgroundColor: isActive ? colors.successBg : colors.mutedBg,
-                        borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3,
-                      }}>
-                        <Text style={{
-                          color: isActive ? colors.success : colors.mutedFg,
-                          fontSize: 11, fontFamily: 'Inter_600SemiBold',
-                        }}>
+                    <View className="flex-row items-center gap-2 flex-wrap">
+                      <View className={cn('rounded-full px-2 py-0.5', isActive ? 'bg-success-bg' : 'bg-muted')}>
+                        <Text
+                          className={cn('text-[11px]', isActive ? 'text-success' : 'text-muted-foreground')}
+                          style={{ fontFamily: 'Inter_600SemiBold' }}
+                        >
                           {isActive ? 'Active' : 'Exited'}
                         </Text>
                       </View>
-                      <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+                      <Text
+                        className="text-muted-foreground text-[11px]"
+                        style={{ fontFamily: 'Inter_400Regular' }}
+                      >
                         {GENDER_LABELS[tenant.gender] ?? tenant.gender}
                       </Text>
                     </View>
                   </View>
                 </View>
 
-                {/* Quick actions row */}
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+                <View className="flex-row gap-2 mt-3.5">
                   <Pressable
                     onPress={handleCall}
                     android_ripple={null}
-                    style={{
-                      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-                      backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 10,
-                    }}
+                    className="flex-1 flex-row items-center justify-center gap-1.5 bg-primary rounded-[10px] py-2.5"
                   >
                     <PhoneIcon size={14} color="#fff" weight="bold" />
-                    <Text style={{ color: '#fff', fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+                    <Text
+                      className="text-white text-[13px]"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       Call
                     </Text>
                   </Pressable>
@@ -415,14 +373,13 @@ export default function TenantDetailScreen() {
                     <Pressable
                       onPress={() => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never)}
                       android_ripple={null}
-                      style={{
-                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card,
-                        borderRadius: 10, paddingVertical: 10,
-                      }}
+                      className="flex-1 flex-row items-center justify-center gap-1.5 border border-border bg-card rounded-[10px] py-2.5"
                     >
-                      <ReceiptIcon size={14} color={colors.foreground} weight="bold" />
-                      <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+                      <ReceiptIcon size={14} color={palette.foreground} weight="bold" />
+                      <Text
+                        className="text-foreground text-[13px]"
+                        style={{ fontFamily: 'Inter_600SemiBold' }}
+                      >
                         Record Payment
                       </Text>
                     </Pressable>
@@ -431,150 +388,146 @@ export default function TenantDetailScreen() {
               </View>
             </Entrance>
 
-            {/* ── Slot info ── */}
             <Entrance trigger={focusTick} delay={100}>
-              <SectionCard title="Slot assignment" Icon={HouseIcon} colors={colors}>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 12 }}>
-                  <MapPinIcon size={13} color={colors.mutedFg} style={{ marginTop: 2 }} />
-                  <Text style={{
-                    color: colors.foreground, fontSize: 13,
-                    fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
-                  }}>
+              <SectionCard title="Slot assignment" Icon={HouseIcon} mutedFg={palette.mutedForeground}>
+                <View className="flex-row items-start gap-1.5 mb-3">
+                  <MapPinIcon size={13} color={palette.mutedForeground} style={{ marginTop: 2 }} />
+                  <Text
+                    className="text-foreground text-[13px] flex-1 leading-[18px]"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     <Text style={{ fontFamily: 'Inter_600SemiBold' }}>{tenant.property_name}</Text>
                     {' · '}{tenant.unit_number}{' · '}{tenant.slot_number}
                   </Text>
                 </View>
 
-                <View style={{ height: 1, backgroundColor: colors.border, marginVertical: 4 }} />
-                <InfoRow label="Monthly rent" value={formatCurrency(tenant.monthly_rent)} colors={colors} />
-                <InfoRow label="Tenure" value={formatTenure(tenant.join_date, tenant.exit_date)} colors={colors} />
-                <InfoRow label="Joined" value={formatLongDate(tenant.join_date)} colors={colors} />
+                <View className="h-px bg-border my-1" />
+                <InfoRow label="Monthly rent" value={formatCurrency(tenant.monthly_rent)} />
+                <InfoRow label="Tenure" value={formatTenure(tenant.join_date, tenant.exit_date)} />
+                <InfoRow label="Joined" value={formatLongDate(tenant.join_date)} />
                 {tenant.exit_date && (
                   <InfoRow
                     label="Exited"
                     value={formatLongDate(tenant.exit_date)}
-                    valueColor={colors.mutedFg}
-                    colors={colors}
+                    valueColor={palette.mutedForeground}
                   />
                 )}
               </SectionCard>
             </Entrance>
 
-            {/* ── Personal info ── */}
             <Entrance trigger={focusTick} delay={140}>
-              <SectionCard title="Personal information" Icon={UserIcon} colors={colors}>
-                <InfoRow label="Phone" value={tenant.phone} colors={colors} />
-                <InfoRow label="Gender" value={GENDER_LABELS[tenant.gender] ?? tenant.gender} colors={colors} />
-                {tenant.email && <InfoRow label="Email" value={tenant.email} colors={colors} />}
+              <SectionCard title="Personal information" Icon={UserIcon} mutedFg={palette.mutedForeground}>
+                <InfoRow label="Phone" value={tenant.phone} />
+                <InfoRow label="Gender" value={GENDER_LABELS[tenant.gender] ?? tenant.gender} />
+                {tenant.email && <InfoRow label="Email" value={tenant.email} />}
                 {tenant.permanent_address && (
-                  <InfoRow label="Address" value={tenant.permanent_address} colors={colors} />
+                  <InfoRow label="Address" value={tenant.permanent_address} />
                 )}
               </SectionCard>
             </Entrance>
 
-            {/* ── Work info (if any) ── */}
             {(tenant.work_type || tenant.work_location) && (
               <Entrance trigger={focusTick} delay={180}>
-                <SectionCard title="Work" Icon={BriefcaseIcon} colors={colors}>
+                <SectionCard title="Work" Icon={BriefcaseIcon} mutedFg={palette.mutedForeground}>
                   {tenant.work_type && (
                     <InfoRow
                       label="Type"
                       value={WORK_TYPE_LABELS[tenant.work_type] ?? tenant.work_type}
-                      colors={colors}
                     />
                   )}
                   {tenant.work_location && (
-                    <InfoRow label="Location" value={tenant.work_location} colors={colors} />
+                    <InfoRow label="Location" value={tenant.work_location} />
                   )}
                 </SectionCard>
               </Entrance>
             )}
 
-            {/* ── ID proof (if any) ── */}
             {(tenant.id_proof_type || tenant.id_proof_number) && (
               <Entrance trigger={focusTick} delay={220}>
-                <SectionCard title="ID proof" Icon={IdentificationCardIcon} colors={colors}>
+                <SectionCard title="ID proof" Icon={IdentificationCardIcon} mutedFg={palette.mutedForeground}>
                   {tenant.id_proof_type && (
                     <InfoRow
                       label="Type"
                       value={ID_PROOF_LABELS[tenant.id_proof_type] ?? tenant.id_proof_type}
-                      colors={colors}
                     />
                   )}
                   {tenant.id_proof_number && (
-                    <InfoRow label="Number" value={tenant.id_proof_number} colors={colors} />
+                    <InfoRow label="Number" value={tenant.id_proof_number} />
                   )}
                 </SectionCard>
               </Entrance>
             )}
 
-            {/* ── Emergency contact (if any) ── */}
             {(tenant.emergency_contact_name || tenant.emergency_contact_phone) && (
               <Entrance trigger={focusTick} delay={260}>
-                <SectionCard title="Emergency contact" Icon={UsersThreeIcon} colors={colors}>
+                <SectionCard title="Emergency contact" Icon={UsersThreeIcon} mutedFg={palette.mutedForeground}>
                   {tenant.emergency_contact_name && (
-                    <InfoRow label="Name" value={tenant.emergency_contact_name} colors={colors} />
+                    <InfoRow label="Name" value={tenant.emergency_contact_name} />
                   )}
                   {tenant.emergency_contact_phone && (
-                    <InfoRow label="Phone" value={tenant.emergency_contact_phone} colors={colors} />
+                    <InfoRow label="Phone" value={tenant.emergency_contact_phone} />
                   )}
                 </SectionCard>
               </Entrance>
             )}
 
-            {/* ── Financial summary ── */}
             <Entrance trigger={focusTick} delay={300}>
-              <View style={{
-                backgroundColor: colors.card,
-                borderWidth: 1, borderColor: colors.border,
-                borderRadius: 12, marginBottom: 12, overflow: 'hidden',
-              }}>
-                <View style={{
-                  flexDirection: 'row', alignItems: 'center', gap: 8,
-                  padding: 16, paddingBottom: 12,
-                }}>
-                  <ReceiptIcon size={16} color={colors.mutedFg} weight="duotone" />
-                  <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+              <View className="bg-card border border-border rounded-xl mb-3 overflow-hidden">
+                <View className="flex-row items-center gap-2 p-4 pb-3">
+                  <ReceiptIcon size={16} color={palette.mutedForeground} weight="duotone" />
+                  <Text
+                    className="text-foreground text-sm"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
                     Financial summary
                   </Text>
                 </View>
-                <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border }}>
-                  <View style={{
-                    flex: 1, borderRightWidth: 1, borderRightColor: colors.border, padding: 12,
-                  }}>
-                    <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginBottom: 4 }}>
+                <View className="flex-row border-t border-border">
+                  <View className="flex-1 border-r border-border p-3">
+                    <Text
+                      className="text-muted-foreground text-[11px] mb-1"
+                      style={{ fontFamily: 'Inter_400Regular' }}
+                    >
                       Total paid
                     </Text>
-                    <Text style={{ color: colors.foreground, fontSize: 16, fontFamily: 'Inter_600SemiBold' }}>
+                    <Text
+                      className="text-foreground text-base"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       {formatCurrency(paymentSummary.totalPaid)}
                     </Text>
                   </View>
-                  <View style={{ flex: 1, padding: 12 }}>
-                    <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginBottom: 4 }}>
+                  <View className="flex-1 p-3">
+                    <Text
+                      className="text-muted-foreground text-[11px] mb-1"
+                      style={{ fontFamily: 'Inter_400Regular' }}
+                    >
                       Deposit
                     </Text>
-                    <Text style={{ color: colors.foreground, fontSize: 16, fontFamily: 'Inter_600SemiBold' }}>
+                    <Text
+                      className="text-foreground text-base"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       {formatCurrency(tenant.deposit_amount)}
                     </Text>
                   </View>
                 </View>
-                <View style={{ flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.border }}>
-                  <StatTile label="Paid"    value={paymentSummary.paidCount.toString()}    color={colors.success} colors={colors} />
-                  <View style={{ width: 1, backgroundColor: colors.border }} />
-                  <StatTile label="Partial" value={paymentSummary.partialCount.toString()} color={colors.warning} colors={colors} />
-                  <View style={{ width: 1, backgroundColor: colors.border }} />
-                  <StatTile label="Pending" value={paymentSummary.pendingCount.toString()} color={paymentSummary.pendingCount > 0 ? colors.danger : colors.mutedFg} colors={colors} />
+                <View className="flex-row border-t border-border">
+                  <StatTile label="Paid"    value={paymentSummary.paidCount.toString()}    color={palette.success} />
+                  <View className="w-px bg-border" />
+                  <StatTile label="Partial" value={paymentSummary.partialCount.toString()} color={palette.warning} />
+                  <View className="w-px bg-border" />
+                  <StatTile label="Pending" value={paymentSummary.pendingCount.toString()} color={paymentSummary.pendingCount > 0 ? palette.destructive : palette.mutedForeground} />
                 </View>
               </View>
             </Entrance>
 
-            {/* ── Payment history ── */}
             <Entrance trigger={focusTick} delay={340}>
-              <View style={{
-                flexDirection: 'row', alignItems: 'center',
-                justifyContent: 'space-between', marginBottom: 10,
-              }}>
-                <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+              <View className="flex-row items-center justify-between mb-2.5">
+                <Text
+                  className="text-foreground text-sm"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
+                >
                   Payment history
                 </Text>
                 {isActive && (payments ?? []).length > 0 && (
@@ -582,50 +535,41 @@ export default function TenantDetailScreen() {
                     onPress={() => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never)}
                     android_ripple={null}
                     hitSlop={6}
-                    style={{
-                      flexDirection: 'row', alignItems: 'center', gap: 4,
-                      backgroundColor: colors.primary, borderRadius: 10,
-                      paddingHorizontal: 10, paddingVertical: 6,
-                    }}
+                    className="flex-row items-center gap-1 bg-primary rounded-[10px] px-2.5 py-1.5"
                   >
                     <PlusIcon size={11} color="#fff" weight="bold" />
-                    <Text style={{ color: '#fff', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+                    <Text
+                      className="text-white text-xs"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       Record
                     </Text>
                   </Pressable>
                 )}
               </View>
               {(payments ?? []).length === 0 ? (
-                <View style={{
-                  backgroundColor: colors.card,
-                  borderWidth: 1, borderColor: colors.border,
-                  borderRadius: 12, padding: 24, alignItems: 'center',
-                }}>
-                  <View style={{
-                    width: 44, height: 44, borderRadius: 22,
-                    backgroundColor: colors.mutedBg,
-                    alignItems: 'center', justifyContent: 'center', marginBottom: 10,
-                  }}>
-                    <ReceiptIcon size={20} color={colors.mutedFg} weight="duotone" />
+                <View className="bg-card border border-border rounded-xl p-6 items-center">
+                  <View className="size-11 rounded-full bg-muted items-center justify-center mb-2.5">
+                    <ReceiptIcon size={20} color={palette.mutedForeground} weight="duotone" />
                   </View>
-                  <Text style={{
-                    color: colors.foreground, fontSize: 13,
-                    fontFamily: 'Inter_600SemiBold', marginBottom: 4,
-                  }}>
+                  <Text
+                    className="text-foreground text-[13px] mb-1"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
                     No payments yet
                   </Text>
-                  <Text style={{
-                    color: colors.mutedFg, fontSize: 12,
-                    fontFamily: 'Inter_400Regular', textAlign: 'center',
-                  }}>
+                  <Text
+                    className="text-muted-foreground text-xs text-center"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     Recorded payments will appear here.
                   </Text>
                 </View>
               ) : (
-                <View style={{ gap: 10 }}>
+                <View className="gap-2.5">
                   {(payments ?? []).map((p, i) => (
                     <Entrance key={p.id} delay={i * 40} trigger={focusTick}>
-                      <PaymentRow payment={p} colors={colors} />
+                      <PaymentRow payment={p} />
                     </Entrance>
                   ))}
                 </View>

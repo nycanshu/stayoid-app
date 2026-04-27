@@ -3,9 +3,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { ArrowLeftIcon, ShieldCheckIcon } from 'phosphor-react-native';
-import { useColors } from '../../../lib/hooks/use-colors';
+import { useColorScheme } from 'nativewind';
 import { Entrance } from '../../../components/animations';
-import type { AppColors } from '../../../lib/theme/colors';
+import { THEME } from '../../../lib/theme';
 
 const SECTIONS = [
   {
@@ -34,7 +34,7 @@ const SECTIONS = [
   },
   {
     title: 'Children',
-    body: 'Stayoid is intended for adults managing rental businesses. We do not knowingly collect data from anyone under 18. If you believe we have, contact us and we\'ll delete it.',
+    body: "Stayoid is intended for adults managing rental businesses. We do not knowingly collect data from anyone under 18. If you believe we have, contact us and we'll delete it.",
   },
   {
     title: 'Changes to this policy',
@@ -47,68 +47,64 @@ const SECTIONS = [
 ];
 
 export default function PrivacyScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <Entrance trigger={1} style={{ marginBottom: 20 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+          <View className="flex-row items-center mb-3.5">
             <Pressable
               onPress={() => router.back()}
               android_ripple={null}
               hitSlop={8}
-              style={{
-                width: 40, height: 40, borderRadius: 10,
-                borderWidth: 1, borderColor: colors.border,
-                backgroundColor: colors.card,
-                alignItems: 'center', justifyContent: 'center',
-              }}
+              className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
             >
-              <ArrowLeftIcon size={18} color={colors.foreground} />
+              <ArrowLeftIcon size={18} color={palette.foreground} />
             </Pressable>
           </View>
-          <Text style={{
-            color: colors.foreground,
-            fontSize: 22, fontFamily: 'Inter_600SemiBold',
-            letterSpacing: -0.3, paddingRight: 0.3,
-          }}>
+          <Text
+            className="text-foreground text-[22px] tracking-tight"
+            style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
+          >
             Privacy Policy
           </Text>
-          <Text style={{
-            color: colors.mutedFg, fontSize: 13,
-            fontFamily: 'Inter_400Regular', marginTop: 2,
-          }}>
+          <Text
+            className="text-muted-foreground text-[13px] mt-0.5"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             What we collect, why, and how to control it
           </Text>
         </Entrance>
 
-        {/* Top reassurance banner */}
         <Entrance trigger={1} delay={40}>
-          <View style={{
-            backgroundColor: `${colors.success}10`,
-            borderWidth: 1, borderColor: `${colors.success}33`,
-            borderRadius: 12, padding: 14,
-            flexDirection: 'row', alignItems: 'center', gap: 12,
-            marginBottom: 16,
-          }}>
-            <View style={{
-              width: 36, height: 36, borderRadius: 10,
-              backgroundColor: colors.successBg,
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <ShieldCheckIcon size={18} color={colors.success} weight="fill" />
+          <View
+            style={{
+              backgroundColor: `${palette.success}10`,
+              borderColor: `${palette.success}33`,
+            }}
+            className="border rounded-xl p-3.5 flex-row items-center gap-3 mb-4"
+          >
+            <View className="size-9 rounded-[10px] bg-success-bg items-center justify-center">
+              <ShieldCheckIcon size={18} color={palette.success} weight="fill" />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold', marginBottom: 2 }}>
+            <View className="flex-1">
+              <Text
+                className="text-foreground text-[13px] mb-0.5"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 Your data stays yours
               </Text>
-              <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular', lineHeight: 17 }}>
+              <Text
+                className="text-muted-foreground text-xs leading-[17px]"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 We never sell your data. Encrypted in transit and at rest.
               </Text>
             </View>
@@ -117,29 +113,28 @@ export default function PrivacyScreen() {
 
         {SECTIONS.map((s, i) => (
           <Entrance key={s.title} trigger={1} delay={80 + i * 30}>
-            <View style={{
-              backgroundColor: colors.card,
-              borderWidth: 1, borderColor: colors.border,
-              borderRadius: 12, padding: 16, marginBottom: 10,
-            }}>
-              <Text style={{
-                color: colors.foreground, fontSize: 14,
-                fontFamily: 'Inter_600SemiBold', marginBottom: 6,
-              }}>
+            <View className="bg-card border border-border rounded-xl p-4 mb-2.5">
+              <Text
+                className="text-foreground text-sm mb-1.5"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 {s.title}
               </Text>
-              <Text style={{
-                color: colors.mutedFg, fontSize: 13,
-                fontFamily: 'Inter_400Regular', lineHeight: 20,
-              }}>
+              <Text
+                className="text-muted-foreground text-[13px] leading-5"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 {s.body}
               </Text>
             </View>
           </Entrance>
         ))}
 
-        <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+        <View className="items-center py-4">
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             Last updated: April 2026
           </Text>
         </View>

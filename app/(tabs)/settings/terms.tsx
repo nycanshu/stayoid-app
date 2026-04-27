@@ -3,9 +3,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { ArrowLeftIcon } from 'phosphor-react-native';
-import { useColors } from '../../../lib/hooks/use-colors';
+import { useColorScheme } from 'nativewind';
 import { Entrance } from '../../../components/animations';
-import type { AppColors } from '../../../lib/theme/colors';
+import { THEME } from '../../../lib/theme';
 
 const SECTIONS = [
   {
@@ -38,7 +38,7 @@ const SECTIONS = [
   },
   {
     title: '8. Limitation of Liability',
-    body: 'Stayoid is provided “as is.” To the fullest extent permitted by law, we are not liable for any indirect or consequential damages arising from your use of the app, including financial loss from missed payments or incorrect records.',
+    body: 'Stayoid is provided "as is." To the fullest extent permitted by law, we are not liable for any indirect or consequential damages arising from your use of the app, including financial loss from missed payments or incorrect records.',
   },
   {
     title: '9. Changes to These Terms',
@@ -46,81 +46,76 @@ const SECTIONS = [
   },
   {
     title: '10. Contact',
-    body: 'Questions? Email hello.stayoid@gmail.com and we\'ll get back to you within two business days.',
+    body: "Questions? Email hello.stayoid@gmail.com and we'll get back to you within two business days.",
   },
 ];
 
 function LegalScreen({
-  title, subtitle, sections, colors,
+  title, subtitle, sections,
 }: {
   title: string; subtitle: string;
   sections: { title: string; body: string }[];
-  colors: AppColors;
 }) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
         <Entrance trigger={1} style={{ marginBottom: 20 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 14 }}>
+          <View className="flex-row items-center mb-3.5">
             <Pressable
               onPress={() => router.back()}
               android_ripple={null}
               hitSlop={8}
-              style={{
-                width: 40, height: 40, borderRadius: 10,
-                borderWidth: 1, borderColor: colors.border,
-                backgroundColor: colors.card,
-                alignItems: 'center', justifyContent: 'center',
-              }}
+              className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
             >
-              <ArrowLeftIcon size={18} color={colors.foreground} />
+              <ArrowLeftIcon size={18} color={palette.foreground} />
             </Pressable>
           </View>
-          <Text style={{
-            color: colors.foreground,
-            fontSize: 22, fontFamily: 'Inter_600SemiBold',
-            letterSpacing: -0.3, paddingRight: 0.3,
-          }}>
+          <Text
+            className="text-foreground text-[22px] tracking-tight"
+            style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
+          >
             {title}
           </Text>
-          <Text style={{
-            color: colors.mutedFg, fontSize: 13,
-            fontFamily: 'Inter_400Regular', marginTop: 2,
-          }}>
+          <Text
+            className="text-muted-foreground text-[13px] mt-0.5"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             {subtitle}
           </Text>
         </Entrance>
 
         {sections.map((s, i) => (
           <Entrance key={s.title} trigger={1} delay={60 + i * 30}>
-            <View style={{
-              backgroundColor: colors.card,
-              borderWidth: 1, borderColor: colors.border,
-              borderRadius: 12, padding: 16, marginBottom: 10,
-            }}>
-              <Text style={{
-                color: colors.foreground, fontSize: 14,
-                fontFamily: 'Inter_600SemiBold', marginBottom: 6,
-              }}>
+            <View className="bg-card border border-border rounded-xl p-4 mb-2.5">
+              <Text
+                className="text-foreground text-sm mb-1.5"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 {s.title}
               </Text>
-              <Text style={{
-                color: colors.mutedFg, fontSize: 13,
-                fontFamily: 'Inter_400Regular', lineHeight: 20,
-              }}>
+              <Text
+                className="text-muted-foreground text-[13px] leading-5"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 {s.body}
               </Text>
             </View>
           </Entrance>
         ))}
 
-        <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+        <View className="items-center py-4">
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             Last updated: April 2026
           </Text>
         </View>
@@ -130,13 +125,11 @@ function LegalScreen({
 }
 
 export default function TermsScreen() {
-  const colors = useColors();
   return (
     <LegalScreen
       title="Terms of Service"
       subtitle="The rules that govern your use of Stayoid"
       sections={SECTIONS}
-      colors={colors}
     />
   );
 }

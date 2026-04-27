@@ -16,20 +16,22 @@ import {
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
 import { useQueryClient } from '@tanstack/react-query';
+import { useColorScheme } from 'nativewind';
 import { useAuthStore } from '../../../lib/stores/auth-store';
 import { useThemeStore, type ThemePreference } from '../../../lib/stores/theme-store';
 import { usePreferencesStore } from '../../../lib/stores/preferences-store';
-import { useColors } from '../../../lib/hooks/use-colors';
 import { authApi } from '../../../lib/api/auth';
 import { getInitials } from '../../../lib/utils/formatters';
 import { SettingsRow, SettingsSection } from '../../../components/settings/SettingsRow';
 import { Entrance } from '../../../components/animations';
-import type { AppColors } from '../../../lib/theme/colors';
+import { THEME } from '../../../lib/theme';
+import { cn } from '../../../lib/utils';
 
 const SUPPORT_EMAIL = 'hello.stayoid@gmail.com';
 
-// ── Theme picker (3-option segmented control) ─────────────────────────────────
-function ThemePicker({ colors }: { colors: AppColors }) {
+function ThemePicker() {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const preference = useThemeStore((s) => s.preference);
   const setPreference = useThemeStore((s) => s.setPreference);
 
@@ -40,19 +42,20 @@ function ThemePicker({ colors }: { colors: AppColors }) {
   ];
 
   return (
-    <View style={{ paddingHorizontal: 14, paddingVertical: 14 }}>
-      <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
+    <View className="px-3.5 py-3.5">
+      <Text
+        className="text-foreground text-sm mb-1"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         Theme
       </Text>
-      <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginBottom: 12 }}>
+      <Text
+        className="text-muted-foreground text-[11px] mb-3"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         Match your phone's appearance or pick a fixed mode
       </Text>
-      <View style={{
-        flexDirection: 'row',
-        backgroundColor: colors.background,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 10, padding: 3,
-      }}>
+      <View className="flex-row bg-background border border-border rounded-[10px] p-[3px]">
         {options.map((opt) => {
           const active = preference === opt.value;
           const Icon = opt.Icon;
@@ -64,19 +67,25 @@ function ThemePicker({ colors }: { colors: AppColors }) {
                 setPreference(opt.value);
               }}
               android_ripple={null}
-              style={{
-                flex: 1,
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
-                paddingVertical: 8, borderRadius: 8,
-                backgroundColor: active ? colors.card : 'transparent',
-              }}
+              className={cn(
+                'flex-1 flex-row items-center justify-center gap-1.5 py-2 rounded-lg',
+                active && 'bg-card',
+              )}
             >
-              <Icon size={13} color={active ? colors.foreground : colors.mutedFg} weight={active ? 'fill' : 'regular'} />
-              <Text style={{
-                color: active ? colors.foreground : colors.mutedFg,
-                fontSize: 12,
-                fontFamily: active ? 'Inter_600SemiBold' : 'Inter_400Regular',
-              }}>
+              <Icon
+                size={13}
+                color={active ? palette.foreground : palette.mutedForeground}
+                weight={active ? 'fill' : 'regular'}
+              />
+              <Text
+                className={cn(
+                  'text-xs',
+                  active ? 'text-foreground' : 'text-muted-foreground',
+                )}
+                style={{
+                  fontFamily: active ? 'Inter_600SemiBold' : 'Inter_400Regular',
+                }}
+              >
                 {opt.label}
               </Text>
             </Pressable>
@@ -87,8 +96,9 @@ function ThemePicker({ colors }: { colors: AppColors }) {
   );
 }
 
-// ── Profile card with inline edit ─────────────────────────────────────────────
-function ProfileCard({ colors }: { colors: AppColors }) {
+function ProfileCard() {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const user    = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const [editing, setEditing] = useState(false);
@@ -119,65 +129,45 @@ function ProfileCard({ colors }: { colors: AppColors }) {
   };
 
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, padding: 16, marginBottom: 16,
-    }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <View style={{
-          width: 56, height: 56, borderRadius: 28,
-          backgroundColor: colors.primaryBg,
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Text style={{ color: colors.primary, fontSize: 18, fontFamily: 'Inter_600SemiBold' }}>
+    <View className="bg-card border border-border rounded-xl p-4 mb-4">
+      <View className="flex-row items-center gap-3.5">
+        <View className="size-14 rounded-full bg-primary-bg items-center justify-center">
+          <Text
+            className="text-primary text-lg"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             {getInitials(user?.name ?? 'U')}
           </Text>
         </View>
 
-        <View style={{ flex: 1, minWidth: 0 }}>
+        <View className="flex-1 min-w-0">
           {editing ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View className="flex-row items-center gap-1.5">
               <TextInput
                 value={draft}
                 onChangeText={setDraft}
                 autoFocus
                 autoCapitalize="words"
                 placeholder="Your name"
-                placeholderTextColor={colors.mutedFg}
-                style={{
-                  flex: 1,
-                  backgroundColor: colors.background,
-                  borderWidth: 1, borderColor: colors.border,
-                  borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7,
-                  color: colors.foreground,
-                  fontSize: 14, fontFamily: 'Inter_600SemiBold',
-                }}
+                placeholderTextColor={palette.mutedForeground}
+                className="flex-1 bg-background border border-border rounded-lg px-2.5 py-1.5 text-foreground text-sm"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
               />
               <Pressable
                 onPress={() => setEditing(false)}
                 disabled={saving}
                 android_ripple={null}
                 hitSlop={6}
-                style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  borderWidth: 1, borderColor: colors.border,
-                  backgroundColor: colors.background,
-                  alignItems: 'center', justifyContent: 'center',
-                }}
+                className="size-8 rounded-lg border border-border bg-background items-center justify-center"
               >
-                <XIcon size={13} color={colors.mutedFg} />
+                <XIcon size={13} color={palette.mutedForeground} />
               </Pressable>
               <Pressable
                 onPress={save}
                 disabled={saving}
                 android_ripple={null}
                 hitSlop={6}
-                style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  backgroundColor: colors.primary,
-                  alignItems: 'center', justifyContent: 'center',
-                }}
+                className="size-8 rounded-lg bg-primary items-center justify-center"
               >
                 {saving ? (
                   <ActivityIndicator size="small" color="#fff" />
@@ -187,13 +177,11 @@ function ProfileCard({ colors }: { colors: AppColors }) {
               </Pressable>
             </View>
           ) : (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View className="flex-row items-center gap-1.5">
               <Text
                 numberOfLines={1}
-                style={{
-                  color: colors.foreground, fontSize: 16,
-                  fontFamily: 'Inter_600SemiBold', flexShrink: 1,
-                }}
+                className="text-foreground text-base shrink"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
               >
                 {user?.name ?? 'You'}
               </Text>
@@ -201,21 +189,18 @@ function ProfileCard({ colors }: { colors: AppColors }) {
                 onPress={startEdit}
                 android_ripple={null}
                 hitSlop={6}
-                style={{
-                  width: 26, height: 26, borderRadius: 6,
-                  backgroundColor: colors.mutedBg,
-                  alignItems: 'center', justifyContent: 'center',
-                }}
+                className="size-[26px] rounded-md bg-muted items-center justify-center"
               >
-                <PencilIcon size={11} color={colors.mutedFg} />
+                <PencilIcon size={11} color={palette.mutedForeground} />
               </Pressable>
             </View>
           )}
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
-            <EnvelopeIcon size={11} color={colors.mutedFg} />
+          <View className="flex-row items-center gap-1 mt-1">
+            <EnvelopeIcon size={11} color={palette.mutedForeground} />
             <Text
               numberOfLines={1}
-              style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular', flexShrink: 1 }}
+              className="text-muted-foreground text-xs shrink"
+              style={{ fontFamily: 'Inter_400Regular' }}
             >
               {user?.email ?? '—'}
             </Text>
@@ -226,7 +211,6 @@ function ProfileCard({ colors }: { colors: AppColors }) {
   );
 }
 
-// ── Last-synced relative formatter ────────────────────────────────────────────
 function formatRelative(iso: string | null): string {
   if (!iso) return 'Never';
   const d = new Date(iso);
@@ -237,9 +221,9 @@ function formatRelative(iso: string | null): string {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
-// ── Screen ────────────────────────────────────────────────────────────────────
 export default function SettingsScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const queryClient = useQueryClient();
 
   const logout = useAuthStore((s) => s.logout);
@@ -255,7 +239,6 @@ export default function SettingsScreen() {
 
   useFocusEffect(useCallback(() => {
     setFocusTick((t) => t + 1);
-    // re-render so "X min ago" updates
     forceTick((t) => t + 1);
   }, []));
 
@@ -282,7 +265,6 @@ export default function SettingsScreen() {
     Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Stayoid%20App%20Feedback`);
   };
   const handleRate = () => {
-    // Will swap to a real store URL when published
     Linking.openURL(Platform.OS === 'ios'
       ? 'https://apps.apple.com/app/stayoid'
       : 'https://play.google.com/store/apps/details?id=com.stayoid.app',
@@ -296,11 +278,10 @@ export default function SettingsScreen() {
     } catch {/* ignore */}
   };
 
-  // Native Alert.alert for destructive confirms — guaranteed cross-platform rendering
   const confirmSignOut = () => {
     Alert.alert(
       'Sign out?',
-      'You\'ll need to sign in again to use the app.',
+      "You'll need to sign in again to use the app.",
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -341,60 +322,53 @@ export default function SettingsScreen() {
       <StatusBar style="auto" />
 
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Header ── */}
         <Entrance trigger={focusTick} style={{ marginBottom: 20 }}>
-          <Text style={{
-            color: colors.foreground,
-            fontSize: 22, fontFamily: 'Inter_600SemiBold',
-            letterSpacing: -0.3, paddingRight: 0.3,
-          }}>
+          <Text
+            className="text-foreground text-[22px] tracking-tight"
+            style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
+          >
             Settings
           </Text>
-          <Text style={{
-            color: colors.mutedFg, fontSize: 13,
-            fontFamily: 'Inter_400Regular', marginTop: 2,
-          }}>
+          <Text
+            className="text-muted-foreground text-[13px] mt-0.5"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             Customise the app and manage your account
           </Text>
         </Entrance>
 
-        {/* ── Profile card ── */}
         <Entrance trigger={focusTick} delay={60}>
-          <ProfileCard colors={colors} />
+          <ProfileCard />
         </Entrance>
 
-        {/* ── Manage ── */}
         <Entrance trigger={focusTick} delay={80}>
-          <SettingsSection title="Manage" colors={colors}>
+          <SettingsSection title="Manage">
             <SettingsRow
               type="nav"
               Icon={UsersIcon}
-              iconBg={colors.successBg}
-              iconColor={colors.success}
+              iconBg={palette.successBg}
+              iconColor={palette.success}
               label="Tenants"
               description="View, add, and manage tenants"
               onPress={() => router.push('/(tabs)/tenants' as never)}
               isFirst
               isLast
-              colors={colors}
             />
           </SettingsSection>
         </Entrance>
 
-        {/* ── Appearance ── */}
         <Entrance trigger={focusTick} delay={100}>
-          <SettingsSection title="Appearance" colors={colors}>
-            <ThemePicker colors={colors} />
+          <SettingsSection title="Appearance">
+            <ThemePicker />
           </SettingsSection>
         </Entrance>
 
-        {/* ── Preferences ── */}
         <Entrance trigger={focusTick} delay={140}>
-          <SettingsSection title="Preferences" colors={colors}>
+          <SettingsSection title="Preferences">
             <SettingsRow
               type="switch"
               Icon={VibrateIcon}
@@ -407,39 +381,36 @@ export default function SettingsScreen() {
               }}
               isFirst
               isLast
-              colors={colors}
             />
           </SettingsSection>
         </Entrance>
 
-        {/* ── Data & Sync ── */}
         <Entrance trigger={focusTick} delay={180}>
-          <SettingsSection title="Data & Sync" colors={colors}>
+          <SettingsSection title="Data & Sync">
             <Pressable
               onPress={handleSync}
               disabled={syncing}
               android_ripple={null}
-              style={{
-                flexDirection: 'row', alignItems: 'center', gap: 12,
-                paddingHorizontal: 14, paddingVertical: 12,
-              }}
+              className="flex-row items-center gap-3 px-3.5 py-3"
             >
-              <View style={{
-                width: 32, height: 32, borderRadius: 8,
-                backgroundColor: colors.mutedBg,
-                alignItems: 'center', justifyContent: 'center',
-              }}>
+              <View className="size-8 rounded-lg bg-muted items-center justify-center">
                 {syncing ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <ActivityIndicator size="small" color={palette.primary} />
                 ) : (
-                  <ArrowsClockwiseIcon size={16} color={colors.mutedFg} weight="bold" />
+                  <ArrowsClockwiseIcon size={16} color={palette.mutedForeground} weight="bold" />
                 )}
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+              <View className="flex-1">
+                <Text
+                  className="text-foreground text-sm"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
+                >
                   {syncing ? 'Syncing…' : 'Sync now'}
                 </Text>
-                <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 }}>
+                <Text
+                  className="text-muted-foreground text-[11px] mt-0.5"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
                   Refresh all dashboards, properties, and tenants
                 </Text>
               </View>
@@ -449,44 +420,39 @@ export default function SettingsScreen() {
               Icon={InfoIcon}
               label="Last synced"
               value={formatRelative(lastSyncedAt)}
-              colors={colors}
             />
           </SettingsSection>
         </Entrance>
 
-        {/* ── Support ── */}
         <Entrance trigger={focusTick} delay={220}>
-          <SettingsSection title="Support" colors={colors}>
+          <SettingsSection title="Support">
             <SettingsRow
               type="nav"
               Icon={ChatDotsIcon}
-              iconBg={colors.infoBg}
-              iconColor={colors.info}
+              iconBg={palette.infoBg}
+              iconColor={palette.info}
               label="Help & Support"
               description="Get in touch with the team"
               onPress={handleSupport}
               isFirst
-              colors={colors}
             />
             <SettingsRow
               type="nav"
               Icon={SmileyIcon}
-              iconBg={colors.successBg}
-              iconColor={colors.success}
+              iconBg={palette.successBg}
+              iconColor={palette.success}
               label="Send Feedback"
               description="Tell us what to improve"
               onPress={handleFeedback}
-              colors={colors}
             />
             <SettingsRow
               type="nav"
               Icon={StarIcon}
-              iconBg={colors.warningBg}
-              iconColor={colors.warning}
+              iconBg={palette.warningBg}
+              iconColor={palette.warning}
               label="Rate the App"
               description="Loving it? Leave a review"
               onPress={handleRate}
-              colors={colors}
             />
             <SettingsRow
               type="nav"
@@ -495,38 +461,33 @@ export default function SettingsScreen() {
               description="Tell another landlord about us"
               onPress={handleShare}
               isLast
-              colors={colors}
             />
           </SettingsSection>
         </Entrance>
 
-        {/* ── About ── */}
         <Entrance trigger={focusTick} delay={260}>
-          <SettingsSection title="About" colors={colors}>
+          <SettingsSection title="About">
             <SettingsRow
               type="nav"
               Icon={HeartIcon}
-              iconBg={colors.primaryBg}
-              iconColor={colors.primary}
+              iconBg={palette.primaryBg}
+              iconColor={palette.primary}
               label="Meet the developer"
               description="The team behind Stayoid"
               onPress={() => router.push('/(tabs)/settings/about' as never)}
               isFirst
-              colors={colors}
             />
             <SettingsRow
               type="nav"
               Icon={FileTextIcon}
               label="Terms of Service"
               onPress={() => router.push('/(tabs)/settings/terms' as never)}
-              colors={colors}
             />
             <SettingsRow
               type="nav"
               Icon={ShieldIcon}
               label="Privacy Policy"
               onPress={() => router.push('/(tabs)/settings/privacy' as never)}
-              colors={colors}
             />
             <SettingsRow
               type="text"
@@ -534,14 +495,12 @@ export default function SettingsScreen() {
               label="Version"
               value={`${appVersion} (${Platform.OS})`}
               isLast
-              colors={colors}
             />
           </SettingsSection>
         </Entrance>
 
-        {/* ── Account ── */}
         <Entrance trigger={focusTick} delay={300}>
-          <SettingsSection title="Account" colors={colors}>
+          <SettingsSection title="Account">
             <SettingsRow
               type="nav"
               Icon={SignOutIcon}
@@ -549,30 +508,33 @@ export default function SettingsScreen() {
               destructive
               onPress={confirmSignOut}
               isFirst
-              colors={colors}
             />
             <SettingsRow
               type="nav"
               Icon={TrashIcon}
-              iconBg={colors.dangerBg}
-              iconColor={colors.danger}
+              iconBg={palette.destructiveBg}
+              iconColor={palette.destructive}
               label="Delete account"
               description="Permanently removes all your data"
               destructive
               onPress={handleDeleteAccount}
               isLast
-              colors={colors}
             />
           </SettingsSection>
         </Entrance>
 
-        {/* Footer note */}
         <Entrance trigger={focusTick} delay={340}>
-          <View style={{ alignItems: 'center', paddingVertical: 12, gap: 4 }}>
-            <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+          <View className="items-center py-3 gap-1">
+            <Text
+              className="text-muted-foreground text-[11px]"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               Made with care in India 🇮🇳
             </Text>
-            <Text style={{ color: colors.mutedFg, fontSize: 10, fontFamily: 'Inter_400Regular' }}>
+            <Text
+              className="text-muted-foreground text-[10px]"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               Stayoid v{appVersion}
             </Text>
           </View>
