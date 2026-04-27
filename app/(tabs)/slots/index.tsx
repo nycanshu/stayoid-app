@@ -228,7 +228,7 @@ export default function SlotsScreen() {
   useProperties();
   const {
     data: slots, isLoading, refetch, isRefetching,
-  } = useSlots(propertyId, undefined);
+  } = useSlots(propertyId, undefined, { allowAll: true });
 
   const handleRefresh = useCallback(() => {
     refetch();

@@ -20,12 +20,19 @@ export function useProperty(slug: string) {
   });
 }
 
-export function useSlots(propertyId?: string, vacant?: boolean) {
+export function useSlots(
+  propertyId?: string,
+  vacant?: boolean,
+  options?: { allowAll?: boolean },
+) {
   return useQuery({
     queryKey: ['slots', propertyId, vacant],
     queryFn: () => slotsApi.list({ property_id: propertyId, vacant }),
     staleTime: 30_000,
-    enabled: !!propertyId,
+    // Without `allowAll`, only fire when a specific property is selected (used by
+    // property detail). With `allowAll: true`, fire even when propertyId is
+    // undefined — the global slots page wants every slot across every property.
+    enabled: !!propertyId || !!options?.allowAll,
   });
 }
 

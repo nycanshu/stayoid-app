@@ -16,25 +16,29 @@ import { useCreateUnit, useUpdateUnit } from '../../lib/hooks/use-units';
 import {
   unitFormSchema, type UnitFormValues,
 } from '../../lib/validations/unit';
+import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
-import type { Unit } from '../../types/property';
+import type { Unit, PropertyType } from '../../types/property';
 
 interface UnitFormModalProps {
-  visible:    boolean;
-  propertyId: string;
-  floorId:    string;
+  visible:       boolean;
+  propertyId:    string;
+  floorId:       string;
+  /** Drives label vocabulary: PG → "Room", FLAT → "Flat". */
+  propertyType?: PropertyType;
   /** Existing unit for edit mode; undefined for create. */
-  unit?:      Unit;
-  onClose:    () => void;
-  onSuccess?: (unit: Unit) => void;
+  unit?:         Unit;
+  onClose:       () => void;
+  onSuccess?:    (unit: Unit) => void;
 }
 
 export function UnitFormModal({
-  visible, propertyId, floorId, unit, onClose, onSuccess,
+  visible, propertyId, floorId, propertyType, unit, onClose, onSuccess,
 }: UnitFormModalProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const labels = getPropertyTypeLabels(propertyType);
   const createUnit = useCreateUnit();
   const updateUnit = useUpdateUnit();
 
@@ -155,13 +159,15 @@ export function UnitFormModal({
                 className="text-foreground text-base tracking-tight"
                 style={{ fontFamily: 'Inter_600SemiBold' }}
               >
-                {isEdit ? 'Edit Unit' : 'Add Unit'}
+                {isEdit ? `Edit ${labels.unitLabel}` : `Add ${labels.unitLabel}`}
               </Text>
               <Text
                 className="text-muted-foreground text-xs mt-0.5"
                 style={{ fontFamily: 'Inter_400Regular' }}
               >
-                {isEdit ? "Update this unit's details" : 'Add a room or flat to this floor'}
+                {isEdit
+                  ? `Update this ${labels.unitLabel.toLowerCase()}'s details`
+                  : `Add a ${labels.unitLabel.toLowerCase()} to this floor`}
               </Text>
             </View>
             <Pressable
@@ -180,7 +186,7 @@ export function UnitFormModal({
                 className="text-foreground text-[13px] mb-1.5"
                 style={{ fontFamily: 'Inter_600SemiBold' }}
               >
-                Unit number <Text className="text-destructive">*</Text>
+                {labels.unitLabel} number <Text className="text-destructive">*</Text>
               </Text>
               <Controller
                 control={control}
@@ -327,7 +333,7 @@ export function UnitFormModal({
                   )}
                   style={{ fontFamily: 'Inter_600SemiBold' }}
                 >
-                  {isSubmitting ? 'Saving…' : (isEdit ? 'Save' : 'Add Unit')}
+                  {isSubmitting ? 'Saving…' : (isEdit ? 'Save' : `Add ${labels.unitLabel}`)}
                 </Text>
               </Pressable>
             </View>

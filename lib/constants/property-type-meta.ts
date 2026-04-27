@@ -62,3 +62,29 @@ export function getPropertyTypeMeta(
 export function getAllPropertyTypeMeta(colors: ColorTokens): PropertyTypeMeta[] {
   return [getPropertyTypeMeta('PG', colors), getPropertyTypeMeta('FLAT', colors)];
 }
+
+/** Just the text labels — no colors needed. Cheaper for components that
+ *  only render copy ("Add Bed", "Room 101", etc.). */
+export interface PropertyTypeLabels {
+  unitLabel: string;          // "Room" | "Flat"
+  unitLabelPlural: string;    // "Rooms" | "Flats"
+  slotLabel: string;          // "Bed" | "Room"
+  slotLabelPlural: string;    // "Beds" | "Rooms"
+  shortLabel: string;         // "PG" | "Flat"
+}
+
+export function getPropertyTypeLabels(type: string | undefined): PropertyTypeLabels {
+  if (type === 'FLAT') {
+    return {
+      unitLabel: 'Flat',  unitLabelPlural: 'Flats',
+      slotLabel: 'Room',  slotLabelPlural: 'Rooms',
+      shortLabel: 'Flat',
+    };
+  }
+  // Default to PG semantics — they're the more granular labels
+  return {
+    unitLabel: 'Room',  unitLabelPlural: 'Rooms',
+    slotLabel: 'Bed',   slotLabelPlural: 'Beds',
+    shortLabel: 'PG',
+  };
+}

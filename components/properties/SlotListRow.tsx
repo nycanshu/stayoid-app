@@ -1,8 +1,9 @@
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { BedIcon, MapPinIcon, PlusIcon } from 'phosphor-react-native';
+import { BedIcon, MapPinIcon, PlusIcon, LockSimpleIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { formatCurrency, getInitials } from '../../lib/utils/formatters';
+import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
 import type { Slot } from '../../types/property';
@@ -14,6 +15,7 @@ interface SlotListRowProps {
 export function SlotListRow({ slot }: SlotListRowProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const labels = getPropertyTypeLabels(slot.property_type);
   const occupied = slot.is_occupied;
   const tenant = slot.active_tenant;
   const rent = Number(slot.monthly_rent);
@@ -29,10 +31,7 @@ export function SlotListRow({ slot }: SlotListRowProps) {
     <Pressable
       onPress={occupied ? goToTenant : assignTenant}
       android_ripple={null}
-      className={cn(
-        'bg-card border border-border rounded-xl p-3.5',
-        !occupied && 'border-l-[3px] border-l-primary',
-      )}
+      className="bg-card border border-border rounded-xl p-3.5"
     >
       <View className="flex-row items-start gap-3">
         <View
@@ -54,31 +53,13 @@ export function SlotListRow({ slot }: SlotListRowProps) {
         </View>
 
         <View className="flex-1 min-w-0">
-          <View className="flex-row items-center gap-1.5 mb-0.5">
-            <Text
-              numberOfLines={1}
-              className="text-foreground text-sm shrink"
-              style={{ fontFamily: 'Inter_600SemiBold' }}
-            >
-              {occupied && tenant ? tenant.name : `Slot ${slot.slot_number}`}
-            </Text>
-            <View
-              className={cn(
-                'rounded-full px-2 py-px',
-                occupied ? 'bg-success-bg' : 'bg-primary-bg',
-              )}
-            >
-              <Text
-                className={cn(
-                  'text-[10px]',
-                  occupied ? 'text-success' : 'text-primary',
-                )}
-                style={{ fontFamily: 'Inter_600SemiBold' }}
-              >
-                {occupied ? 'Occupied' : 'Vacant'}
-              </Text>
-            </View>
-          </View>
+          <Text
+            numberOfLines={1}
+            className="text-foreground text-sm mb-0.5"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
+            {occupied && tenant ? tenant.name : `${labels.slotLabel} ${slot.slot_number}`}
+          </Text>
 
           <View className="flex-row items-center gap-1 mb-0.5">
             <MapPinIcon size={11} color={palette.mutedForeground} />
@@ -87,7 +68,7 @@ export function SlotListRow({ slot }: SlotListRowProps) {
               className="text-muted-foreground text-[11px] flex-1"
               style={{ fontFamily: 'Inter_400Regular' }}
             >
-              {slot.property_name} · Unit {slot.unit_number} · Slot {slot.slot_number}
+              {slot.property_name} · {labels.unitLabel} {slot.unit_number} · {labels.slotLabel} {slot.slot_number}
             </Text>
           </View>
 
@@ -106,7 +87,17 @@ export function SlotListRow({ slot }: SlotListRowProps) {
                 </Text>
               )}
             </Text>
-            {!occupied && (
+            {occupied ? (
+              <View className="flex-row items-center gap-1 bg-warning-bg rounded-lg px-2.5 py-1">
+                <LockSimpleIcon size={11} color={palette.warning} weight="fill" />
+                <Text
+                  className="text-warning text-[11px]"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
+                >
+                  Occupied
+                </Text>
+              </View>
+            ) : (
               <View className="flex-row items-center gap-1 bg-primary rounded-lg px-2.5 py-1">
                 <PlusIcon size={11} color="#fff" weight="bold" />
                 <Text

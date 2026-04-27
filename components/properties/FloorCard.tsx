@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useState, useMemo } from 'react';
 import {
   CaretDownIcon, CaretUpIcon,
-  DoorOpenIcon, UsersIcon, BedIcon, PlusIcon,
+  DoorOpenIcon, UsersIcon, BedIcon, PlusIcon, ArrowSquareOutIcon,
 } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { OccupancyBar } from './OccupancyBar';
@@ -11,9 +11,10 @@ import { UnitFormModal } from './UnitFormModal';
 import { SlotFormModal } from './SlotFormModal';
 import { useUnits } from '../../lib/hooks/use-units';
 import { formatFloorName, formatCurrency } from '../../lib/utils/formatters';
+import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
-import type { Slot } from '../../types/property';
+import type { Slot, PropertyType } from '../../types/property';
 
 interface UnitGroup {
   unit_number: string;
@@ -26,6 +27,11 @@ interface FloorCardProps {
   slots: Slot[];
   propertyId: string;
   floorId: string;
+  /** Drives label vocabulary: PG → "Room"/"Bed", FLAT → "Flat"/"Room". */
+  propertyType?: PropertyType;
+  /** Slugs needed to deep-link to the floor / unit detail pages. */
+  propertySlug?: string;
+  floorSlug?: string;
 }
 
 function getFloorBadgeClasses(floorNumber: number): { bg: string; fg: string } {
@@ -96,21 +102,34 @@ function UnitSection({
   unit,
   unitId,
   onAddSlot,
+  onOpen,
+  unitWord,
+  slotWord,
 }: {
   unit: UnitGroup;
   unitId: string | undefined;
   onAddSlot: (unitId: string, unitLabel: string) => void;
+  onOpen?: () => void;
+  /** Singular unit label like "Room" / "Flat" — drives display only. */
+  unitWord: string;
+  /** Singular slot label like "Bed" / "Room" — drives display only. */
+  slotWord: string;
 }) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
 
   const occupied = unit.slots.filter((s) => s.is_occupied).length;
   const total    = unit.slots.length;
-  const unitLabel = `Unit ${unit.unit_number}`;
+  const unitLabel = `${unitWord} ${unit.unit_number}`;
 
   return (
     <View className="bg-background border border-border rounded-[10px] mt-2.5 overflow-hidden">
-      <View className="flex-row items-center gap-2.5 px-3 py-2.5">
+      <Pressable
+        onPress={onOpen}
+        disabled={!onOpen}
+        android_ripple={null}
+        className="flex-row items-center gap-2.5 px-3 py-2.5"
+      >
         <View className="size-7 rounded-lg bg-muted items-center justify-center">
           <DoorOpenIcon size={14} color={palette.mutedForeground} weight="duotone" />
         </View>
@@ -125,12 +144,17 @@ function UnitSection({
             className="text-muted-foreground text-[11px] mt-px"
             style={{ fontFamily: 'Inter_400Regular' }}
           >
-            {total === 0 ? 'No slots yet' : `${occupied}/${total} occupied`}
+            {total === 0
+              ? `No ${slotWord.toLowerCase()}s yet`
+              : `${occupied}/${total} occupied`}
           </Text>
         </View>
         {unitId && (
           <Pressable
-            onPress={() => onAddSlot(unitId, unitLabel)}
+            onPress={(e) => {
+              e.stopPropagation();
+              onAddSlot(unitId, unitLabel);
+            }}
             android_ripple={null}
             hitSlop={6}
             className="flex-row items-center gap-1 bg-primary rounded-lg px-2 py-1.5"
@@ -140,19 +164,22 @@ function UnitSection({
               className="text-white text-[11px]"
               style={{ fontFamily: 'Inter_600SemiBold' }}
             >
-              Slot
+              {slotWord}
             </Text>
           </Pressable>
         )}
-      </View>
+      </Pressable>
       {unit.slots.map((s) => <SlotRow key={s.id} slot={s} />)}
     </View>
   );
 }
 
-export function FloorCard({ floorNumber, slots, propertyId, floorId }: FloorCardProps) {
+export function FloorCard({
+  floorNumber, slots, propertyId, floorId, propertyType, propertySlug, floorSlug,
+}: FloorCardProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const labels = getPropertyTypeLabels(propertyType);
   const [expanded, setExpanded] = useState(false);
   const [unitFormOpen, setUnitFormOpen] = useState(false);
   const [slotFormState, setSlotFormState] = useState<
@@ -231,7 +258,7 @@ export function FloorCard({ floorNumber, slots, propertyId, floorId }: FloorCard
                 className="text-muted-foreground text-[11px]"
                 style={{ fontFamily: 'Inter_400Regular' }}
               >
-                {unitsCount} {unitsCount === 1 ? 'unit' : 'units'}
+                {unitsCount} {unitsCount === 1 ? labels.unitLabel.toLowerCase() : labels.unitLabelPlural.toLowerCase()}
               </Text>
             </View>
             <View className="flex-row items-center gap-0.5">
@@ -254,6 +281,19 @@ export function FloorCard({ floorNumber, slots, propertyId, floorId }: FloorCard
             </View>
           </View>
         </View>
+        {propertySlug && floorSlug && (
+          <Pressable
+            onPress={(e) => {
+              e.stopPropagation();
+              router.push(`/(tabs)/properties/${propertySlug}/floors/${floorSlug}` as never);
+            }}
+            android_ripple={null}
+            hitSlop={6}
+            className="size-8 rounded-lg items-center justify-center mr-1"
+          >
+            <ArrowSquareOutIcon size={14} color={palette.mutedForeground} />
+          </Pressable>
+        )}
         {expanded
           ? <CaretUpIcon size={16} color={palette.mutedForeground} />
           : <CaretDownIcon size={16} color={palette.mutedForeground} />}
@@ -285,6 +325,16 @@ export function FloorCard({ floorNumber, slots, propertyId, floorId }: FloorCard
               unit={unit}
               unitId={unitIdBySlug.get(unit.unit_slug)}
               onAddSlot={openSlotModal}
+              unitWord={labels.unitLabel}
+              slotWord={labels.slotLabel}
+              onOpen={
+                propertySlug && floorSlug
+                  ? () =>
+                      router.push(
+                        `/(tabs)/properties/${propertySlug}/floors/${floorSlug}/units/${unit.unit_slug}` as never,
+                      )
+                  : undefined
+              }
             />
           ))}
 
@@ -298,7 +348,7 @@ export function FloorCard({ floorNumber, slots, propertyId, floorId }: FloorCard
               className="text-primary text-[13px]"
               style={{ fontFamily: 'Inter_600SemiBold' }}
             >
-              Add Unit
+              Add {labels.unitLabel}
             </Text>
           </Pressable>
         </View>
@@ -308,6 +358,7 @@ export function FloorCard({ floorNumber, slots, propertyId, floorId }: FloorCard
         visible={unitFormOpen}
         propertyId={propertyId}
         floorId={floorId}
+        propertyType={propertyType}
         onClose={() => setUnitFormOpen(false)}
       />
 
@@ -317,6 +368,7 @@ export function FloorCard({ floorNumber, slots, propertyId, floorId }: FloorCard
         floorId={floorId}
         unitId={slotFormState.unitId}
         unitLabel={slotFormState.unitLabel}
+        propertyType={propertyType}
         onClose={() => setSlotFormState((s) => ({ ...s, open: false }))}
       />
     </View>

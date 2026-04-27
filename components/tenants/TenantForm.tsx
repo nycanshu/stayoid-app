@@ -22,6 +22,7 @@ import {
   formatCurrency, formatFloorName,
   GENDER_LABELS, WORK_TYPE_LABELS, ID_PROOF_LABELS,
 } from '../../lib/utils/formatters';
+import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { SlotPickerModal } from './SlotPickerModal';
 import { useActionSheet } from '../ui/ActionSheet';
 import { Entrance } from '../animations';
@@ -388,28 +389,42 @@ export function TenantForm({
   const submitLabel    = mode === 'create' ? 'Add Tenant' : 'Save Changes';
   const loadingLabel   = mode === 'create' ? 'Adding…' : 'Saving…';
 
-  const displaySlot = selectedSlot
-    ? {
-        propertyName:  selectedProperty?.name ?? '',
-        floorNumber:   selectedSlot.floor_number,
-        unitNumber:    selectedSlot.unit_number,
-        slotNumber:    selectedSlot.slot_number,
-        monthlyRent:   slotRent,
-      }
-    : tenant
-    ? {
-        propertyName: tenant.property_name,
-        floorNumber:  null as number | null,
-        unitNumber:   tenant.unit_number,
-        slotNumber:   tenant.slot_number,
-        monthlyRent:  Number(tenant.monthly_rent),
-      }
-    : null;
+  let displaySlot: {
+    propertyName: string;
+    floorNumber: number | null;
+    unitNumber: string;
+    slotNumber: string;
+    monthlyRent: number;
+  } | null = null;
+  if (selectedSlot) {
+    displaySlot = {
+      propertyName: selectedProperty?.name ?? '',
+      floorNumber: selectedSlot.floor_number,
+      unitNumber: selectedSlot.unit_number,
+      slotNumber: selectedSlot.slot_number,
+      monthlyRent: slotRent,
+    };
+  } else if (tenant) {
+    displaySlot = {
+      propertyName: tenant.property_name,
+      floorNumber: null,
+      unitNumber: tenant.unit_number,
+      slotNumber: tenant.slot_number,
+      monthlyRent: Number(tenant.monthly_rent),
+    };
+  }
+
+  // Drive label vocabulary from whichever property type we know about.
+  const labels = getPropertyTypeLabels(
+    selectedSlot?.property_type
+    ?? selectedProperty?.property_type
+    ?? tenant?.property_type,
+  );
 
   return (
     <>
       <Entrance trigger={1}>
-        <SectionCard title="Slot assignment" Icon={HouseIcon} mutedFg={palette.mutedForeground}>
+        <SectionCard title={`${labels.slotLabel} assignment`} Icon={HouseIcon} mutedFg={palette.mutedForeground}>
           {displaySlot ? (
             <Pressable
               onPress={() => setPickerOpen(true)}
@@ -435,7 +450,7 @@ export function TenantForm({
                   {displaySlot.floorNumber !== null
                     ? `${formatFloorName(displaySlot.floorNumber)} · `
                     : ''}
-                  Unit {displaySlot.unitNumber} · Slot {displaySlot.slotNumber}
+                  {labels.unitLabel} {displaySlot.unitNumber} · {labels.slotLabel} {displaySlot.slotNumber}
                 </Text>
                 {displaySlot.monthlyRent > 0 && (
                   <Text
@@ -470,7 +485,7 @@ export function TenantForm({
                 className="text-primary text-[13px]"
                 style={{ fontFamily: 'Inter_600SemiBold' }}
               >
-                Select Vacant Slot
+                Select Vacant {labels.slotLabel}
               </Text>
             </Pressable>
           )}

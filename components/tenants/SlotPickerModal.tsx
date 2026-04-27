@@ -8,7 +8,7 @@ import {
 } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { useProperties, useSlots } from '../../lib/hooks/use-properties';
-import { getPropertyTypeMeta } from '../../lib/constants/property-type-meta';
+import { getPropertyTypeMeta, getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { formatCurrency, formatFloorName } from '../../lib/utils/formatters';
 import { Skeleton } from '../ui/skeleton';
 import { THEME } from '../../lib/theme';
@@ -39,6 +39,7 @@ export function SlotPickerModal({
   );
 
   const activeProperty = lockedProperty ?? selectedProperty;
+  const labels = getPropertyTypeLabels(activeProperty?.property_type);
 
   const { data: slots, isLoading: slotsLoading } = useSlots(activeProperty?.id, true);
 
@@ -94,7 +95,9 @@ export function SlotPickerModal({
               className="text-foreground text-lg tracking-tight"
               style={{ fontFamily: 'Inter_600SemiBold' }}
             >
-              {!activeProperty ? 'Select Property' : 'Select Vacant Slot'}
+              {!activeProperty
+                ? 'Select Property'
+                : `Select Vacant ${getPropertyTypeLabels(activeProperty.property_type).slotLabel}`}
             </Text>
             {activeProperty && (
               <Text
@@ -212,7 +215,7 @@ export function SlotPickerModal({
                           className="text-foreground text-xs"
                           style={{ fontFamily: 'Inter_600SemiBold' }}
                         >
-                          Unit {unitNumber}
+                          {labels.unitLabel} {unitNumber}
                         </Text>
                         <Text
                           className="text-muted-foreground text-[11px]"
@@ -242,7 +245,7 @@ export function SlotPickerModal({
                                 className="text-foreground text-[13px]"
                                 style={{ fontFamily: 'Inter_600SemiBold' }}
                               >
-                                Slot {slot.slot_number}
+                                {labels.slotLabel} {slot.slot_number}
                               </Text>
                               <Text
                                 className="text-muted-foreground text-[11px] mt-px"
@@ -287,13 +290,13 @@ export function SlotPickerModal({
                     className="text-foreground text-sm mb-1"
                     style={{ fontFamily: 'Inter_600SemiBold' }}
                   >
-                    No vacant slots
+                    No vacant {labels.slotLabelPlural.toLowerCase()}
                   </Text>
                   <Text
                     className="text-muted-foreground text-xs text-center"
                     style={{ fontFamily: 'Inter_400Regular' }}
                   >
-                    All slots in this property are occupied.
+                    All {labels.slotLabelPlural.toLowerCase()} in this property are occupied.
                   </Text>
                 </View>
               )

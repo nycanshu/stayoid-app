@@ -21,6 +21,7 @@ import {
   formatCurrency, formatTenure, formatLongDate,
   GENDER_LABELS, WORK_TYPE_LABELS, ID_PROOF_LABELS, getInitials,
 } from '../../../../lib/utils/formatters';
+import { getPropertyTypeLabels } from '../../../../lib/constants/property-type-meta';
 import { PaymentRow } from '../../../../components/properties/PaymentRow';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { Entrance } from '../../../../components/animations';
@@ -392,7 +393,7 @@ export default function TenantDetailScreen() {
             </Entrance>
 
             <Entrance trigger={focusTick} delay={100}>
-              <SectionCard title="Slot assignment" Icon={HouseIcon} mutedFg={palette.mutedForeground}>
+              <SectionCard title={`${getPropertyTypeLabels(tenant.property_type).slotLabel} assignment`} Icon={HouseIcon} mutedFg={palette.mutedForeground}>
                 <View className="flex-row items-start gap-1.5 mb-3">
                   <MapPinIcon size={13} color={palette.mutedForeground} style={{ marginTop: 2 }} />
                   <Text
@@ -400,7 +401,7 @@ export default function TenantDetailScreen() {
                     style={{ fontFamily: 'Inter_400Regular' }}
                   >
                     <Text style={{ fontFamily: 'Inter_600SemiBold' }}>{tenant.property_name}</Text>
-                    {' · '}{tenant.unit_number}{' · '}{tenant.slot_number}
+                    {' · '}{getPropertyTypeLabels(tenant.property_type).unitLabel} {tenant.unit_number}{' · '}{getPropertyTypeLabels(tenant.property_type).slotLabel} {tenant.slot_number}
                   </Text>
                 </View>
 

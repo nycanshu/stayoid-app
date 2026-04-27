@@ -16,28 +16,32 @@ import { useCreateSlot, useUpdateSlot } from '../../lib/hooks/use-slot-mutations
 import {
   slotFormSchema, type SlotFormValues,
 } from '../../lib/validations/slot';
+import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
-import type { Slot } from '../../types/property';
+import type { Slot, PropertyType } from '../../types/property';
 
 interface SlotFormModalProps {
-  visible:    boolean;
-  propertyId: string;
-  floorId:    string;
-  unitId:     string;
-  /** Display label like "Unit 101" — shown in the header for context */
-  unitLabel?: string;
+  visible:       boolean;
+  propertyId:    string;
+  floorId:       string;
+  unitId:        string;
+  /** Display label like "Room 101" — shown in the header for context */
+  unitLabel?:    string;
+  /** Drives label vocabulary: PG → "Bed", FLAT → "Room". */
+  propertyType?: PropertyType;
   /** Existing slot for edit mode; undefined for create. */
-  slot?:      Slot;
-  onClose:    () => void;
-  onSuccess?: (slot: Slot) => void;
+  slot?:         Slot;
+  onClose:       () => void;
+  onSuccess?:    (slot: Slot) => void;
 }
 
 export function SlotFormModal({
-  visible, propertyId, floorId, unitId, unitLabel, slot, onClose, onSuccess,
+  visible, propertyId, floorId, unitId, unitLabel, propertyType, slot, onClose, onSuccess,
 }: SlotFormModalProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const labels = getPropertyTypeLabels(propertyType);
   const createSlot = useCreateSlot();
   const updateSlot = useUpdateSlot();
 
@@ -114,6 +118,16 @@ export function SlotFormModal({
     transform: [{ scale: scale.value }],
   }));
 
+  const slotWord = labels.slotLabel.toLowerCase();
+  let headerSubtitle: string;
+  if (isEdit) {
+    headerSubtitle = `Update this ${slotWord}'s details`;
+  } else if (unitLabel) {
+    headerSubtitle = `Add a ${slotWord} to ${unitLabel}`;
+  } else {
+    headerSubtitle = `Add a ${slotWord}`;
+  }
+
   return (
     <Modal
       transparent
@@ -158,18 +172,14 @@ export function SlotFormModal({
                 className="text-foreground text-base tracking-tight"
                 style={{ fontFamily: 'Inter_600SemiBold' }}
               >
-                {isEdit ? 'Edit Slot' : 'Add Slot'}
+                {isEdit ? `Edit ${labels.slotLabel}` : `Add ${labels.slotLabel}`}
               </Text>
               <Text
                 numberOfLines={1}
                 className="text-muted-foreground text-xs mt-0.5"
                 style={{ fontFamily: 'Inter_400Regular' }}
               >
-                {isEdit
-                  ? "Update this slot's details"
-                  : unitLabel
-                    ? `Add a bed or member slot to ${unitLabel}`
-                    : 'Add a bed or member slot'}
+                {headerSubtitle}
               </Text>
             </View>
             <Pressable
@@ -188,7 +198,7 @@ export function SlotFormModal({
                 className="text-foreground text-[13px] mb-1.5"
                 style={{ fontFamily: 'Inter_600SemiBold' }}
               >
-                Slot number <Text className="text-destructive">*</Text>
+                {labels.slotLabel} number <Text className="text-destructive">*</Text>
               </Text>
               <Controller
                 control={control}
@@ -344,7 +354,7 @@ export function SlotFormModal({
                   )}
                   style={{ fontFamily: 'Inter_600SemiBold' }}
                 >
-                  {isSubmitting ? 'Saving…' : (isEdit ? 'Save' : 'Add Slot')}
+                  {isSubmitting ? 'Saving…' : (isEdit ? 'Save' : `Add ${labels.slotLabel}`)}
                 </Text>
               </Pressable>
             </View>

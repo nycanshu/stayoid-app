@@ -484,6 +484,9 @@ export default function PropertyDetailScreen() {
                           slots={slotsByFloor[floorNum] ?? []}
                           propertyId={property.id}
                           floorId={floor.id}
+                          propertyType={property.property_type}
+                          propertySlug={property.slug}
+                          floorSlug={floor.slug}
                         />
                       </Entrance>
                     );
