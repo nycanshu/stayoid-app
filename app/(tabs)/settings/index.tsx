@@ -127,7 +127,7 @@ function ProfileCard({ colors }: { colors: AppColors }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View style={{
           width: 56, height: 56, borderRadius: 28,
-          backgroundColor: `${colors.primary}22`,
+          backgroundColor: colors.primaryBg,
           alignItems: 'center', justifyContent: 'center',
         }}>
           <Text style={{ color: colors.primary, fontSize: 18, fontFamily: 'Inter_600SemiBold' }}>
@@ -506,7 +506,7 @@ export default function SettingsScreen() {
             <SettingsRow
               type="nav"
               Icon={HeartIcon}
-              iconBg={`${colors.primary}22`}
+              iconBg={colors.primaryBg}
               iconColor={colors.primary}
               label="Meet the developer"
               description="The team behind Stayoid"

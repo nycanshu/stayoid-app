@@ -142,7 +142,7 @@ function PillPicker<T extends string>({
           android_ripple={null}
           style={{
             borderWidth: 1, borderColor: !value ? colors.primary : colors.border,
-            backgroundColor: !value ? `${colors.primary}18` : colors.background,
+            backgroundColor: !value ? colors.primaryBg : colors.background,
             borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7,
           }}
         >
@@ -167,7 +167,7 @@ function PillPicker<T extends string>({
             style={{
               borderWidth: selected ? 1.5 : 1,
               borderColor: selected ? colors.primary : colors.border,
-              backgroundColor: selected ? `${colors.primary}18` : colors.background,
+              backgroundColor: selected ? colors.primaryBg : colors.background,
               borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7,
             }}
           >
@@ -202,14 +202,17 @@ function SubmitButton({
         android_ripple={null}
         style={{
           height: 50,
-          backgroundColor: disabled || loading ? `${colors.primary}99` : colors.primary,
+          backgroundColor: disabled || loading ? colors.mutedBg : colors.primary,
           borderRadius: 12,
           alignItems: 'center', justifyContent: 'center',
           flexDirection: 'row', gap: 8,
         }}
       >
-        {loading && <ActivityIndicator size="small" color="#fff" />}
-        <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>
+        {loading && <ActivityIndicator size="small" color={disabled || loading ? colors.mutedFg : '#fff'} />}
+        <Text style={{
+          color: disabled || loading ? colors.mutedFg : '#fff',
+          fontSize: 15, fontFamily: 'Inter_600SemiBold',
+        }}>
           {loading ? loadingLabel : label}
         </Text>
       </Pressable>
@@ -423,7 +426,7 @@ export function TenantForm({
             >
               <View style={{
                 width: 36, height: 36, borderRadius: 10,
-                backgroundColor: `${colors.primary}22`,
+                backgroundColor: colors.primaryBg,
                 alignItems: 'center', justifyContent: 'center',
               }}>
                 <BedIcon size={16} color={colors.primary} weight="duotone" />

@@ -56,7 +56,7 @@ function FilterChips({
               flexDirection: 'row', alignItems: 'center', gap: 6,
               borderWidth: 1,
               borderColor: isActive ? colors.primary : colors.border,
-              backgroundColor: isActive ? `${colors.primary}18` : colors.card,
+              backgroundColor: isActive ? colors.primaryBg : colors.card,
               borderRadius: 99,
               paddingHorizontal: 12, paddingVertical: 7,
             }}

@@ -21,8 +21,19 @@ export const propertiesApi = {
 };
 
 export const floorsApi = {
+  list: (propertyId: string) =>
+    apiClient
+      .get<{ results: Floor[] } | Floor[]>(`/properties/${propertyId}/floors/`)
+      .then((r) => (Array.isArray(r.data) ? r.data : r.data.results)),
+
   create: (propertyId: string, data: { floor_number: number; name?: string }) =>
     apiClient.post<Floor>(`/properties/${propertyId}/floors/`, data).then((r) => r.data),
+
+  update: (propertyId: string, floorId: string, data: Partial<{ floor_number: number; name: string }>) =>
+    apiClient.patch<Floor>(`/properties/${propertyId}/floors/${floorId}/`, data).then((r) => r.data),
+
+  delete: (propertyId: string, floorId: string) =>
+    apiClient.delete(`/properties/${propertyId}/floors/${floorId}/`),
 };
 
 export const unitsApi = {

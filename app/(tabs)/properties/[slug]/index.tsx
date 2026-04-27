@@ -12,6 +12,7 @@ import {
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useProperty, useSlots, useDeleteProperty } from '../../../../lib/hooks/use-properties';
+import { useFloors } from '../../../../lib/hooks/use-floors';
 import { useTenants } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useDashboard } from '../../../../lib/hooks/use-dashboard';
@@ -20,6 +21,7 @@ import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { getPropertyTypeMeta } from '../../../../lib/constants/property-type-meta';
 import { PropertyStatsStrip } from '../../../../components/properties/PropertyStatsStrip';
 import { FloorCard } from '../../../../components/properties/FloorCard';
+import { FloorFormModal } from '../../../../components/properties/FloorFormModal';
 import { TenantRow } from '../../../../components/properties/TenantRow';
 import { PaymentRow } from '../../../../components/properties/PaymentRow';
 import { Skeleton } from '../../../../components/ui/skeleton';
@@ -121,7 +123,17 @@ function TabBar({
               flex: 1, flexDirection: 'row',
               alignItems: 'center', justifyContent: 'center',
               gap: 5, paddingVertical: 8, borderRadius: 8,
+              // Active uses card bg + shadow — same pattern as the website's
+              // shadcn TabsList (data-[state=active]:bg-background shadow-sm).
+              // Without the shadow, white-on-light-gray is invisible in light mode.
               backgroundColor: isActive ? colors.card : 'transparent',
+              ...(isActive && {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.12,
+                shadowRadius: 3,
+                elevation: 2,
+              }),
             }}
           >
             <Text style={{
@@ -131,7 +143,11 @@ function TabBar({
               {tab.label}
             </Text>
             {tab.count !== undefined && tab.count > 0 && (
-              <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+              <Text style={{
+                color: isActive ? colors.foreground : colors.mutedFg,
+                fontSize: 11, fontFamily: 'Inter_400Regular',
+                opacity: isActive ? 0.6 : 1,
+              }}>
                 {tab.count}
               </Text>
             )}
@@ -201,12 +217,14 @@ export default function PropertyDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [activeTab, setActiveTab] = useState<Tab>('floors');
   const [focusTick, setFocusTick] = useState(0);
+  const [floorFormOpen, setFloorFormOpen] = useState(false);
 
   useFocusEffect(useCallback(() => {
     setFocusTick((t) => t + 1);
   }, []));
 
   const { data: property, isLoading: propertyLoading, refetch: refetchProp, isRefetching } = useProperty(slug);
+  const { data: floors,   isLoading: floorsLoading,   refetch: refetchFloors }             = useFloors(property?.id);
   const { data: slots,    isLoading: slotsLoading,    refetch: refetchSlots }              = useSlots(property?.id);
   const { data: tenants,  isLoading: tenantsLoading,  refetch: refetchTenants }            = useTenants({ property_id: property?.id, active: true });
   const { data: payments, isLoading: paymentsLoading, refetch: refetchPayments }           = usePayments({ property_id: property?.id });
@@ -214,24 +232,28 @@ export default function PropertyDetailScreen() {
   const deleteProperty = useDeleteProperty();
 
   const handleRefresh = useCallback(() => {
-    refetchProp(); refetchSlots(); refetchTenants(); refetchPayments();
+    refetchProp(); refetchFloors(); refetchSlots(); refetchTenants(); refetchPayments();
     setFocusTick((t) => t + 1);
-  }, [refetchProp, refetchSlots, refetchTenants, refetchPayments]);
+  }, [refetchProp, refetchFloors, refetchSlots, refetchTenants, refetchPayments]);
 
   const propertyStats = useMemo(
     () => dashboard?.properties?.find((p) => p.id === property?.id),
     [dashboard?.properties, property?.id],
   );
 
-  const floorGroups = useMemo(() => {
+  // Group slots by floor_number for in-floor display
+  const slotsByFloor = useMemo(() => {
     const map: Record<number, Slot[]> = {};
     (slots ?? []).forEach((s) => { (map[s.floor_number] ??= []).push(s); });
     return map;
   }, [slots]);
 
+  // Use the actual floors list as source of truth — even floors with 0 slots show up
   const sortedFloors = useMemo(
-    () => Object.keys(floorGroups).map(Number).sort((a, b) => a - b),
-    [floorGroups],
+    () => (floors ?? [])
+      .map((f) => f.floor_number)
+      .sort((a, b) => a - b),
+    [floors],
   );
 
   const totalSlots  = slots?.length ?? 0;
@@ -426,7 +448,7 @@ export default function PropertyDetailScreen() {
         {/* ── Floors tab ─────────────────────────────────────────────────── */}
         {activeTab === 'floors' && (
           <Entrance trigger={`floors-${focusTick}`} delay={120}>
-            {slotsLoading ? (
+            {(floorsLoading || slotsLoading) ? (
               <View style={{ gap: 10 }}>
                 {[0, 1, 2].map((i) => (
                   <View key={i} style={{
@@ -445,24 +467,92 @@ export default function PropertyDetailScreen() {
                 ))}
               </View>
             ) : sortedFloors.length === 0 ? (
-              <EmptyCard
-                Icon={StackIcon}
-                title="No floors yet"
-                description="Add floors and rooms from the web app to see them here."
-                colors={colors}
-              />
-            ) : (
-              <View style={{ gap: 10 }}>
-                {sortedFloors.map((floorNum, i) => (
-                  <Entrance key={floorNum} delay={i * 55} trigger={`floors-${focusTick}`}>
-                    <FloorCard
-                      floorNumber={floorNum}
-                      slots={floorGroups[floorNum]}
-                      colors={colors}
-                    />
-                  </Entrance>
-                ))}
+              // Empty state with prominent "Add Floor" CTA
+              <View style={{
+                backgroundColor: colors.card,
+                borderWidth: 1, borderColor: colors.border,
+                borderRadius: 12, padding: 28,
+                alignItems: 'center',
+              }}>
+                <View style={{
+                  width: 52, height: 52, borderRadius: 16,
+                  backgroundColor: colors.primaryBg,
+                  alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+                }}>
+                  <StackIcon size={24} color={colors.primary} weight="duotone" />
+                </View>
+                <Text style={{
+                  color: colors.foreground, fontSize: 14,
+                  fontFamily: 'Inter_600SemiBold', marginBottom: 4, textAlign: 'center',
+                }}>
+                  No floors yet
+                </Text>
+                <Text style={{
+                  color: colors.mutedFg, fontSize: 12,
+                  fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 18,
+                  marginBottom: 14,
+                }}>
+                  Add your first floor to start organising {meta?.unitLabelPlural.toLowerCase() ?? 'units'} and {meta?.slotLabelPlural.toLowerCase() ?? 'beds'}.
+                </Text>
+                <Pressable
+                  onPress={() => setFloorFormOpen(true)}
+                  android_ripple={null}
+                  style={({ pressed }) => ({
+                    flexDirection: 'row', alignItems: 'center', gap: 6,
+                    backgroundColor: colors.primary,
+                    opacity: pressed ? 0.85 : 1,
+                    borderRadius: 10,
+                    paddingHorizontal: 14, paddingVertical: 10,
+                  })}
+                >
+                  <PlusIcon size={13} color="#fff" weight="bold" />
+                  <Text style={{ color: '#fff', fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+                    Add Floor
+                  </Text>
+                </Pressable>
               </View>
+            ) : (
+              <>
+                {/* Header row with count + Add Floor button */}
+                <View style={{
+                  flexDirection: 'row', alignItems: 'center',
+                  justifyContent: 'space-between', marginBottom: 12,
+                }}>
+                  <Text style={{
+                    color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular',
+                  }}>
+                    {sortedFloors.length} {sortedFloors.length === 1 ? 'floor' : 'floors'}
+                  </Text>
+                  <Pressable
+                    onPress={() => setFloorFormOpen(true)}
+                    android_ripple={null}
+                    hitSlop={6}
+                    style={({ pressed }) => ({
+                      flexDirection: 'row', alignItems: 'center', gap: 5,
+                      backgroundColor: colors.primary,
+                      opacity: pressed ? 0.85 : 1,
+                      borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7,
+                    })}
+                  >
+                    <PlusIcon size={12} color="#fff" weight="bold" />
+                    <Text style={{ color: '#fff', fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+                      Add Floor
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <View style={{ gap: 10 }}>
+                  {sortedFloors.map((floorNum, i) => (
+                    <Entrance key={floorNum} delay={i * 55} trigger={`floors-${focusTick}`}>
+                      <FloorCard
+                        floorNumber={floorNum}
+                        slots={slotsByFloor[floorNum] ?? []}
+                        colors={colors}
+                      />
+                    </Entrance>
+                  ))}
+                </View>
+              </>
             )}
           </Entrance>
         )}
@@ -567,6 +657,15 @@ export default function PropertyDetailScreen() {
           </Entrance>
         )}
       </ScrollView>
+
+      {/* Floor add/edit modal */}
+      {property && (
+        <FloorFormModal
+          visible={floorFormOpen}
+          propertyId={property.id}
+          onClose={() => setFloorFormOpen(false)}
+        />
+      )}
     </SafeAreaView>
   );
 }

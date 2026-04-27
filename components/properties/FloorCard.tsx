@@ -50,7 +50,7 @@ function SlotRow({ slot, colors }: { slot: Slot; colors: AppColors }) {
     >
       <View style={{
         width: 28, height: 28, borderRadius: 8,
-        backgroundColor: occupied ? `${colors.primary}22` : colors.mutedBg,
+        backgroundColor: occupied ? colors.primaryBg : colors.mutedBg,
         alignItems: 'center', justifyContent: 'center',
       }}>
         <Text style={{

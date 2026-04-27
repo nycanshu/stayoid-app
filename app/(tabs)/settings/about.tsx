@@ -58,7 +58,7 @@ function MemberCard({ member, colors }: { member: Member; colors: AppColors }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: member.bio ? 12 : 0 }}>
         <View style={{
           width: 52, height: 52, borderRadius: 26,
-          backgroundColor: `${colors.primary}22`,
+          backgroundColor: colors.primaryBg,
           alignItems: 'center', justifyContent: 'center',
         }}>
           <Text style={{ color: colors.primary, fontSize: 17, fontFamily: 'Inter_600SemiBold' }}>
@@ -171,7 +171,7 @@ export default function AboutScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <View style={{
                 width: 38, height: 38, borderRadius: 10,
-                backgroundColor: `${colors.primary}22`,
+                backgroundColor: colors.primaryBg,
                 alignItems: 'center', justifyContent: 'center',
               }}>
                 <RocketIcon size={18} color={colors.primary} weight="fill" />

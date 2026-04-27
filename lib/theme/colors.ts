@@ -7,6 +7,7 @@ export const LIGHT = {
   mutedFg:     '#737373',
 
   primary:     '#4F9D7E',
+  primaryBg:   '#E5F3EE',  // soft tint of primary for chips/icon-bgs (no alpha)
   success:     '#22C55E',
   successBg:   '#DCFCE7',
   warning:     '#F59E0B',
@@ -20,12 +21,16 @@ export const LIGHT = {
 export const DARK = {
   background:  '#0F0F0F',
   card:        '#181818',
-  border:      '#272727',
+  // border is now visibly distinct from BOTH `card` (#181818) and `mutedBg`
+  // (#272727) — previously border===mutedBg which made any "muted button on
+  // card with border" combination look invisible in dark mode.
+  border:      '#3A3A3A',
   foreground:  '#FAFAFA',
   mutedBg:     '#272727',
   mutedFg:     '#A3A3A3',
 
   primary:     '#4F9D7E',
+  primaryBg:   '#1A3C2E',  // dark tint of primary for chips/icon-bgs (no alpha)
   success:     '#22C55E',
   successBg:   '#1E3C28',
   warning:     '#F59E0B',

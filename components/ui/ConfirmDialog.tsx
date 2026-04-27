@@ -10,7 +10,6 @@ import Animated, {
   runOnJS, Easing,
 } from 'react-native-reanimated';
 import { useColors } from '../../lib/hooks/use-colors';
-import { blend } from '../../lib/theme/blend';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 // Cap dialog width — never wider than 380, never wider than the screen minus 48px gutter
@@ -94,13 +93,6 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
   }));
 
   const isDestructive = !!config?.destructive;
-  // ── Cancel button colors: blend foreground into card bg so they're a SOLID
-  //    different shade from the card on EVERY theme. Then a strong border on top.
-  //    Light mode card #FFFFFF → cancelBg ≈ #F0F0F0 (clearly different)
-  //    Dark  mode card #181818 → cancelBg ≈ #242424 (clearly different)
-  const cancelBg      = blend(colors.foreground, colors.card, 0.07);
-  const cancelOutline = blend(colors.foreground, colors.card, 0.30);
-  const cardOutline   = blend(colors.foreground, colors.card, 0.20);
   const confirmLabel  = config?.confirmLabel ?? (isDestructive ? 'Delete' : 'Confirm');
   const cancelLabel   = config?.cancelLabel ?? 'Cancel';
   const confirmBg     = isDestructive ? colors.danger : colors.primary;
@@ -139,7 +131,7 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
               {
                 width: DIALOG_MAX_W,
                 backgroundColor: colors.card,
-                borderColor: cardOutline,
+                borderColor: colors.border,
               },
               cardStyle,
             ]}
@@ -166,9 +158,9 @@ export function ConfirmDialogProvider({ children }: { children: ReactNode }) {
                     styles.btn,
                     styles.btnSecondary,
                     {
-                      backgroundColor: pressed ? blend(colors.foreground, cancelBg, 0.15) : cancelBg,
-                      borderColor: cancelOutline,
-                      opacity: busy ? 0.6 : 1,
+                      backgroundColor: colors.mutedBg,
+                      borderColor: colors.border,
+                      opacity: pressed ? 0.7 : busy ? 0.6 : 1,
                     },
                   ]}
                 >

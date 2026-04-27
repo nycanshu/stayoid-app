@@ -13,7 +13,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { CheckIcon } from 'phosphor-react-native';
 import { useColors } from '../../lib/hooks/use-colors';
-import { blend } from '../../lib/theme/blend';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 const SHEET_MAX_H = SCREEN_H * 0.85;
@@ -64,18 +63,19 @@ function OptionButton({
   const Icon = option.Icon;
   const fg   = option.destructive ? colors.danger : colors.foreground;
 
-  // Three-level depth: sheet (background) → cards (card) → buttons (mutedBg)
+  // Three-level depth: sheet (background) → cards (card) → buttons
+  // Each option uses theme tokens directly — same pattern as the dashboard.
   const bg = option.destructive
     ? colors.dangerBg
     : option.selected
-      ? blend(colors.primary, colors.card, 0.18)
+      ? colors.primaryBg   // subtle green tint for selected
       : colors.card;
 
   const border = option.destructive
     ? colors.danger
     : option.selected
       ? colors.primary
-      : blend(colors.foreground, colors.card, 0.18);  // visible on card bg
+      : colors.border;          // adapts: light #E5E7EB / dark #3A3A3A
 
   return (
     <Pressable
@@ -176,8 +176,7 @@ export function ActionSheetProvider({ children }: { children: ReactNode }) {
   const sheetStyle    = useAnimatedStyle(() => ({ transform: [{ translateY: translate.value }] }));
 
   // Card outline that's always visible regardless of theme
-  const titleOutline  = blend(colors.foreground, colors.background, 0.20);
-  const cancelOutline = blend(colors.foreground, colors.background, 0.20);
+  // Use theme tokens directly — same pattern as the dashboard's cards.
 
   return (
     <ActionSheetContext.Provider value={{ show: open, hide: close }}>
@@ -205,7 +204,7 @@ export function ActionSheetProvider({ children }: { children: ReactNode }) {
               position: 'absolute', left: 0, right: 0, bottom: 0,
               backgroundColor: colors.background,
               borderTopLeftRadius: 24, borderTopRightRadius: 24,
-              borderTopWidth: 1, borderColor: titleOutline,
+              borderTopWidth: 1, borderColor: colors.border,
               paddingHorizontal: 12,
               paddingTop: 12,
               paddingBottom: Math.max(insets.bottom, 12) + 8,
@@ -229,7 +228,7 @@ export function ActionSheetProvider({ children }: { children: ReactNode }) {
           {(config?.title || config?.message) && (
             <View style={[
               styles.titleCard,
-              { backgroundColor: colors.card, borderColor: titleOutline },
+              { backgroundColor: colors.card, borderColor: colors.border },
             ]}>
               {config?.title && (
                 <Text
@@ -274,7 +273,7 @@ export function ActionSheetProvider({ children }: { children: ReactNode }) {
               android_ripple={null}
               style={[
                 styles.cancel,
-                { backgroundColor: colors.card, borderColor: cancelOutline },
+                { backgroundColor: colors.card, borderColor: colors.border },
               ]}
             >
               <Text style={[styles.cancelText, { color: colors.foreground }]}>

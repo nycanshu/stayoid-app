@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import {
   HouseIcon, BuildingsIcon, CreditCardIcon, GearSixIcon,
 } from 'phosphor-react-native';
@@ -126,7 +127,18 @@ function FloatingTabBar({ state, navigation }: any) {
               target: route.key,
               canPreventDefault: true,
             });
-            if (!isFocused && !event.defaultPrevented) {
+            if (event.defaultPrevented) return;
+
+            if (isFocused) {
+              // Re-tap on the currently focused tab → pop its inner stack to
+              // root and bring the user back to the tab's default screen.
+              Haptics.selectionAsync();
+              navigation.dispatch({
+                type: 'NAVIGATE',
+                payload: { name: route.name },
+                target: state.key,
+              });
+            } else {
               navigation.navigate(route.name, route.params);
             }
           };

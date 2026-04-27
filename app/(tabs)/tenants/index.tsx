@@ -40,7 +40,7 @@ function FilterChips({
         const count = counts[k];
         const isUnpaid = k === 'unpaid';
         const accent = isUnpaid ? colors.warning : colors.primary;
-        const accentBg = isUnpaid ? colors.warningBg : `${colors.primary}18`;
+        const accentBg = isUnpaid ? colors.warningBg : colors.primaryBg;
         return (
           <Pressable
             key={k}

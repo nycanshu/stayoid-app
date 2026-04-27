@@ -250,12 +250,12 @@ export function SlotPickerModal({
                               flexDirection: 'row', alignItems: 'center', gap: 10,
                               paddingHorizontal: 12, paddingVertical: 11,
                               borderTopWidth: 1, borderTopColor: colors.border,
-                              backgroundColor: isSelected ? `${colors.primary}10` : 'transparent',
+                              backgroundColor: isSelected ? colors.primaryBg : 'transparent',
                             }}
                           >
                             <View style={{
                               width: 30, height: 30, borderRadius: 8,
-                              backgroundColor: `${colors.primary}22`,
+                              backgroundColor: colors.primaryBg,
                               alignItems: 'center', justifyContent: 'center',
                             }}>
                               <BedIcon size={13} color={colors.primary} weight="duotone" />

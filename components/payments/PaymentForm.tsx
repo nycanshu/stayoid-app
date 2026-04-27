@@ -69,14 +69,17 @@ function SubmitButton({
         android_ripple={null}
         style={{
           height: 50,
-          backgroundColor: disabled || loading ? `${colors.primary}99` : colors.primary,
+          backgroundColor: disabled || loading ? colors.mutedBg : colors.primary,
           borderRadius: 12,
           alignItems: 'center', justifyContent: 'center',
           flexDirection: 'row', gap: 8,
         }}
       >
-        {loading && <ActivityIndicator size="small" color="#fff" />}
-        <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>
+        {loading && <ActivityIndicator size="small" color={disabled || loading ? colors.mutedFg : '#fff'} />}
+        <Text style={{
+          color: disabled || loading ? colors.mutedFg : '#fff',
+          fontSize: 15, fontFamily: 'Inter_600SemiBold',
+        }}>
           {loading ? 'Recording…' : label}
         </Text>
       </Pressable>
