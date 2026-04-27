@@ -16,8 +16,8 @@ export interface PropertyTypeMeta {
   slotLabelPlural: string;
 }
 
-/** Minimal color shape required to compute a meta entry. Both `AppColors`
- *  and `THEME.light/dark` from `lib/theme.ts` satisfy this. */
+/** Minimal color shape required to compute a meta entry. `THEME.light` /
+ *  `THEME.dark` from `lib/theme.ts` satisfy this. */
 type ColorTokens = {
   info: string;
   infoBg: string;

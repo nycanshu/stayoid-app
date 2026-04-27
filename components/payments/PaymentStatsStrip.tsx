@@ -33,7 +33,10 @@ function StatCell({
       </Text>
       <Text
         className={cn('text-base leading-5 text-foreground', valueClass)}
-        style={{ color: valueHex, fontFamily: 'Inter_600SemiBold' }}
+        style={[
+          { fontFamily: 'Inter_600SemiBold' },
+          valueHex ? { color: valueHex } : null,
+        ]}
       >
         {value}
       </Text>

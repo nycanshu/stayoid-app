@@ -35,10 +35,10 @@ export function StatCard({
       </Text>
       <Text
         className="text-lg mb-0.5 text-foreground"
-        style={{
-          color: valueColor,
-          fontFamily: 'Inter_600SemiBold',
-        }}
+        style={[
+          { fontFamily: 'Inter_600SemiBold' },
+          valueColor ? { color: valueColor } : null,
+        ]}
       >
         {value}
       </Text>

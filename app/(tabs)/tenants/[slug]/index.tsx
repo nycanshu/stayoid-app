@@ -68,7 +68,10 @@ function InfoRow({
       </Text>
       <Text
         className="text-foreground text-xs flex-1 text-right"
-        style={{ color: valueColor, fontFamily: 'Inter_600SemiBold' }}
+        style={[
+          { fontFamily: 'Inter_600SemiBold' },
+          valueColor ? { color: valueColor } : null,
+        ]}
         numberOfLines={2}
       >
         {value}
