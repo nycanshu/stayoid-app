@@ -9,79 +9,84 @@ import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring,
 } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 import { useCreateProperty, useUpdateProperty } from '../../lib/hooks/use-properties';
 import { propertyFormSchema, type PropertyFormValues } from '../../lib/validations/property';
 import { getAllPropertyTypeMeta, type PropertyTypeMeta } from '../../lib/constants/property-type-meta';
 import { PropertyPreviewCard } from './PropertyPreviewCard';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { PropertyType } from '../../types/property';
 
 const NAME_MAX = 255;
 
-// ── Field primitives ──────────────────────────────────────────────────────────
-function FieldLabel({ children, colors }: { children: React.ReactNode; colors: AppColors }) {
+function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 8 }}>
-      <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+    <View className="flex-row items-center gap-0.5 mb-2">
+      <Text
+        className="text-foreground text-[13px]"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         {children}
       </Text>
-      <Text style={{ color: colors.danger, fontSize: 13 }}>*</Text>
+      <Text className="text-destructive text-[13px]">*</Text>
     </View>
   );
 }
 
-function FieldError({ message, colors }: { message?: string; colors: AppColors }) {
+function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <Text style={{ color: colors.danger, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 6 }}>
+    <Text
+      className="text-destructive text-xs mt-1.5"
+      style={{ fontFamily: 'Inter_400Regular' }}
+    >
       {message}
     </Text>
   );
 }
 
-// ── Type option card ──────────────────────────────────────────────────────────
 function TypeOption({
-  meta, selected, onPress, colors,
+  meta, selected, onPress,
 }: {
-  meta: PropertyTypeMeta; selected: boolean; onPress: () => void; colors: AppColors;
+  meta: PropertyTypeMeta; selected: boolean; onPress: () => void;
 }) {
   const Icon = meta.Icon;
   return (
     <Pressable
       onPress={onPress}
       android_ripple={null}
-      style={{
-        flex: 1,
-        backgroundColor: colors.card,
-        borderWidth: selected ? 1.5 : 1,
-        borderColor: selected ? colors.primary : colors.border,
-        borderRadius: 12,
-        padding: 12,
-      }}
+      className={cn(
+        'flex-1 bg-card rounded-xl p-3',
+        selected ? 'border-[1.5px] border-primary' : 'border border-border',
+      )}
     >
-      <View style={{
-        width: 36, height: 36, borderRadius: 10,
-        backgroundColor: meta.iconBg,
-        alignItems: 'center', justifyContent: 'center',
-        marginBottom: 10,
-      }}>
+      <View
+        style={{ backgroundColor: meta.iconBg }}
+        className="size-9 rounded-[10px] items-center justify-center mb-2.5"
+      >
         <Icon size={18} color={meta.iconColor} weight="fill" />
       </View>
-      <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
+      <Text
+        className="text-foreground text-[13px] mb-1"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         {meta.longLabel}
       </Text>
-      <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 15 }}>
+      <Text
+        className="text-muted-foreground text-[11px] leading-[15px]"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         {meta.description}
       </Text>
     </Pressable>
   );
 }
 
-// ── Submit button ─────────────────────────────────────────────────────────────
 function SubmitButton({
-  onPress, label, loading, disabled, colors,
+  onPress, label, loading, disabled, mutedFg,
 }: {
-  onPress: () => void; label: string; loading: boolean; disabled: boolean; colors: AppColors;
+  onPress: () => void; label: string; loading: boolean; disabled: boolean; mutedFg: string;
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -93,19 +98,24 @@ function SubmitButton({
         onPressIn={() => { scale.value = withSpring(0.97, { damping: 18, stiffness: 240 }); }}
         onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 240 }); }}
         android_ripple={null}
-        style={{
-          height: 50,
-          backgroundColor: disabled || loading ? colors.mutedBg : colors.primary,
-          borderRadius: 12,
-          alignItems: 'center', justifyContent: 'center',
-          flexDirection: 'row', gap: 8,
-        }}
+        className={cn(
+          'h-[50px] rounded-xl items-center justify-center flex-row gap-2',
+          disabled || loading ? 'bg-muted' : 'bg-primary',
+        )}
       >
-        {loading && <ActivityIndicator size="small" color={disabled || loading ? colors.mutedFg : '#fff'} />}
-        <Text style={{
-          color: disabled || loading ? colors.mutedFg : '#fff',
-          fontSize: 15, fontFamily: 'Inter_600SemiBold',
-        }}>
+        {loading && (
+          <ActivityIndicator
+            size="small"
+            color={disabled || loading ? mutedFg : '#fff'}
+          />
+        )}
+        <Text
+          className={cn(
+            'text-[15px]',
+            disabled || loading ? 'text-muted-foreground' : 'text-white',
+          )}
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {loading ? (label === 'Save Changes' ? 'Saving…' : 'Creating…') : label}
         </Text>
       </Pressable>
@@ -113,20 +123,19 @@ function SubmitButton({
   );
 }
 
-// ── Form component ────────────────────────────────────────────────────────────
 interface PropertyFormProps {
   mode: 'create' | 'edit';
   defaultValues?: Partial<PropertyFormValues>;
-  /** Required for edit mode — slug used for the update mutation */
   slug?: string;
   onSuccess: (newSlug: string) => void;
   onCancel: () => void;
-  colors: AppColors;
 }
 
 export function PropertyForm({
-  mode, defaultValues, slug, onSuccess, onCancel, colors,
+  mode, defaultValues, slug, onSuccess, onCancel,
 }: PropertyFormProps) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const createProperty = useCreateProperty();
   const updateProperty = useUpdateProperty();
 
@@ -143,7 +152,6 @@ export function PropertyForm({
     },
   });
 
-  // Reset form when defaultValues arrive (edit mode loading)
   useEffect(() => {
     if (mode === 'edit' && defaultValues) {
       reset({
@@ -158,9 +166,8 @@ export function PropertyForm({
   const propertyType = watch('property_type');
   const address      = watch('address');
 
-  const typeOptions = getAllPropertyTypeMeta(colors);
+  const typeOptions = getAllPropertyTypeMeta(palette);
 
-  // Soft preview opacity hint
   const previewOpacity = useSharedValue(mode === 'edit' ? 1 : 0.75);
   useEffect(() => {
     previewOpacity.value = withTiming(
@@ -188,69 +195,58 @@ export function PropertyForm({
     }
   };
 
-  // For edit mode: enable submit when valid (even if !isDirty, so user can re-save)
   const submitDisabled = mode === 'create' ? (!isValid || !isDirty) : !isValid;
   const submitLabel    = mode === 'create' ? 'Create Property' : 'Save Changes';
 
+  const inputBaseClass = 'bg-background rounded-[10px] px-3.5 py-3 text-sm text-foreground border';
+
   return (
     <>
-      {/* ── Form card ── */}
-      <View style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, padding: 16,
-        marginBottom: 12,
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-          <BuildingsIcon size={16} color={colors.mutedFg} weight="duotone" />
-          <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+      <View className="bg-card border border-border rounded-xl p-4 mb-3">
+        <View className="flex-row items-center gap-2 mb-[18px]">
+          <BuildingsIcon size={16} color={palette.mutedForeground} weight="duotone" />
+          <Text
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             {mode === 'create' ? 'Property Details' : 'Edit Property'}
           </Text>
         </View>
 
-        {/* Property Name */}
-        <View style={{ marginBottom: 18 }}>
-          <FieldLabel colors={colors}>Property Name</FieldLabel>
+        <View className="mb-[18px]">
+          <FieldLabel>Property Name</FieldLabel>
           <Controller
             control={control}
             name="name"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
                 placeholder="e.g. Sunrise PG"
-                placeholderTextColor={colors.mutedFg}
+                placeholderTextColor={palette.mutedForeground}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 maxLength={NAME_MAX}
-                style={{
-                  backgroundColor: colors.background,
-                  borderWidth: 1,
-                  borderColor: errors.name ? colors.danger : colors.border,
-                  borderRadius: 10,
-                  paddingHorizontal: 14, paddingVertical: 12,
-                  color: colors.foreground,
-                  fontSize: 14, fontFamily: 'Inter_400Regular',
-                }}
+                className={cn(inputBaseClass, errors.name ? 'border-destructive' : 'border-border')}
+                style={{ fontFamily: 'Inter_400Regular' }}
                 autoCapitalize="words"
                 returnKeyType="next"
               />
             )}
           />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-            <FieldError message={errors.name?.message} colors={colors} />
-            <Text style={{
-              color: colors.mutedFg, fontSize: 11,
-              fontFamily: 'Inter_400Regular', marginLeft: 'auto',
-            }}>
+          <View className="flex-row justify-between items-center mt-1.5">
+            <FieldError message={errors.name?.message} />
+            <Text
+              className="text-muted-foreground text-[11px] ml-auto"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               {(name ?? '').length}/{NAME_MAX}
             </Text>
           </View>
         </View>
 
-        {/* Property Type */}
-        <View style={{ marginBottom: 18 }}>
-          <FieldLabel colors={colors}>Property Type</FieldLabel>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View className="mb-[18px]">
+          <FieldLabel>Property Type</FieldLabel>
+          <View className="flex-row gap-2.5">
             {typeOptions.map((opt) => (
               <TypeOption
                 key={opt.value}
@@ -260,79 +256,67 @@ export function PropertyForm({
                   Haptics.selectionAsync();
                   setValue('property_type', opt.value as PropertyType, { shouldDirty: true });
                 }}
-                colors={colors}
               />
             ))}
           </View>
-          <FieldError message={errors.property_type?.message} colors={colors} />
+          <FieldError message={errors.property_type?.message} />
         </View>
 
-        {/* Address */}
         <View>
-          <FieldLabel colors={colors}>Address</FieldLabel>
+          <FieldLabel>Address</FieldLabel>
           <Controller
             control={control}
             name="address"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
                 placeholder="Street, area, city, PIN"
-                placeholderTextColor={colors.mutedFg}
+                placeholderTextColor={palette.mutedForeground}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
-                style={{
-                  backgroundColor: colors.background,
-                  borderWidth: 1,
-                  borderColor: errors.address ? colors.danger : colors.border,
-                  borderRadius: 10,
-                  paddingHorizontal: 14, paddingVertical: 12,
-                  color: colors.foreground,
-                  fontSize: 14, fontFamily: 'Inter_400Regular',
-                  minHeight: 80,
-                }}
+                className={cn(
+                  inputBaseClass,
+                  'min-h-[80px]',
+                  errors.address ? 'border-destructive' : 'border-border',
+                )}
+                style={{ fontFamily: 'Inter_400Regular' }}
               />
             )}
           />
-          <FieldError message={errors.address?.message} colors={colors} />
+          <FieldError message={errors.address?.message} />
         </View>
       </View>
 
-      {/* ── Live Preview ── */}
-      <Animated.View style={[previewStyle, { marginBottom: 20 }]}>
+      <Animated.View style={previewStyle} className="mb-5">
         <PropertyPreviewCard
           name={name ?? ''}
           propertyType={(propertyType ?? 'PG') as PropertyType}
           address={address ?? ''}
           mode={mode}
-          colors={colors}
         />
       </Animated.View>
 
-      {/* ── Actions ── */}
-      <View style={{ gap: 10 }}>
+      <View className="gap-2.5">
         <SubmitButton
           onPress={handleSubmit(onSubmit)}
           label={submitLabel}
           loading={isSubmitting}
           disabled={submitDisabled}
-          colors={colors}
+          mutedFg={palette.mutedForeground}
         />
         <Pressable
           onPress={onCancel}
           disabled={isSubmitting}
           android_ripple={null}
-          style={{
-            height: 48,
-            borderWidth: 1, borderColor: colors.border,
-            backgroundColor: colors.card,
-            borderRadius: 12,
-            alignItems: 'center', justifyContent: 'center',
-          }}
+          className="h-12 border border-border bg-card rounded-xl items-center justify-center"
         >
-          <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+          <Text
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             Cancel
           </Text>
         </Pressable>
