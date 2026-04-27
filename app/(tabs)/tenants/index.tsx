@@ -13,6 +13,7 @@ import { useTenants } from '../../../lib/hooks/use-tenants';
 import { TenantCard } from '../../../components/tenants/TenantCard';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Entrance } from '../../../components/animations';
+import { PropertyFilterBar } from '../../../components/properties/PropertyFilterBar';
 import { THEME } from '../../../lib/theme';
 import { cn } from '../../../lib/utils';
 
@@ -156,6 +157,7 @@ export default function TenantsScreen() {
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const [query, setQuery]         = useState('');
   const [filter, setFilter]       = useState<FilterKey>('all');
+  const [propertyId, setPropertyId] = useState<string | undefined>(undefined);
   const [focusTick, setFocusTick] = useState(0);
 
   useFocusEffect(useCallback(() => {
@@ -165,7 +167,10 @@ export default function TenantsScreen() {
   const {
     data: allTenants, isLoading,
     refetch, isRefetching,
-  } = useTenants({ query: query.trim() || undefined });
+  } = useTenants({
+    query: query.trim() || undefined,
+    property_id: propertyId,
+  });
 
   const filtered = useMemo(() => {
     const list = allTenants ?? [];
@@ -252,6 +257,10 @@ export default function TenantsScreen() {
                   <PlusIcon size={18} color="#fff" weight="bold" />
                 </Pressable>
               </View>
+            </Entrance>
+
+            <Entrance trigger={focusTick} delay={40} style={{ marginBottom: 12 }}>
+              <PropertyFilterBar value={propertyId} onChange={setPropertyId} />
             </Entrance>
 
             <Entrance trigger={focusTick} delay={60} style={{ marginBottom: 12 }}>

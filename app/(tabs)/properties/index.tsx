@@ -13,6 +13,7 @@ import { useColorScheme } from 'nativewind';
 import { PropertyCard } from '../../../components/properties/PropertyCard';
 import { PropertyCardSkeleton } from '../../../components/properties/PropertyCardSkeleton';
 import { AddPropertyCard } from '../../../components/properties/AddPropertyCard';
+import { PortfolioStatsStrip } from '../../../components/properties/PortfolioStatsStrip';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { useProperties } from '../../../lib/hooks/use-properties';
 import { useDashboard } from '../../../lib/hooks/use-dashboard';
@@ -145,6 +146,14 @@ export default function PropertiesScreen() {
                   <PlusIcon size={18} color="#fff" weight="bold" />
                 </Pressable>
               </View>
+            </Entrance>
+
+            <Entrance trigger={focusTick} delay={40} style={{ marginBottom: 12 }}>
+              <PortfolioStatsStrip
+                properties={dashboard?.properties}
+                totalProperties={total}
+                isLoading={isLoading}
+              />
             </Entrance>
 
             <Entrance trigger={focusTick} delay={60}>

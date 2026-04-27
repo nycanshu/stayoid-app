@@ -145,6 +145,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="payments" />
       <Tabs.Screen name="settings" />
       <Tabs.Screen name="tenants" options={{ href: null }} />
+      <Tabs.Screen name="slots" options={{ href: null }} />
     </Tabs>
   );
 }

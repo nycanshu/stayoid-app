@@ -11,7 +11,8 @@ import {
   MoonIcon, SunIcon, MonitorIcon,
   VibrateIcon, ArrowsClockwiseIcon, ChatDotsIcon, StarIcon,
   ShareIcon, FileTextIcon, ShieldIcon, HeartIcon, InfoIcon,
-  SignOutIcon, TrashIcon, SmileyIcon, UsersIcon,
+  SignOutIcon, TrashIcon, SmileyIcon, UsersIcon, CalendarIcon,
+  BedIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import Constants from 'expo-constants';
@@ -205,6 +206,21 @@ function ProfileCard() {
               {user?.email ?? '—'}
             </Text>
           </View>
+          {user?.date_joined && (
+            <View className="flex-row items-center gap-1 mt-0.5">
+              <CalendarIcon size={11} color={palette.mutedForeground} />
+              <Text
+                numberOfLines={1}
+                className="text-muted-foreground text-xs shrink"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
+                Joined{' '}
+                {new Date(user.date_joined).toLocaleDateString('en-IN', {
+                  day: 'numeric', month: 'short', year: 'numeric',
+                })}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -356,6 +372,15 @@ export default function SettingsScreen() {
               description="View, add, and manage tenants"
               onPress={() => router.push('/(tabs)/tenants' as never)}
               isFirst
+            />
+            <SettingsRow
+              type="nav"
+              Icon={BedIcon}
+              iconBg={palette.primaryBg}
+              iconColor={palette.primary}
+              label="Slots"
+              description="Vacancy and occupancy across properties"
+              onPress={() => router.push('/(tabs)/slots' as never)}
               isLast
             />
           </SettingsSection>

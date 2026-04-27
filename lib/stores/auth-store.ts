@@ -7,6 +7,7 @@ interface AuthUser {
   id: number;
   name: string;
   email: string;
+  date_joined?: string;
 }
 
 interface AuthState {

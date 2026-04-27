@@ -18,6 +18,7 @@ import { PaymentStatsStrip } from '../../../components/payments/PaymentStatsStri
 import { MonthNavigator } from '../../../components/payments/MonthNavigator';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Entrance } from '../../../components/animations';
+import { PropertyFilterBar } from '../../../components/properties/PropertyFilterBar';
 import { THEME } from '../../../lib/theme';
 import { cn } from '../../../lib/utils';
 import type { Payment } from '../../../types/payment';
@@ -169,6 +170,7 @@ export default function PaymentsScreen() {
   const [month, setMonth]   = useState(now.getMonth() + 1);
   const [year, setYear]     = useState(now.getFullYear());
   const [filter, setFilter] = useState<FilterKey>('all');
+  const [propertyId, setPropertyId] = useState<string | undefined>(undefined);
   const [focusTick, setFocusTick] = useState(0);
 
   useFocusEffect(useCallback(() => {
@@ -178,12 +180,12 @@ export default function PaymentsScreen() {
   const {
     data: payments, isLoading: paymentsLoading,
     refetch: refetchPayments, isRefetching,
-  } = usePayments({ month, year });
+  } = usePayments({ month, year, property_id: propertyId });
 
   const {
     data: unpaidTenants, isLoading: unpaidLoading,
     refetch: refetchUnpaid,
-  } = useTenants({ unpaid: true, month, year });
+  } = useTenants({ unpaid: true, month, year, property_id: propertyId });
 
   const { data: dashboard } = useDashboard();
 
@@ -273,6 +275,10 @@ export default function PaymentsScreen() {
                   <PlusIcon size={18} color="#fff" weight="bold" />
                 </Pressable>
               </View>
+            </Entrance>
+
+            <Entrance trigger={focusTick} delay={40} style={{ marginBottom: 12 }}>
+              <PropertyFilterBar value={propertyId} onChange={setPropertyId} />
             </Entrance>
 
             <Entrance trigger={focusTick} delay={60} style={{ marginBottom: 12 }}>
