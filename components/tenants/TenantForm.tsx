@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
 } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 import { useCreateTenant, useUpdateTenant } from '../../lib/hooks/use-tenants';
 import {
   tenantFormSchema, type TenantFormValues,
@@ -24,13 +25,13 @@ import {
 import { SlotPickerModal } from './SlotPickerModal';
 import { useActionSheet } from '../ui/ActionSheet';
 import { Entrance } from '../animations';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type {
   Gender, WorkType, IdProofType, Tenant,
 } from '../../types/tenant';
 import type { Slot, Property } from '../../types/property';
 
-// ── Date helpers (local, no UTC drift) ────────────────────────────────────────
 function toISO(d: Date) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -44,7 +45,6 @@ function formatDisplayDate(s?: string) {
   return dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-// ── Phone mask: digits only, max 10 ───────────────────────────────────────────
 function unmaskPhone(s: string) { return s.replace(/\D/g, '').slice(0, 10); }
 function displayPhone(s: string) {
   const d = unmaskPhone(s);
@@ -52,44 +52,48 @@ function displayPhone(s: string) {
   return `${d.slice(0, 5)} ${d.slice(5)}`;
 }
 
-// ── Field primitives ──────────────────────────────────────────────────────────
-function FieldLabel({ children, required, colors }: { children: React.ReactNode; required?: boolean; colors: AppColors }) {
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 8 }}>
-      <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+    <View className="flex-row items-center gap-0.5 mb-2">
+      <Text
+        className="text-foreground text-[13px]"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         {children}
       </Text>
-      {required && <Text style={{ color: colors.danger, fontSize: 13 }}>*</Text>}
+      {required && <Text className="text-destructive text-[13px]">*</Text>}
     </View>
   );
 }
 
-function FieldError({ message, colors }: { message?: string; colors: AppColors }) {
+function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <Text style={{ color: colors.danger, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 6 }}>
+    <Text
+      className="text-destructive text-xs mt-1.5"
+      style={{ fontFamily: 'Inter_400Regular' }}
+    >
       {message}
     </Text>
   );
 }
 
 function SectionCard({
-  title, Icon, colors, children,
+  title, Icon, mutedFg, children,
 }: {
   title: string;
   Icon: React.ComponentType<{ size: number; color: string; weight?: any }>;
-  colors: AppColors;
+  mutedFg: string;
   children: React.ReactNode;
 }) {
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, padding: 16, marginBottom: 12,
-    }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-        <Icon size={16} color={colors.mutedFg} weight="duotone" />
-        <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+    <View className="bg-card border border-border rounded-xl p-4 mb-3">
+      <View className="flex-row items-center gap-2 mb-[18px]">
+        <Icon size={16} color={mutedFg} weight="duotone" />
+        <Text
+          className="text-foreground text-sm"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {title}
         </Text>
       </View>
@@ -99,57 +103,54 @@ function SectionCard({
 }
 
 function FormTextInput({
-  value, onChangeText, onBlur, placeholder, error, colors, ...rest
+  value, onChangeText, onBlur, placeholder, error, mutedFg, ...rest
 }: {
   value: string; onChangeText: (v: string) => void; onBlur?: () => void;
-  placeholder: string; error?: boolean; colors: AppColors;
+  placeholder: string; error?: boolean; mutedFg: string;
 } & Omit<React.ComponentProps<typeof TextInput>, 'value' | 'onChangeText' | 'onBlur' | 'placeholder' | 'style'>) {
   return (
     <TextInput
       placeholder={placeholder}
-      placeholderTextColor={colors.mutedFg}
+      placeholderTextColor={mutedFg}
       value={value}
       onChangeText={onChangeText}
       onBlur={onBlur}
-      style={{
-        backgroundColor: colors.background,
-        borderWidth: 1,
-        borderColor: error ? colors.danger : colors.border,
-        borderRadius: 10,
-        paddingHorizontal: 14, paddingVertical: 12,
-        color: colors.foreground,
-        fontSize: 14, fontFamily: 'Inter_400Regular',
-      }}
+      className={cn(
+        'bg-background border rounded-[10px] px-3.5 py-3 text-foreground text-sm',
+        error ? 'border-destructive' : 'border-border',
+      )}
+      style={{ fontFamily: 'Inter_400Regular' }}
       {...rest}
     />
   );
 }
 
 function PillPicker<T extends string>({
-  options, value, onChange, colors, withClear,
+  options, value, onChange, withClear,
 }: {
   options: { value: T; label: string }[];
   value: T | '';
   onChange: (v: T | '') => void;
-  colors: AppColors;
   withClear?: boolean;
 }) {
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+    <View className="flex-row flex-wrap gap-2">
       {withClear && (
         <Pressable
           onPress={() => onChange('')}
           android_ripple={null}
-          style={{
-            borderWidth: 1, borderColor: !value ? colors.primary : colors.border,
-            backgroundColor: !value ? colors.primaryBg : colors.background,
-            borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7,
-          }}
+          className={cn(
+            'rounded-full px-3 py-1.5 border',
+            !value ? 'bg-primary-bg border-primary' : 'bg-background border-border',
+          )}
         >
-          <Text style={{
-            color: !value ? colors.primary : colors.foreground,
-            fontSize: 12, fontFamily: 'Inter_600SemiBold',
-          }}>
+          <Text
+            className={cn(
+              'text-xs',
+              !value ? 'text-primary' : 'text-foreground',
+            )}
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             None
           </Text>
         </Pressable>
@@ -164,17 +165,20 @@ function PillPicker<T extends string>({
               onChange(opt.value);
             }}
             android_ripple={null}
-            style={{
-              borderWidth: selected ? 1.5 : 1,
-              borderColor: selected ? colors.primary : colors.border,
-              backgroundColor: selected ? colors.primaryBg : colors.background,
-              borderRadius: 99, paddingHorizontal: 12, paddingVertical: 7,
-            }}
+            className={cn(
+              'rounded-full px-3 py-1.5',
+              selected
+                ? 'bg-primary-bg border-[1.5px] border-primary'
+                : 'bg-background border border-border',
+            )}
           >
-            <Text style={{
-              color: selected ? colors.primary : colors.foreground,
-              fontSize: 12, fontFamily: 'Inter_600SemiBold',
-            }}>
+            <Text
+              className={cn(
+                'text-xs',
+                selected ? 'text-primary' : 'text-foreground',
+              )}
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               {opt.label}
             </Text>
           </Pressable>
@@ -185,10 +189,10 @@ function PillPicker<T extends string>({
 }
 
 function SubmitButton({
-  onPress, label, loadingLabel, loading, disabled, colors,
+  onPress, label, loadingLabel, loading, disabled, mutedFg,
 }: {
   onPress: () => void; label: string; loadingLabel: string;
-  loading: boolean; disabled: boolean; colors: AppColors;
+  loading: boolean; disabled: boolean; mutedFg: string;
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -200,19 +204,24 @@ function SubmitButton({
         onPressIn={() => { scale.value = withSpring(0.97, { damping: 18, stiffness: 240 }); }}
         onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 240 }); }}
         android_ripple={null}
-        style={{
-          height: 50,
-          backgroundColor: disabled || loading ? colors.mutedBg : colors.primary,
-          borderRadius: 12,
-          alignItems: 'center', justifyContent: 'center',
-          flexDirection: 'row', gap: 8,
-        }}
+        className={cn(
+          'h-[50px] rounded-xl items-center justify-center flex-row gap-2',
+          disabled || loading ? 'bg-muted' : 'bg-primary',
+        )}
       >
-        {loading && <ActivityIndicator size="small" color={disabled || loading ? colors.mutedFg : '#fff'} />}
-        <Text style={{
-          color: disabled || loading ? colors.mutedFg : '#fff',
-          fontSize: 15, fontFamily: 'Inter_600SemiBold',
-        }}>
+        {loading && (
+          <ActivityIndicator
+            size="small"
+            color={disabled || loading ? mutedFg : '#fff'}
+          />
+        )}
+        <Text
+          className={cn(
+            'text-[15px]',
+            disabled || loading ? 'text-muted-foreground' : 'text-white',
+          )}
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {loading ? loadingLabel : label}
         </Text>
       </Pressable>
@@ -251,21 +260,19 @@ function pickDate(
   });
 }
 
-// ── Form props ────────────────────────────────────────────────────────────────
 interface TenantFormProps {
   mode: 'create' | 'edit';
-  /** For edit mode — existing tenant being edited */
   tenant?: Tenant;
-  /** Optional URL params */
   lockedPropertySlug?: string;
   onSuccess: (slug: string) => void;
   onCancel: () => void;
-  colors: AppColors;
 }
 
 export function TenantForm({
-  mode, tenant, lockedPropertySlug, onSuccess, onCancel, colors,
+  mode, tenant, lockedPropertySlug, onSuccess, onCancel,
 }: TenantFormProps) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const createTenant = useCreateTenant();
   const updateTenant = useUpdateTenant();
@@ -276,7 +283,6 @@ export function TenantForm({
 
   const today = new Date();
 
-  // Defaults — pre-filled in edit mode
   const defaultValues: TenantFormValues = {
     name:                    tenant?.name ?? '',
     phone:                   tenant?.phone ?? '',
@@ -284,7 +290,7 @@ export function TenantForm({
     permanent_address:       tenant?.permanent_address ?? '',
     join_date:               tenant?.join_date ?? toISO(today),
     deposit_amount:          tenant?.deposit_amount ?? '',
-    slot_id:                 tenant ? '' : '',  // edit mode: only set when slot is changed
+    slot_id:                 '',
     email:                   tenant?.email ?? '',
     work_type:               (tenant?.work_type ?? '') as WorkType | '',
     work_location:           tenant?.work_location ?? '',
@@ -303,11 +309,6 @@ export function TenantForm({
     defaultValues,
   });
 
-  // In edit mode, the slot picker is optional — if user doesn't change it,
-  // we don't include slot_id in the PATCH. So we tweak validation: in edit
-  // mode, slot_id can be empty (treated as "keep current slot").
-  // We achieve this by setting a sentinel slot_id once the form mounts in edit
-  // mode so Zod's `min(1)` passes without requiring the user to pick.
   useEffect(() => {
     if (mode === 'edit' && tenant) {
       reset({ ...defaultValues, slot_id: 'KEEP_CURRENT' });
@@ -319,7 +320,6 @@ export function TenantForm({
   const workType = watch('work_type');
   const idType   = watch('id_proof_type');
 
-  // Push slot selection into form when picked, and refresh deposit suggestion.
   useEffect(() => {
     if (selectedSlot) {
       setValue('slot_id', selectedSlot.id, { shouldValidate: true, shouldDirty: true });
@@ -355,7 +355,6 @@ export function TenantForm({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         onSuccess(created.slug);
       } else if (tenant) {
-        // Edit mode: only send slot_id if user explicitly changed it
         const slotChanged = values.slot_id && values.slot_id !== 'KEEP_CURRENT';
         const updated = await updateTenant.mutateAsync({
           id: tenant.id,
@@ -389,7 +388,6 @@ export function TenantForm({
   const submitLabel    = mode === 'create' ? 'Add Tenant' : 'Save Changes';
   const loadingLabel   = mode === 'create' ? 'Adding…' : 'Saving…';
 
-  // For display: in edit mode, fall back to tenant's existing slot info
   const displaySlot = selectedSlot
     ? {
         propertyName:  selectedProperty?.name ?? '',
@@ -410,37 +408,29 @@ export function TenantForm({
 
   return (
     <>
-      {/* ── 1. Slot assignment ── */}
       <Entrance trigger={1}>
-        <SectionCard title="Slot assignment" Icon={HouseIcon} colors={colors}>
+        <SectionCard title="Slot assignment" Icon={HouseIcon} mutedFg={palette.mutedForeground}>
           {displaySlot ? (
             <Pressable
               onPress={() => setPickerOpen(true)}
               android_ripple={null}
-              style={{
-                backgroundColor: colors.background,
-                borderWidth: 1, borderColor: colors.border,
-                borderRadius: 10, padding: 12,
-                flexDirection: 'row', alignItems: 'center', gap: 12,
-              }}
+              className="bg-background border border-border rounded-[10px] p-3 flex-row items-center gap-3"
             >
-              <View style={{
-                width: 36, height: 36, borderRadius: 10,
-                backgroundColor: colors.primaryBg,
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <BedIcon size={16} color={colors.primary} weight="duotone" />
+              <View className="size-9 rounded-[10px] bg-primary-bg items-center justify-center">
+                <BedIcon size={16} color={palette.primary} weight="duotone" />
               </View>
-              <View style={{ flex: 1 }}>
+              <View className="flex-1">
                 <Text
                   numberOfLines={1}
-                  style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}
+                  className="text-foreground text-sm"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
                 >
                   {displaySlot.propertyName}
                 </Text>
                 <Text
                   numberOfLines={1}
-                  style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 }}
+                  className="text-muted-foreground text-[11px] mt-0.5"
+                  style={{ fontFamily: 'Inter_400Regular' }}
                 >
                   {displaySlot.floorNumber !== null
                     ? `${formatFloorName(displaySlot.floorNumber)} · `
@@ -448,12 +438,24 @@ export function TenantForm({
                   Unit {displaySlot.unitNumber} · Slot {displaySlot.slotNumber}
                 </Text>
                 {displaySlot.monthlyRent > 0 && (
-                  <Text style={{ color: colors.foreground, fontSize: 11, fontFamily: 'Inter_600SemiBold', marginTop: 2 }}>
-                    {formatCurrency(displaySlot.monthlyRent)}<Text style={{ color: colors.mutedFg, fontFamily: 'Inter_400Regular' }}>/mo</Text>
+                  <Text
+                    className="text-foreground text-[11px] mt-0.5"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
+                    {formatCurrency(displaySlot.monthlyRent)}
+                    <Text
+                      className="text-muted-foreground"
+                      style={{ fontFamily: 'Inter_400Regular' }}
+                    >
+                      /mo
+                    </Text>
                   </Text>
                 )}
               </View>
-              <Text style={{ color: colors.primary, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+              <Text
+                className="text-primary text-xs"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 Change
               </Text>
             </Pressable>
@@ -461,36 +463,33 @@ export function TenantForm({
             <Pressable
               onPress={() => setPickerOpen(true)}
               android_ripple={null}
-              style={{
-                backgroundColor: colors.background,
-                borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border,
-                borderRadius: 10, padding: 14,
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
+              className="bg-background border-[1.5px] border-dashed border-border rounded-[10px] p-3.5 flex-row items-center justify-center gap-2"
             >
-              <PlusIcon size={14} color={colors.primary} weight="bold" />
-              <Text style={{ color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+              <PlusIcon size={14} color={palette.primary} weight="bold" />
+              <Text
+                className="text-primary text-[13px]"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 Select Vacant Slot
               </Text>
             </Pressable>
           )}
           {mode === 'edit' && (
-            <Text style={{
-              color: colors.mutedFg, fontSize: 11,
-              fontFamily: 'Inter_400Regular', marginTop: 8, lineHeight: 16,
-            }}>
+            <Text
+              className="text-muted-foreground text-[11px] mt-2 leading-4"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               Tap to move this tenant to a different vacant slot. Leave as-is to keep current slot.
             </Text>
           )}
-          <FieldError message={errors.slot_id?.message} colors={colors} />
+          <FieldError message={errors.slot_id?.message} />
         </SectionCard>
       </Entrance>
 
-      {/* ── 2. Personal info ── */}
       <Entrance trigger={1} delay={40}>
-        <SectionCard title="Personal information" Icon={UserIcon} colors={colors}>
-          <View style={{ marginBottom: 16 }}>
-            <FieldLabel required colors={colors}>Full name</FieldLabel>
+        <SectionCard title="Personal information" Icon={UserIcon} mutedFg={palette.mutedForeground}>
+          <View className="mb-4">
+            <FieldLabel required>Full name</FieldLabel>
             <Controller
               control={control}
               name="name"
@@ -503,15 +502,15 @@ export function TenantForm({
                   autoCapitalize="words"
                   returnKeyType="next"
                   error={!!errors.name}
-                  colors={colors}
+                  mutedFg={palette.mutedForeground}
                 />
               )}
             />
-            <FieldError message={errors.name?.message} colors={colors} />
+            <FieldError message={errors.name?.message} />
           </View>
 
-          <View style={{ marginBottom: 16 }}>
-            <FieldLabel required colors={colors}>Phone</FieldLabel>
+          <View className="mb-4">
+            <FieldLabel required>Phone</FieldLabel>
             <Controller
               control={control}
               name="phone"
@@ -525,15 +524,15 @@ export function TenantForm({
                   inputMode="tel"
                   maxLength={11}
                   error={!!errors.phone}
-                  colors={colors}
+                  mutedFg={palette.mutedForeground}
                 />
               )}
             />
-            <FieldError message={errors.phone?.message} colors={colors} />
+            <FieldError message={errors.phone?.message} />
           </View>
 
-          <View style={{ marginBottom: 16 }}>
-            <FieldLabel required colors={colors}>Gender</FieldLabel>
+          <View className="mb-4">
+            <FieldLabel required>Gender</FieldLabel>
             <PillPicker<Gender>
               options={[
                 { value: 'MALE',   label: GENDER_LABELS.MALE   },
@@ -542,12 +541,11 @@ export function TenantForm({
               ]}
               value={gender}
               onChange={(v) => v && setValue('gender', v as Gender, { shouldValidate: true, shouldDirty: true })}
-              colors={colors}
             />
           </View>
 
           <View>
-            <FieldLabel colors={colors}>Email</FieldLabel>
+            <FieldLabel>Email</FieldLabel>
             <Controller
               control={control}
               name="email"
@@ -561,63 +559,55 @@ export function TenantForm({
                   autoCapitalize="none"
                   autoCorrect={false}
                   error={!!errors.email}
-                  colors={colors}
+                  mutedFg={palette.mutedForeground}
                 />
               )}
             />
-            <FieldError message={errors.email?.message} colors={colors} />
+            <FieldError message={errors.email?.message} />
           </View>
         </SectionCard>
       </Entrance>
 
-      {/* ── 3. Permanent address ── */}
       <Entrance trigger={1} delay={80}>
-        <SectionCard title="Permanent address" Icon={MapPinIcon} colors={colors}>
+        <SectionCard title="Permanent address" Icon={MapPinIcon} mutedFg={palette.mutedForeground}>
           <Controller
             control={control}
             name="permanent_address"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
                 placeholder="Hometown / permanent address"
-                placeholderTextColor={colors.mutedFg}
+                placeholderTextColor={palette.mutedForeground}
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
-                style={{
-                  backgroundColor: colors.background,
-                  borderWidth: 1,
-                  borderColor: errors.permanent_address ? colors.danger : colors.border,
-                  borderRadius: 10,
-                  paddingHorizontal: 14, paddingVertical: 12,
-                  color: colors.foreground,
-                  fontSize: 14, fontFamily: 'Inter_400Regular',
-                  minHeight: 70,
-                }}
+                className={cn(
+                  'bg-background border rounded-[10px] px-3.5 py-3 text-foreground text-sm min-h-[70px]',
+                  errors.permanent_address ? 'border-destructive' : 'border-border',
+                )}
+                style={{ fontFamily: 'Inter_400Regular' }}
               />
             )}
           />
-          <FieldError message={errors.permanent_address?.message} colors={colors} />
+          <FieldError message={errors.permanent_address?.message} />
         </SectionCard>
       </Entrance>
 
-      {/* ── 4. Work ── */}
       <Entrance trigger={1} delay={120}>
-        <SectionCard title="Work (optional)" Icon={BriefcaseIcon} colors={colors}>
-          <View style={{ marginBottom: 16 }}>
-            <FieldLabel colors={colors}>Type</FieldLabel>
+        <SectionCard title="Work (optional)" Icon={BriefcaseIcon} mutedFg={palette.mutedForeground}>
+          <View className="mb-4">
+            <FieldLabel>Type</FieldLabel>
             <PillPicker<WorkType>
               options={Object.entries(WORK_TYPE_LABELS).map(([v, l]) => ({ value: v as WorkType, label: l }))}
               value={(workType ?? '') as WorkType | ''}
               onChange={(v) => setValue('work_type', v as WorkType | '', { shouldDirty: true })}
-              colors={colors}
               withClear
             />
           </View>
           <View>
-            <FieldLabel colors={colors}>Work location</FieldLabel>
+            <FieldLabel>Work location</FieldLabel>
             <Controller
               control={control}
               name="work_location"
@@ -627,7 +617,7 @@ export function TenantForm({
                   onChangeText={onChange}
                   onBlur={onBlur}
                   placeholder="Company / area"
-                  colors={colors}
+                  mutedFg={palette.mutedForeground}
                 />
               )}
             />
@@ -635,21 +625,19 @@ export function TenantForm({
         </SectionCard>
       </Entrance>
 
-      {/* ── 5. ID proof ── */}
       <Entrance trigger={1} delay={160}>
-        <SectionCard title="ID proof (optional)" Icon={IdentificationCardIcon} colors={colors}>
-          <View style={{ marginBottom: 16 }}>
-            <FieldLabel colors={colors}>Type</FieldLabel>
+        <SectionCard title="ID proof (optional)" Icon={IdentificationCardIcon} mutedFg={palette.mutedForeground}>
+          <View className="mb-4">
+            <FieldLabel>Type</FieldLabel>
             <PillPicker<IdProofType>
               options={Object.entries(ID_PROOF_LABELS).map(([v, l]) => ({ value: v as IdProofType, label: l }))}
               value={(idType ?? '') as IdProofType | ''}
               onChange={(v) => setValue('id_proof_type', v as IdProofType | '', { shouldDirty: true })}
-              colors={colors}
               withClear
             />
           </View>
           <View>
-            <FieldLabel colors={colors}>ID number</FieldLabel>
+            <FieldLabel>ID number</FieldLabel>
             <Controller
               control={control}
               name="id_proof_number"
@@ -660,7 +648,7 @@ export function TenantForm({
                   onBlur={onBlur}
                   placeholder="Enter ID number"
                   autoCapitalize="characters"
-                  colors={colors}
+                  mutedFg={palette.mutedForeground}
                 />
               )}
             />
@@ -668,11 +656,10 @@ export function TenantForm({
         </SectionCard>
       </Entrance>
 
-      {/* ── 6. Emergency contact ── */}
       <Entrance trigger={1} delay={200}>
-        <SectionCard title="Emergency contact (optional)" Icon={UsersThreeIcon} colors={colors}>
-          <View style={{ marginBottom: 16 }}>
-            <FieldLabel colors={colors}>Name</FieldLabel>
+        <SectionCard title="Emergency contact (optional)" Icon={UsersThreeIcon} mutedFg={palette.mutedForeground}>
+          <View className="mb-4">
+            <FieldLabel>Name</FieldLabel>
             <Controller
               control={control}
               name="emergency_contact_name"
@@ -683,13 +670,13 @@ export function TenantForm({
                   onBlur={onBlur}
                   placeholder="Contact name"
                   autoCapitalize="words"
-                  colors={colors}
+                  mutedFg={palette.mutedForeground}
                 />
               )}
             />
           </View>
           <View>
-            <FieldLabel colors={colors}>Phone</FieldLabel>
+            <FieldLabel>Phone</FieldLabel>
             <Controller
               control={control}
               name="emergency_contact_phone"
@@ -703,20 +690,19 @@ export function TenantForm({
                   inputMode="tel"
                   maxLength={11}
                   error={!!errors.emergency_contact_phone}
-                  colors={colors}
+                  mutedFg={palette.mutedForeground}
                 />
               )}
             />
-            <FieldError message={errors.emergency_contact_phone?.message} colors={colors} />
+            <FieldError message={errors.emergency_contact_phone?.message} />
           </View>
         </SectionCard>
       </Entrance>
 
-      {/* ── 7. Financial details ── */}
       <Entrance trigger={1} delay={240}>
-        <SectionCard title="Financial details" Icon={CurrencyInrIcon} colors={colors}>
-          <View style={{ marginBottom: 16 }}>
-            <FieldLabel required colors={colors}>Join date</FieldLabel>
+        <SectionCard title="Financial details" Icon={CurrencyInrIcon} mutedFg={palette.mutedForeground}>
+          <View className="mb-4">
+            <FieldLabel required>Join date</FieldLabel>
             <Pressable
               onPress={() => pickDate(
                 'Join date',
@@ -725,60 +711,61 @@ export function TenantForm({
                 showActionSheet,
               )}
               android_ripple={null}
-              style={{
-                flexDirection: 'row', alignItems: 'center', gap: 10,
-                backgroundColor: colors.background,
-                borderWidth: 1, borderColor: errors.join_date ? colors.danger : colors.border,
-                borderRadius: 10, paddingHorizontal: 14, height: 46,
-              }}
+              className={cn(
+                'flex-row items-center gap-2.5 bg-background border rounded-[10px] px-3.5 h-[46px]',
+                errors.join_date ? 'border-destructive' : 'border-border',
+              )}
             >
-              <CalendarIcon size={14} color={colors.mutedFg} />
-              <Text style={{ flex: 1, color: colors.foreground, fontSize: 14, fontFamily: 'Inter_400Regular' }}>
+              <CalendarIcon size={14} color={palette.mutedForeground} />
+              <Text
+                className="flex-1 text-foreground text-sm"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 {formatDisplayDate(joinDate)}
               </Text>
-              <CaretDownIcon size={12} color={colors.mutedFg} />
+              <CaretDownIcon size={12} color={palette.mutedForeground} />
             </Pressable>
-            <FieldError message={errors.join_date?.message} colors={colors} />
+            <FieldError message={errors.join_date?.message} />
           </View>
 
           <View>
-            <FieldLabel required colors={colors}>Deposit amount</FieldLabel>
+            <FieldLabel required>Deposit amount</FieldLabel>
             <Controller
               control={control}
               name="deposit_amount"
               render={({ field: { onChange, onBlur, value } }) => (
-                <View style={{
-                  flexDirection: 'row', alignItems: 'center',
-                  backgroundColor: colors.background,
-                  borderWidth: 1,
-                  borderColor: errors.deposit_amount ? colors.danger : colors.border,
-                  borderRadius: 10, paddingHorizontal: 14,
-                }}>
-                  <Text style={{ color: colors.mutedFg, fontSize: 14, fontFamily: 'Inter_400Regular', marginRight: 6 }}>
+                <View
+                  className={cn(
+                    'flex-row items-center bg-background border rounded-[10px] px-3.5',
+                    errors.deposit_amount ? 'border-destructive' : 'border-border',
+                  )}
+                >
+                  <Text
+                    className="text-muted-foreground text-sm mr-1.5"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     ₹
                   </Text>
                   <TextInput
                     placeholder={slotRent > 0 ? String(slotRent) : '10000'}
-                    placeholderTextColor={colors.mutedFg}
+                    placeholderTextColor={palette.mutedForeground}
                     value={value}
                     onChangeText={onChange}
                     onBlur={onBlur}
                     keyboardType="numeric"
                     inputMode="numeric"
-                    style={{
-                      flex: 1, color: colors.foreground,
-                      fontSize: 14, fontFamily: 'Inter_400Regular', paddingVertical: 12,
-                    }}
+                    className="flex-1 text-foreground text-sm py-3"
+                    style={{ fontFamily: 'Inter_400Regular' }}
                   />
                 </View>
               )}
             />
-            <FieldError message={errors.deposit_amount?.message} colors={colors} />
+            <FieldError message={errors.deposit_amount?.message} />
             {mode === 'create' && slotRent > 0 && (
-              <Text style={{
-                color: colors.mutedFg, fontSize: 11,
-                fontFamily: 'Inter_400Regular', marginTop: 6, lineHeight: 16,
-              }}>
+              <Text
+                className="text-muted-foreground text-[11px] mt-1.5 leading-4"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 Suggested from slot rent. Override if you collected a different deposit.
               </Text>
             )}
@@ -786,30 +773,26 @@ export function TenantForm({
         </SectionCard>
       </Entrance>
 
-      {/* ── Actions ── */}
       <Entrance trigger={1} delay={280}>
-        <View style={{ gap: 10 }}>
+        <View className="gap-2.5">
           <SubmitButton
             onPress={handleSubmit(onSubmit)}
             label={submitLabel}
             loadingLabel={loadingLabel}
             loading={isSubmitting}
             disabled={submitDisabled}
-            colors={colors}
+            mutedFg={palette.mutedForeground}
           />
           <Pressable
             onPress={onCancel}
             disabled={isSubmitting}
             android_ripple={null}
-            style={{
-              height: 48,
-              borderWidth: 1, borderColor: colors.border,
-              backgroundColor: colors.card,
-              borderRadius: 12,
-              alignItems: 'center', justifyContent: 'center',
-            }}
+            className="h-12 border border-border bg-card rounded-xl items-center justify-center"
           >
-            <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+            <Text
+              className="text-foreground text-sm"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               Cancel
             </Text>
           </Pressable>
@@ -825,7 +808,6 @@ export function TenantForm({
         }}
         selectedSlotId={selectedSlot?.id}
         lockedPropertySlug={lockedPropertySlug}
-        colors={colors}
       />
     </>
   );

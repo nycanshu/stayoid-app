@@ -12,13 +12,16 @@ import * as Haptics from 'expo-haptics';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
 } from 'react-native-reanimated';
+import { useColorScheme } from 'nativewind';
 import { useRecordPayment } from '../../lib/hooks/use-payments';
 import { useTenants } from '../../lib/hooks/use-tenants';
 import {
   paymentFormSchema, type PaymentFormValues,
 } from '../../lib/validations/payment';
 import {
-  PAYMENT_METHODS, getPaymentMethodMeta, getPaymentStatusMeta,
+  PAYMENT_METHODS,
+  getPaymentMethodMetaScheme,
+  getPaymentStatusMetaScheme,
 } from '../../lib/constants/payment-method-meta';
 import { getPropertyTypeMeta } from '../../lib/constants/property-type-meta';
 import {
@@ -26,36 +29,41 @@ import {
 } from '../../lib/utils/formatters';
 import { TenantPickerModal } from './TenantPickerModal';
 import { useActionSheet } from '../ui/ActionSheet';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { PaymentMethod, PaymentStatus } from '../../types/payment';
 import type { Tenant } from '../../types/tenant';
 
-// ── Field primitives ──────────────────────────────────────────────────────────
-function FieldLabel({ children, required, colors }: { children: React.ReactNode; required?: boolean; colors: AppColors }) {
+function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 8 }}>
-      <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+    <View className="flex-row items-center gap-0.5 mb-2">
+      <Text
+        className="text-foreground text-[13px]"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         {children}
       </Text>
-      {required && <Text style={{ color: colors.danger, fontSize: 13 }}>*</Text>}
+      {required && <Text className="text-destructive text-[13px]">*</Text>}
     </View>
   );
 }
 
-function FieldError({ message, colors }: { message?: string; colors: AppColors }) {
+function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <Text style={{ color: colors.danger, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 6 }}>
+    <Text
+      className="text-destructive text-xs mt-1.5"
+      style={{ fontFamily: 'Inter_400Regular' }}
+    >
       {message}
     </Text>
   );
 }
 
-// ── Submit button — spring-press, loading state ───────────────────────────────
 function SubmitButton({
-  onPress, label, loading, disabled, colors,
+  onPress, label, loading, disabled, mutedFg,
 }: {
-  onPress: () => void; label: string; loading: boolean; disabled: boolean; colors: AppColors;
+  onPress: () => void; label: string; loading: boolean; disabled: boolean; mutedFg: string;
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -67,19 +75,24 @@ function SubmitButton({
         onPressIn={() => { scale.value = withSpring(0.97, { damping: 18, stiffness: 240 }); }}
         onPressOut={() => { scale.value = withSpring(1, { damping: 18, stiffness: 240 }); }}
         android_ripple={null}
-        style={{
-          height: 50,
-          backgroundColor: disabled || loading ? colors.mutedBg : colors.primary,
-          borderRadius: 12,
-          alignItems: 'center', justifyContent: 'center',
-          flexDirection: 'row', gap: 8,
-        }}
+        className={cn(
+          'h-[50px] rounded-xl items-center justify-center flex-row gap-2',
+          disabled || loading ? 'bg-muted' : 'bg-primary',
+        )}
       >
-        {loading && <ActivityIndicator size="small" color={disabled || loading ? colors.mutedFg : '#fff'} />}
-        <Text style={{
-          color: disabled || loading ? colors.mutedFg : '#fff',
-          fontSize: 15, fontFamily: 'Inter_600SemiBold',
-        }}>
+        {loading && (
+          <ActivityIndicator
+            size="small"
+            color={disabled || loading ? mutedFg : '#fff'}
+          />
+        )}
+        <Text
+          className={cn(
+            'text-[15px]',
+            disabled || loading ? 'text-muted-foreground' : 'text-white',
+          )}
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {loading ? 'Recording…' : label}
         </Text>
       </Pressable>
@@ -87,7 +100,6 @@ function SubmitButton({
   );
 }
 
-// ── Last 12 months options ────────────────────────────────────────────────────
 function buildLast12Months(): { month: number; year: number; label: string }[] {
   const out: { month: number; year: number; label: string }[] = [];
   const now = new Date();
@@ -102,7 +114,6 @@ function buildLast12Months(): { month: number; year: number; label: string }[] {
   return out;
 }
 
-// ── Date helpers — all local-time, no UTC drift ───────────────────────────────
 function toISO(d: Date) {
   const y  = d.getFullYear();
   const m  = String(d.getMonth() + 1).padStart(2, '0');
@@ -126,28 +137,28 @@ function formatDisplayDate(s?: string) {
   return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-// ── PaymentForm props ─────────────────────────────────────────────────────────
 interface PaymentFormProps {
   preselectedTenantSlug?: string;
   onSuccess: () => void;
   onCancel: () => void;
-  colors: AppColors;
 }
 
 export function PaymentForm({
-  preselectedTenantSlug, onSuccess, onCancel, colors,
+  preselectedTenantSlug, onSuccess, onCancel,
 }: PaymentFormProps) {
+  const { colorScheme } = useColorScheme();
+  const scheme = colorScheme === 'dark' ? 'dark' : 'light';
+  const palette = THEME[scheme];
+
   const { show: showActionSheet } = useActionSheet();
   const recordPayment = useRecordPayment();
 
-  // Pull active tenants (used for resolving the preselected slug → ID)
   const { data: allTenants } = useTenants({ active: true, page_size: 100 });
 
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
 
-  // Resolve preselected slug once tenants list loads
   useEffect(() => {
     if (preselectedTenantSlug && !selectedTenant && allTenants) {
       const match = allTenants.find((t) => t.slug === preselectedTenantSlug);
@@ -181,13 +192,9 @@ export function PaymentForm({
   const method        = watch('payment_method');
   const status        = watch('payment_status');
   const paymentDate   = watch('payment_date');
-  const notes         = watch('notes');
 
   const expectedRent = selectedTenant ? Number(selectedTenant.monthly_rent) : 0;
 
-  // Push tenant selection into form. Whenever the tenant changes, also refresh
-  // the amount to that tenant's monthly rent — switching from a ₹15k tenant to
-  // a ₹20k tenant should not leave the old amount behind.
   useEffect(() => {
     if (selectedTenant) {
       setValue('tenant_id', selectedTenant.id, { shouldValidate: true });
@@ -195,7 +202,6 @@ export function PaymentForm({
     }
   }, [selectedTenant?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-suggest status from amount vs expected
   useEffect(() => {
     if (!selectedTenant) return;
     const n = Number(amount || 0);
@@ -264,22 +270,22 @@ export function PaymentForm({
 
   const submitDisabled = !isValid || !selectedTenant;
 
-  // Confirmation summary text
   const summaryAmount = amount ? formatCurrency(amount) : null;
-  const summaryStatus = getPaymentStatusMeta(status, colors);
-  const summaryMethod = getPaymentMethodMeta(method, colors);
+  const summaryStatus = getPaymentStatusMetaScheme(status, scheme);
+  const summaryMethod = getPaymentMethodMetaScheme(method, scheme);
+
+  const cardClass = 'bg-card border border-border rounded-xl p-4 mb-3';
+  const inputBaseClass = 'bg-background border rounded-[10px]';
 
   return (
     <>
-      {/* ── 1. Tenant section ── */}
-      <View style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, padding: 16, marginBottom: 12,
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <UsersIcon size={16} color={colors.mutedFg} weight="duotone" />
-          <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+      <View className={cardClass}>
+        <View className="flex-row items-center gap-2 mb-3.5">
+          <UsersIcon size={16} color={palette.mutedForeground} weight="duotone" />
+          <Text
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             Tenant
           </Text>
         </View>
@@ -288,38 +294,36 @@ export function PaymentForm({
           <Pressable
             onPress={() => setPickerOpen(true)}
             android_ripple={null}
-            style={{
-              backgroundColor: colors.background,
-              borderWidth: 1, borderColor: colors.border,
-              borderRadius: 10, padding: 12,
-              flexDirection: 'row', alignItems: 'center', gap: 12,
-            }}
+            className="bg-background border border-border rounded-[10px] p-3 flex-row items-center gap-3"
           >
-            <View style={{
-              width: 38, height: 38, borderRadius: 19,
-              backgroundColor: colors.mutedBg,
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Text style={{ color: colors.foreground, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+            <View className="size-[38px] rounded-full bg-muted items-center justify-center">
+              <Text
+                className="text-foreground text-xs"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 {getInitials(selectedTenant.name)}
               </Text>
             </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+            <View className="flex-1 min-w-0">
+              <View className="flex-row items-center gap-1.5 mb-0.5">
                 <Text
                   numberOfLines={1}
-                  style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold', flexShrink: 1 }}
+                  className="text-foreground text-sm shrink"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
                 >
                   {selectedTenant.name}
                 </Text>
                 {(() => {
-                  const tm = getPropertyTypeMeta(selectedTenant.property_type, colors);
+                  const tm = getPropertyTypeMeta(selectedTenant.property_type, palette);
                   return (
-                    <View style={{
-                      backgroundColor: tm.iconBg, borderRadius: 4,
-                      paddingHorizontal: 5, paddingVertical: 1,
-                    }}>
-                      <Text style={{ color: tm.iconColor, fontSize: 9, fontFamily: 'Inter_600SemiBold' }}>
+                    <View
+                      style={{ backgroundColor: tm.iconBg }}
+                      className="rounded px-1 py-px"
+                    >
+                      <Text
+                        style={{ color: tm.iconColor, fontFamily: 'Inter_600SemiBold' }}
+                        className="text-[9px]"
+                      >
                         {tm.shortLabel}
                       </Text>
                     </View>
@@ -328,16 +332,28 @@ export function PaymentForm({
               </View>
               <Text
                 numberOfLines={1}
-                style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginBottom: 2 }}
+                className="text-muted-foreground text-[11px] mb-0.5"
+                style={{ fontFamily: 'Inter_400Regular' }}
               >
                 {selectedTenant.property_name} · {selectedTenant.unit_number} · {selectedTenant.slot_number}
               </Text>
-              <Text style={{ color: colors.foreground, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
+              <Text
+                className="text-foreground text-[11px]"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 {formatCurrency(selectedTenant.monthly_rent)}
-                <Text style={{ color: colors.mutedFg, fontFamily: 'Inter_400Regular' }}>/mo expected</Text>
+                <Text
+                  className="text-muted-foreground"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
+                  /mo expected
+                </Text>
               </Text>
             </View>
-            <Text style={{ color: colors.primary, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+            <Text
+              className="text-primary text-xs"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               Change
             </Text>
           </Pressable>
@@ -345,75 +361,73 @@ export function PaymentForm({
           <Pressable
             onPress={() => setPickerOpen(true)}
             android_ripple={null}
-            style={{
-              backgroundColor: colors.background,
-              borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.border,
-              borderRadius: 10, padding: 14,
-              flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-            }}
+            className="bg-background border-[1.5px] border-dashed border-border rounded-[10px] p-3.5 flex-row items-center justify-center gap-2"
           >
-            <PlusIcon size={14} color={colors.primary} weight="bold" />
-            <Text style={{ color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+            <PlusIcon size={14} color={palette.primary} weight="bold" />
+            <Text
+              className="text-primary text-[13px]"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               Select Tenant
             </Text>
           </Pressable>
         )}
-        <FieldError message={errors.tenant_id?.message} colors={colors} />
+        <FieldError message={errors.tenant_id?.message} />
       </View>
 
-      {/* ── 2. Payment details ── */}
-      <View style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, padding: 16, marginBottom: 12,
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 }}>
-          <ReceiptIcon size={16} color={colors.mutedFg} weight="duotone" />
-          <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+      <View className={cardClass}>
+        <View className="flex-row items-center gap-2 mb-[18px]">
+          <ReceiptIcon size={16} color={palette.mutedForeground} weight="duotone" />
+          <Text
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             Payment details
           </Text>
         </View>
 
-        {/* Amount */}
-        <View style={{ marginBottom: 18 }}>
-          <FieldLabel required colors={colors}>Amount</FieldLabel>
+        <View className="mb-[18px]">
+          <FieldLabel required>Amount</FieldLabel>
           <Controller
             control={control}
             name="amount"
             render={({ field: { onChange, onBlur, value } }) => (
-              <View style={{
-                flexDirection: 'row', alignItems: 'center',
-                backgroundColor: colors.background,
-                borderWidth: 1,
-                borderColor: errors.amount ? colors.danger : colors.border,
-                borderRadius: 10,
-                paddingHorizontal: 14,
-              }}>
-                <Text style={{ color: colors.mutedFg, fontSize: 14, fontFamily: 'Inter_400Regular', marginRight: 6 }}>
+              <View
+                className={cn(
+                  'flex-row items-center px-3.5',
+                  inputBaseClass,
+                  errors.amount ? 'border-destructive' : 'border-border',
+                )}
+              >
+                <Text
+                  className="text-muted-foreground text-sm mr-1.5"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
                   ₹
                 </Text>
                 <TextInput
                   placeholder={expectedRent > 0 ? String(expectedRent) : 'Amount'}
-                  placeholderTextColor={colors.mutedFg}
+                  placeholderTextColor={palette.mutedForeground}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
                   keyboardType="numeric"
                   inputMode="numeric"
-                  style={{
-                    flex: 1, color: colors.foreground,
-                    fontSize: 14, fontFamily: 'Inter_400Regular', paddingVertical: 12,
-                  }}
+                  className="flex-1 text-foreground text-sm py-3"
+                  style={{ fontFamily: 'Inter_400Regular' }}
                 />
                 {selectedTenant && Number(value) !== expectedRent && expectedRent > 0 && (
                   <Pressable
                     onPress={() => onChange(String(expectedRent))}
                     android_ripple={null}
                     hitSlop={6}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                    className="flex-row items-center gap-1"
                   >
-                    <ArrowCounterClockwiseIcon size={11} color={colors.primary} weight="bold" />
-                    <Text style={{ color: colors.primary, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
+                    <ArrowCounterClockwiseIcon size={11} color={palette.primary} weight="bold" />
+                    <Text
+                      className="text-primary text-[11px]"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       Reset
                     </Text>
                   </Pressable>
@@ -421,36 +435,36 @@ export function PaymentForm({
               </View>
             )}
           />
-          <FieldError message={errors.amount?.message} colors={colors} />
+          <FieldError message={errors.amount?.message} />
         </View>
 
-        {/* Period */}
-        <View style={{ marginBottom: 18 }}>
-          <FieldLabel required colors={colors}>For period</FieldLabel>
+        <View className="mb-[18px]">
+          <FieldLabel required>For period</FieldLabel>
           <Pressable
             onPress={openPeriodPicker}
             android_ripple={null}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 10,
-              backgroundColor: colors.background,
-              borderWidth: 1, borderColor: colors.border,
-              borderRadius: 10, paddingHorizontal: 14, height: 46,
-            }}
+            className={cn(
+              'flex-row items-center gap-2.5 px-3.5 h-[46px]',
+              inputBaseClass,
+              'border-border',
+            )}
           >
-            <CalendarIcon size={14} color={colors.mutedFg} />
-            <Text style={{ flex: 1, color: colors.foreground, fontSize: 14, fontFamily: 'Inter_400Regular' }}>
+            <CalendarIcon size={14} color={palette.mutedForeground} />
+            <Text
+              className="flex-1 text-foreground text-sm"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               {formatMonthYear(month, year)}
             </Text>
-            <CaretDownIcon size={12} color={colors.mutedFg} />
+            <CaretDownIcon size={12} color={palette.mutedForeground} />
           </Pressable>
         </View>
 
-        {/* Method */}
-        <View style={{ marginBottom: 18 }}>
-          <FieldLabel required colors={colors}>Payment method</FieldLabel>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View className="mb-[18px]">
+          <FieldLabel required>Payment method</FieldLabel>
+          <View className="flex-row flex-wrap gap-2">
             {PAYMENT_METHODS.map((m) => {
-              const meta = getPaymentMethodMeta(m, colors);
+              const meta = getPaymentMethodMetaScheme(m, scheme);
               const Icon = meta.Icon;
               const selected = method === m;
               return (
@@ -462,18 +476,22 @@ export function PaymentForm({
                   }}
                   android_ripple={null}
                   style={{
-                    flexDirection: 'row', alignItems: 'center', gap: 6,
-                    borderWidth: selected ? 1.5 : 1,
-                    borderColor: selected ? meta.color : colors.border,
-                    backgroundColor: selected ? meta.bg : colors.background,
-                    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+                    borderColor: selected ? meta.color : palette.border,
+                    backgroundColor: selected ? meta.bg : palette.background,
                   }}
+                  className={cn(
+                    'flex-row items-center gap-1.5 rounded-[10px] px-3 py-2',
+                    selected ? 'border-[1.5px]' : 'border',
+                  )}
                 >
-                  <Icon size={13} color={selected ? meta.color : colors.mutedFg} weight={selected ? 'fill' : 'regular'} />
-                  <Text style={{
-                    color: selected ? meta.color : colors.foreground,
-                    fontSize: 12, fontFamily: 'Inter_600SemiBold',
-                  }}>
+                  <Icon size={13} color={selected ? meta.color : palette.mutedForeground} weight={selected ? 'fill' : 'regular'} />
+                  <Text
+                    style={{
+                      color: selected ? meta.color : palette.foreground,
+                      fontFamily: 'Inter_600SemiBold',
+                    }}
+                    className="text-xs"
+                  >
                     {meta.label}
                   </Text>
                 </Pressable>
@@ -482,33 +500,33 @@ export function PaymentForm({
           </View>
         </View>
 
-        {/* Paid on */}
-        <View style={{ marginBottom: 18 }}>
-          <FieldLabel colors={colors}>Paid on</FieldLabel>
+        <View className="mb-[18px]">
+          <FieldLabel>Paid on</FieldLabel>
           <Pressable
             onPress={openDatePicker}
             android_ripple={null}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 10,
-              backgroundColor: colors.background,
-              borderWidth: 1, borderColor: colors.border,
-              borderRadius: 10, paddingHorizontal: 14, height: 46,
-            }}
+            className={cn(
+              'flex-row items-center gap-2.5 px-3.5 h-[46px]',
+              inputBaseClass,
+              'border-border',
+            )}
           >
-            <CalendarIcon size={14} color={colors.mutedFg} />
-            <Text style={{ flex: 1, color: colors.foreground, fontSize: 14, fontFamily: 'Inter_400Regular' }}>
+            <CalendarIcon size={14} color={palette.mutedForeground} />
+            <Text
+              className="flex-1 text-foreground text-sm"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               {formatDisplayDate(paymentDate)}
             </Text>
-            <CaretDownIcon size={12} color={colors.mutedFg} />
+            <CaretDownIcon size={12} color={palette.mutedForeground} />
           </Pressable>
         </View>
 
-        {/* Status */}
         <View>
-          <FieldLabel required colors={colors}>Status</FieldLabel>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          <FieldLabel required>Status</FieldLabel>
+          <View className="flex-row gap-2">
             {(['PAID', 'PARTIAL', 'PENDING'] as PaymentStatus[]).map((s) => {
-              const meta = getPaymentStatusMeta(s, colors);
+              const meta = getPaymentStatusMetaScheme(s, scheme);
               const selected = status === s;
               return (
                 <Pressable
@@ -519,57 +537,59 @@ export function PaymentForm({
                   }}
                   android_ripple={null}
                   style={{
-                    flex: 1,
-                    borderWidth: selected ? 1.5 : 1,
-                    borderColor: selected ? meta.color : colors.border,
-                    backgroundColor: selected ? meta.bg : colors.background,
-                    borderRadius: 10, paddingVertical: 10,
-                    alignItems: 'center',
+                    borderColor: selected ? meta.color : palette.border,
+                    backgroundColor: selected ? meta.bg : palette.background,
                   }}
+                  className={cn(
+                    'flex-1 rounded-[10px] py-2.5 items-center',
+                    selected ? 'border-[1.5px]' : 'border',
+                  )}
                 >
-                  <Text style={{
-                    color: selected ? meta.color : colors.foreground,
-                    fontSize: 12, fontFamily: 'Inter_600SemiBold',
-                  }}>
+                  <Text
+                    style={{
+                      color: selected ? meta.color : palette.foreground,
+                      fontFamily: 'Inter_600SemiBold',
+                    }}
+                    className="text-xs"
+                  >
                     {meta.label}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
-          <Text style={{
-            color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 6, lineHeight: 16,
-          }}>
+          <Text
+            className="text-muted-foreground text-[11px] mt-1.5 leading-4"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             Auto-suggested from amount vs expected. Override if needed.
           </Text>
         </View>
       </View>
 
-      {/* ── 3. Notes (collapsible) ── */}
-      <View style={{ marginBottom: 12 }}>
+      <View className="mb-3">
         {!notesOpen ? (
           <Pressable
             onPress={() => setNotesOpen(true)}
             android_ripple={null}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 6,
-              alignSelf: 'flex-start',
-            }}
+            className="flex-row items-center gap-1.5 self-start"
             hitSlop={6}
           >
-            <PlusIcon size={12} color={colors.primary} weight="bold" />
-            <Text style={{ color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+            <PlusIcon size={12} color={palette.primary} weight="bold" />
+            <Text
+              className="text-primary text-[13px]"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               Add a note (optional)
             </Text>
           </Pressable>
         ) : (
-          <View style={{
-            backgroundColor: colors.card,
-            borderWidth: 1, borderColor: colors.border,
-            borderRadius: 12, padding: 16,
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+          <View className="bg-card border border-border rounded-xl p-4">
+            <View className="flex-row items-center justify-between mb-2">
+              <Text
+                className="text-foreground text-[13px]"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 Notes
               </Text>
               <Pressable
@@ -577,7 +597,7 @@ export function PaymentForm({
                 android_ripple={null}
                 hitSlop={6}
               >
-                <XIcon size={14} color={colors.mutedFg} />
+                <XIcon size={14} color={palette.mutedForeground} />
               </Pressable>
             </View>
             <Controller
@@ -586,22 +606,15 @@ export function PaymentForm({
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   placeholder="e.g. Paid half now, balance next week"
-                  placeholderTextColor={colors.mutedFg}
+                  placeholderTextColor={palette.mutedForeground}
                   value={value ?? ''}
                   onChangeText={onChange}
                   onBlur={onBlur}
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
-                  style={{
-                    backgroundColor: colors.background,
-                    borderWidth: 1, borderColor: colors.border,
-                    borderRadius: 10,
-                    paddingHorizontal: 14, paddingVertical: 12,
-                    color: colors.foreground,
-                    fontSize: 13, fontFamily: 'Inter_400Regular',
-                    minHeight: 70,
-                  }}
+                  className="bg-background border border-border rounded-[10px] px-3.5 py-3 text-foreground text-[13px] min-h-[70px]"
+                  style={{ fontFamily: 'Inter_400Regular' }}
                 />
               )}
             />
@@ -609,61 +622,68 @@ export function PaymentForm({
         )}
       </View>
 
-      {/* ── 4. Confirmation summary ── */}
       {selectedTenant && summaryAmount && (
-        <View style={{
-          backgroundColor: colors.mutedBg,
-          borderRadius: 10, padding: 12, marginBottom: 16,
-        }}>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', lineHeight: 17 }}>
-            <Text style={{ color: colors.foreground, fontFamily: 'Inter_600SemiBold' }}>{summaryAmount}</Text>
+        <View className="bg-muted rounded-[10px] p-3 mb-4">
+          <Text
+            className="text-muted-foreground text-[11px] leading-[17px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
+            <Text
+              className="text-foreground"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
+              {summaryAmount}
+            </Text>
             {' via '}
-            <Text style={{ color: summaryMethod.color, fontFamily: 'Inter_600SemiBold' }}>{summaryMethod.label}</Text>
+            <Text style={{ color: summaryMethod.color, fontFamily: 'Inter_600SemiBold' }}>
+              {summaryMethod.label}
+            </Text>
             {' for '}
-            <Text style={{ color: colors.foreground, fontFamily: 'Inter_600SemiBold' }}>{selectedTenant.name}</Text>
+            <Text
+              className="text-foreground"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
+              {selectedTenant.name}
+            </Text>
             {' · '}
             {formatMonthYear(month, year)}
             {' (will be marked '}
-            <Text style={{ color: summaryStatus.color, fontFamily: 'Inter_600SemiBold' }}>{summaryStatus.label}</Text>
+            <Text style={{ color: summaryStatus.color, fontFamily: 'Inter_600SemiBold' }}>
+              {summaryStatus.label}
+            </Text>
             {')'}
           </Text>
         </View>
       )}
 
-      {/* ── 5. Actions ── */}
-      <View style={{ gap: 10 }}>
+      <View className="gap-2.5">
         <SubmitButton
           onPress={handleSubmit(onSubmit)}
           label="Record Payment"
           loading={isSubmitting}
           disabled={submitDisabled}
-          colors={colors}
+          mutedFg={palette.mutedForeground}
         />
         <Pressable
           onPress={onCancel}
           disabled={isSubmitting}
           android_ripple={null}
-          style={{
-            height: 48,
-            borderWidth: 1, borderColor: colors.border,
-            backgroundColor: colors.card,
-            borderRadius: 12,
-            alignItems: 'center', justifyContent: 'center',
-          }}
+          className="h-12 border border-border bg-card rounded-xl items-center justify-center"
         >
-          <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+          <Text
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             Cancel
           </Text>
         </Pressable>
       </View>
 
-      {/* ── Tenant picker modal ── */}
       <TenantPickerModal
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={(t) => setSelectedTenant(t)}
         selectedId={selectedTenant?.id}
-        colors={colors}
       />
     </>
   );

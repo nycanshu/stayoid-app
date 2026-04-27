@@ -7,11 +7,13 @@ import { useState, useMemo } from 'react';
 import {
   XIcon, MagnifyingGlassIcon, CheckIcon, UsersIcon,
 } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { useTenants } from '../../lib/hooks/use-tenants';
 import { getInitials, formatCurrency } from '../../lib/utils/formatters';
 import { getPropertyTypeMeta } from '../../lib/constants/property-type-meta';
 import { Skeleton } from '../ui/skeleton';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { Tenant } from '../../types/tenant';
 
 interface TenantPickerModalProps {
@@ -19,12 +21,13 @@ interface TenantPickerModalProps {
   onClose: () => void;
   onSelect: (tenant: Tenant) => void;
   selectedId?: string;
-  colors: AppColors;
 }
 
 export function TenantPickerModal({
-  visible, onClose, onSelect, selectedId, colors,
+  visible, onClose, onSelect, selectedId,
 }: TenantPickerModalProps) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const [query, setQuery] = useState('');
   const { data: tenants, isLoading } = useTenants({ active: true, page_size: 100 });
 
@@ -52,61 +55,48 @@ export function TenantPickerModal({
       onRequestClose={handleClose}
       presentationStyle="pageSheet"
     >
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'bottom']}>
+      <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
+          className="flex-1"
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          {/* Header */}
-          <View style={{
-            paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
-            borderBottomWidth: 1, borderBottomColor: colors.border,
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{
-                color: colors.foreground, fontSize: 18, fontFamily: 'Inter_600SemiBold',
-                letterSpacing: -0.3,
-              }}>
+          <View className="px-4 pt-2 pb-3 border-b border-border">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text
+                className="text-foreground text-lg tracking-tight"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 Select Tenant
               </Text>
               <Pressable
                 onPress={handleClose}
                 android_ripple={null}
                 hitSlop={8}
-                style={{
-                  width: 32, height: 32, borderRadius: 8,
-                  backgroundColor: colors.mutedBg,
-                  alignItems: 'center', justifyContent: 'center',
-                }}
+                className="size-8 rounded-lg bg-muted items-center justify-center"
               >
-                <XIcon size={16} color={colors.foreground} weight="bold" />
+                <XIcon size={16} color={palette.foreground} weight="bold" />
               </Pressable>
             </View>
 
-            {/* Search */}
-            <View style={{
-              flexDirection: 'row', alignItems: 'center', gap: 10,
-              backgroundColor: colors.card,
-              borderWidth: 1, borderColor: colors.border,
-              borderRadius: 12, paddingHorizontal: 14, height: 44,
-            }}>
-              <MagnifyingGlassIcon size={16} color={colors.mutedFg} />
+            <View className="flex-row items-center gap-2.5 bg-card border border-border rounded-xl px-3.5 h-11">
+              <MagnifyingGlassIcon size={16} color={palette.mutedForeground} />
               <TextInput
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Search by name, phone, room, property"
-                placeholderTextColor={colors.mutedFg}
-                style={{
-                  flex: 1, color: colors.foreground,
-                  fontSize: 13, fontFamily: 'Inter_400Regular', padding: 0,
-                }}
+                placeholderTextColor={palette.mutedForeground}
+                className="flex-1 text-foreground text-[13px] p-0"
+                style={{ fontFamily: 'Inter_400Regular' }}
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoFocus
               />
               {query.length > 0 && (
                 <Pressable onPress={() => setQuery('')} hitSlop={8} android_ripple={null}>
-                  <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+                  <Text
+                    className="text-muted-foreground text-xs"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
                     Clear
                   </Text>
                 </Pressable>
@@ -114,71 +104,76 @@ export function TenantPickerModal({
             </View>
           </View>
 
-          {/* List */}
           <FlatList
             data={filtered}
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             contentContainerStyle={{ padding: 16 }}
-            ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+            ItemSeparatorComponent={() => <View className="h-2" />}
             renderItem={({ item }) => {
               const isSelected = item.id === selectedId;
-              const typeMeta = getPropertyTypeMeta(item.property_type, colors);
+              const typeMeta = getPropertyTypeMeta(item.property_type, palette);
               return (
                 <Pressable
                   onPress={() => { onSelect(item); handleClose(); }}
                   android_ripple={null}
-                  style={{
-                    backgroundColor: colors.card,
-                    borderWidth: 1,
-                    borderColor: isSelected ? colors.primary : colors.border,
-                    borderRadius: 12, padding: 12,
-                    flexDirection: 'row', alignItems: 'center', gap: 12,
-                  }}
+                  className={cn(
+                    'bg-card border rounded-xl p-3 flex-row items-center gap-3',
+                    isSelected ? 'border-primary' : 'border-border',
+                  )}
                 >
-                  <View style={{
-                    width: 38, height: 38, borderRadius: 19,
-                    backgroundColor: colors.mutedBg,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Text style={{ color: colors.foreground, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+                  <View className="size-[38px] rounded-full bg-muted items-center justify-center">
+                    <Text
+                      className="text-foreground text-xs"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
                       {getInitials(item.name)}
                     </Text>
                   </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <View className="flex-1 min-w-0">
+                    <View className="flex-row items-center gap-1.5 mb-0.5">
                       <Text
                         numberOfLines={1}
-                        style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold', flexShrink: 1 }}
+                        className="text-foreground text-sm shrink"
+                        style={{ fontFamily: 'Inter_600SemiBold' }}
                       >
                         {item.name}
                       </Text>
-                      <View style={{
-                        backgroundColor: typeMeta.iconBg, borderRadius: 4,
-                        paddingHorizontal: 5, paddingVertical: 1,
-                      }}>
-                        <Text style={{ color: typeMeta.iconColor, fontSize: 9, fontFamily: 'Inter_600SemiBold' }}>
+                      <View
+                        style={{ backgroundColor: typeMeta.iconBg }}
+                        className="rounded px-1 py-px"
+                      >
+                        <Text
+                          style={{ color: typeMeta.iconColor, fontFamily: 'Inter_600SemiBold' }}
+                          className="text-[9px]"
+                        >
                           {typeMeta.shortLabel}
                         </Text>
                       </View>
                     </View>
                     <Text
                       numberOfLines={1}
-                      style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginBottom: 2 }}
+                      className="text-muted-foreground text-[11px] mb-0.5"
+                      style={{ fontFamily: 'Inter_400Regular' }}
                     >
                       {item.property_name} · {item.unit_number} · {item.slot_number}
                     </Text>
-                    <Text style={{ color: colors.foreground, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
-                      {formatCurrency(item.monthly_rent)}<Text style={{ color: colors.mutedFg, fontFamily: 'Inter_400Regular' }}>/mo</Text>
+                    <Text
+                      className="text-foreground text-[11px]"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
+                      {formatCurrency(item.monthly_rent)}
+                      <Text
+                        className="text-muted-foreground"
+                        style={{ fontFamily: 'Inter_400Regular' }}
+                      >
+                        /mo
+                      </Text>
                     </Text>
                   </View>
                   {isSelected && (
-                    <View style={{
-                      width: 22, height: 22, borderRadius: 11,
-                      backgroundColor: colors.primary,
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
+                    <View className="size-[22px] rounded-full bg-primary items-center justify-center">
                       <CheckIcon size={12} color="#fff" weight="bold" />
                     </View>
                   )}
@@ -187,16 +182,14 @@ export function TenantPickerModal({
             }}
             ListEmptyComponent={
               isLoading ? (
-                <View style={{ gap: 8 }}>
+                <View className="gap-2">
                   {[0, 1, 2, 3].map((i) => (
-                    <View key={i} style={{
-                      backgroundColor: colors.card,
-                      borderWidth: 1, borderColor: colors.border,
-                      borderRadius: 12, padding: 12,
-                      flexDirection: 'row', alignItems: 'center', gap: 12,
-                    }}>
+                    <View
+                      key={i}
+                      className="bg-card border border-border rounded-xl p-3 flex-row items-center gap-3"
+                    >
                       <Skeleton width={38} height={38} radius={19} />
-                      <View style={{ flex: 1, gap: 6 }}>
+                      <View className="flex-1 gap-1.5">
                         <Skeleton width="60%" height={12} />
                         <Skeleton width="80%" height={10} />
                         <Skeleton width="40%" height={10} />
@@ -205,24 +198,20 @@ export function TenantPickerModal({
                   ))}
                 </View>
               ) : (
-                <View style={{ alignItems: 'center', paddingTop: 60 }}>
-                  <View style={{
-                    width: 52, height: 52, borderRadius: 16,
-                    backgroundColor: colors.mutedBg,
-                    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-                  }}>
-                    <UsersIcon size={24} color={colors.mutedFg} weight="duotone" />
+                <View className="items-center pt-[60px]">
+                  <View className="size-[52px] rounded-2xl bg-muted items-center justify-center mb-3">
+                    <UsersIcon size={24} color={palette.mutedForeground} weight="duotone" />
                   </View>
-                  <Text style={{
-                    color: colors.foreground, fontSize: 14,
-                    fontFamily: 'Inter_600SemiBold', marginBottom: 4,
-                  }}>
+                  <Text
+                    className="text-foreground text-sm mb-1"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
                     {query ? 'No matches' : 'No active tenants'}
                   </Text>
-                  <Text style={{
-                    color: colors.mutedFg, fontSize: 12,
-                    fontFamily: 'Inter_400Regular', textAlign: 'center',
-                  }}>
+                  <Text
+                    className="text-muted-foreground text-xs text-center"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     {query ? 'Try a different search term.' : 'Add tenants from the Tenants tab first.'}
                   </Text>
                 </View>

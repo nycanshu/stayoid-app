@@ -6,11 +6,13 @@ import { useState, useMemo } from 'react';
 import {
   XIcon, CheckIcon, BedIcon, ArrowLeftIcon, HouseIcon,
 } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { useProperties, useSlots } from '../../lib/hooks/use-properties';
 import { getPropertyTypeMeta } from '../../lib/constants/property-type-meta';
 import { formatCurrency, formatFloorName } from '../../lib/utils/formatters';
 import { Skeleton } from '../ui/skeleton';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { Property, Slot } from '../../types/property';
 
 interface SlotPickerModalProps {
@@ -18,18 +20,17 @@ interface SlotPickerModalProps {
   onClose: () => void;
   onSelect: (slot: Slot, property: Property) => void;
   selectedSlotId?: string;
-  /** Optional: lock to a specific property (when arriving via ?property=...) */
   lockedPropertySlug?: string;
-  colors: AppColors;
 }
 
 export function SlotPickerModal({
-  visible, onClose, onSelect, selectedSlotId, lockedPropertySlug, colors,
+  visible, onClose, onSelect, selectedSlotId, lockedPropertySlug,
 }: SlotPickerModalProps) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { data: properties, isLoading: propsLoading } = useProperties();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
-  // Auto-select locked property if provided
   const lockedProperty = useMemo(
     () => (lockedPropertySlug && properties)
       ? properties.find((p) => p.slug === lockedPropertySlug) ?? null
@@ -41,7 +42,6 @@ export function SlotPickerModal({
 
   const { data: slots, isLoading: slotsLoading } = useSlots(activeProperty?.id, true);
 
-  // Group vacant slots by floor → unit
   const grouped = useMemo(() => {
     if (!slots) return [];
     const map: Record<number, { floorName: string; units: Record<string, Slot[]> }> = {};
@@ -77,39 +77,30 @@ export function SlotPickerModal({
       onRequestClose={handleClose}
       presentationStyle="pageSheet"
     >
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'bottom']}>
-        {/* Header */}
-        <View style={{
-          flexDirection: 'row', alignItems: 'center',
-          paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12,
-          borderBottomWidth: 1, borderBottomColor: colors.border,
-        }}>
+      <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
+        <View className="flex-row items-center px-4 pt-2 pb-3 border-b border-border">
           {activeProperty && !lockedProperty && (
             <Pressable
               onPress={() => setSelectedProperty(null)}
               android_ripple={null}
               hitSlop={6}
-              style={{
-                width: 32, height: 32, borderRadius: 8,
-                backgroundColor: colors.mutedBg,
-                alignItems: 'center', justifyContent: 'center',
-                marginRight: 10,
-              }}
+              className="size-8 rounded-lg bg-muted items-center justify-center mr-2.5"
             >
-              <ArrowLeftIcon size={14} color={colors.foreground} />
+              <ArrowLeftIcon size={14} color={palette.foreground} />
             </Pressable>
           )}
-          <View style={{ flex: 1 }}>
-            <Text style={{
-              color: colors.foreground, fontSize: 18,
-              fontFamily: 'Inter_600SemiBold', letterSpacing: -0.3,
-            }}>
+          <View className="flex-1">
+            <Text
+              className="text-foreground text-lg tracking-tight"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               {!activeProperty ? 'Select Property' : 'Select Vacant Slot'}
             </Text>
             {activeProperty && (
               <Text
                 numberOfLines={1}
-                style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 1 }}
+                className="text-muted-foreground text-xs mt-px"
+                style={{ fontFamily: 'Inter_400Regular' }}
               >
                 {activeProperty.name}{totalVacant > 0 ? ` · ${totalVacant} vacant` : ''}
               </Text>
@@ -119,55 +110,46 @@ export function SlotPickerModal({
             onPress={handleClose}
             android_ripple={null}
             hitSlop={8}
-            style={{
-              width: 32, height: 32, borderRadius: 8,
-              backgroundColor: colors.mutedBg,
-              alignItems: 'center', justifyContent: 'center',
-            }}
+            className="size-8 rounded-lg bg-muted items-center justify-center"
           >
-            <XIcon size={16} color={colors.foreground} weight="bold" />
+            <XIcon size={16} color={palette.foreground} weight="bold" />
           </Pressable>
         </View>
 
-        {/* Body */}
         {!activeProperty ? (
           <FlatList
             data={properties ?? []}
             keyExtractor={(p) => p.id}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ padding: 16 }}
-            ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+            ItemSeparatorComponent={() => <View className="h-2" />}
             renderItem={({ item }) => {
-              const tm = getPropertyTypeMeta(item.property_type, colors);
+              const tm = getPropertyTypeMeta(item.property_type, palette);
               const Icon = tm.Icon;
               return (
                 <Pressable
                   onPress={() => setSelectedProperty(item)}
                   android_ripple={null}
-                  style={{
-                    backgroundColor: colors.card,
-                    borderWidth: 1, borderColor: colors.border,
-                    borderRadius: 12, padding: 12,
-                    flexDirection: 'row', alignItems: 'center', gap: 12,
-                  }}
+                  className="bg-card border border-border rounded-xl p-3 flex-row items-center gap-3"
                 >
-                  <View style={{
-                    width: 36, height: 36, borderRadius: 10,
-                    backgroundColor: tm.iconBg,
-                    alignItems: 'center', justifyContent: 'center',
-                  }}>
+                  <View
+                    style={{ backgroundColor: tm.iconBg }}
+                    className="size-9 rounded-[10px] items-center justify-center"
+                  >
                     <Icon size={16} color={tm.iconColor} weight="fill" />
                   </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
+                  <View className="flex-1 min-w-0">
                     <Text
                       numberOfLines={1}
-                      style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}
+                      className="text-foreground text-sm"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
                     >
                       {item.name}
                     </Text>
                     <Text
                       numberOfLines={1}
-                      style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 }}
+                      className="text-muted-foreground text-[11px] mt-0.5"
+                      style={{ fontFamily: 'Inter_400Regular' }}
                     >
                       {item.address}
                     </Text>
@@ -177,16 +159,14 @@ export function SlotPickerModal({
             }}
             ListEmptyComponent={
               propsLoading ? (
-                <View style={{ gap: 8 }}>
+                <View className="gap-2">
                   {[0, 1, 2].map((i) => (
-                    <View key={i} style={{
-                      backgroundColor: colors.card,
-                      borderWidth: 1, borderColor: colors.border,
-                      borderRadius: 12, padding: 12,
-                      flexDirection: 'row', alignItems: 'center', gap: 12,
-                    }}>
+                    <View
+                      key={i}
+                      className="bg-card border border-border rounded-xl p-3 flex-row items-center gap-3"
+                    >
                       <Skeleton width={36} height={36} radius={10} />
-                      <View style={{ flex: 1, gap: 6 }}>
+                      <View className="flex-1 gap-1.5">
                         <Skeleton width="60%" height={12} />
                         <Skeleton width="80%" height={10} />
                       </View>
@@ -194,9 +174,12 @@ export function SlotPickerModal({
                   ))}
                 </View>
               ) : (
-                <View style={{ alignItems: 'center', paddingTop: 60 }}>
-                  <HouseIcon size={32} color={colors.mutedFg} weight="duotone" />
-                  <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold', marginTop: 10 }}>
+                <View className="items-center pt-[60px]">
+                  <HouseIcon size={32} color={palette.mutedForeground} weight="duotone" />
+                  <Text
+                    className="text-foreground text-sm mt-2.5"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
                     No properties yet
                   </Text>
                 </View>
@@ -209,32 +192,32 @@ export function SlotPickerModal({
             keyExtractor={(g) => String(g.floorNum)}
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ padding: 16 }}
-            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            ItemSeparatorComponent={() => <View className="h-3" />}
             renderItem={({ item: floor }) => (
               <View>
-                <Text style={{
-                  color: colors.mutedFg, fontSize: 11,
-                  fontFamily: 'Inter_600SemiBold', letterSpacing: 1,
-                  textTransform: 'uppercase', marginBottom: 8,
-                }}>
+                <Text
+                  className="text-muted-foreground text-[11px] uppercase tracking-[1px] mb-2"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
+                >
                   {floor.floorName}
                 </Text>
-                <View style={{ gap: 6 }}>
+                <View className="gap-1.5">
                   {Object.entries(floor.units).map(([unitNumber, unitSlots]) => (
-                    <View key={unitNumber} style={{
-                      backgroundColor: colors.card,
-                      borderWidth: 1, borderColor: colors.border,
-                      borderRadius: 12, overflow: 'hidden',
-                    }}>
-                      <View style={{
-                        flexDirection: 'row', alignItems: 'center', gap: 6,
-                        paddingHorizontal: 12, paddingVertical: 8,
-                        backgroundColor: colors.mutedBg,
-                      }}>
-                        <Text style={{ color: colors.foreground, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+                    <View
+                      key={unitNumber}
+                      className="bg-card border border-border rounded-xl overflow-hidden"
+                    >
+                      <View className="flex-row items-center gap-1.5 px-3 py-2 bg-muted">
+                        <Text
+                          className="text-foreground text-xs"
+                          style={{ fontFamily: 'Inter_600SemiBold' }}
+                        >
                           Unit {unitNumber}
                         </Text>
-                        <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+                        <Text
+                          className="text-muted-foreground text-[11px]"
+                          style={{ fontFamily: 'Inter_400Regular' }}
+                        >
                           · {unitSlots.length} vacant
                         </Text>
                       </View>
@@ -246,34 +229,30 @@ export function SlotPickerModal({
                             key={slot.id}
                             onPress={() => handleSlotTap(slot)}
                             android_ripple={null}
-                            style={{
-                              flexDirection: 'row', alignItems: 'center', gap: 10,
-                              paddingHorizontal: 12, paddingVertical: 11,
-                              borderTopWidth: 1, borderTopColor: colors.border,
-                              backgroundColor: isSelected ? colors.primaryBg : 'transparent',
-                            }}
+                            className={cn(
+                              'flex-row items-center gap-2.5 px-3 py-2.5 border-t border-border',
+                              isSelected && 'bg-primary-bg',
+                            )}
                           >
-                            <View style={{
-                              width: 30, height: 30, borderRadius: 8,
-                              backgroundColor: colors.primaryBg,
-                              alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              <BedIcon size={13} color={colors.primary} weight="duotone" />
+                            <View className="size-[30px] rounded-lg bg-primary-bg items-center justify-center">
+                              <BedIcon size={13} color={palette.primary} weight="duotone" />
                             </View>
-                            <View style={{ flex: 1 }}>
-                              <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+                            <View className="flex-1">
+                              <Text
+                                className="text-foreground text-[13px]"
+                                style={{ fontFamily: 'Inter_600SemiBold' }}
+                              >
                                 Slot {slot.slot_number}
                               </Text>
-                              <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 1 }}>
+                              <Text
+                                className="text-muted-foreground text-[11px] mt-px"
+                                style={{ fontFamily: 'Inter_400Regular' }}
+                              >
                                 {rent > 0 ? `${formatCurrency(rent)}/mo` : 'Rent not set'}
                               </Text>
                             </View>
                             {isSelected && (
-                              <View style={{
-                                width: 22, height: 22, borderRadius: 11,
-                                backgroundColor: colors.primary,
-                                alignItems: 'center', justifyContent: 'center',
-                              }}>
+                              <View className="size-[22px] rounded-full bg-primary items-center justify-center">
                                 <CheckIcon size={12} color="#fff" weight="bold" />
                               </View>
                             )}
@@ -287,13 +266,12 @@ export function SlotPickerModal({
             )}
             ListEmptyComponent={
               slotsLoading ? (
-                <View style={{ gap: 10 }}>
+                <View className="gap-2.5">
                   {[0, 1].map((i) => (
-                    <View key={i} style={{
-                      backgroundColor: colors.card,
-                      borderWidth: 1, borderColor: colors.border,
-                      borderRadius: 12, padding: 12, gap: 8,
-                    }}>
+                    <View
+                      key={i}
+                      className="bg-card border border-border rounded-xl p-3 gap-2"
+                    >
                       <Skeleton width={80} height={11} />
                       <Skeleton width="100%" height={36} radius={8} />
                       <Skeleton width="100%" height={36} radius={8} />
@@ -301,21 +279,20 @@ export function SlotPickerModal({
                   ))}
                 </View>
               ) : (
-                <View style={{ alignItems: 'center', paddingTop: 60 }}>
-                  <View style={{
-                    width: 52, height: 52, borderRadius: 16,
-                    backgroundColor: colors.mutedBg,
-                    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
-                  }}>
-                    <BedIcon size={24} color={colors.mutedFg} weight="duotone" />
+                <View className="items-center pt-[60px]">
+                  <View className="size-[52px] rounded-2xl bg-muted items-center justify-center mb-3">
+                    <BedIcon size={24} color={palette.mutedForeground} weight="duotone" />
                   </View>
-                  <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
+                  <Text
+                    className="text-foreground text-sm mb-1"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
                     No vacant slots
                   </Text>
-                  <Text style={{
-                    color: colors.mutedFg, fontSize: 12,
-                    fontFamily: 'Inter_400Regular', textAlign: 'center',
-                  }}>
+                  <Text
+                    className="text-muted-foreground text-xs text-center"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     All slots in this property are occupied.
                   </Text>
                 </View>
