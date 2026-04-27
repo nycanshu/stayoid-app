@@ -1,102 +1,114 @@
 import { View, Text } from 'react-native';
 import { MapPinIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { OccupancyBar } from './OccupancyBar';
 import { getPropertyTypeMeta } from '../../lib/constants/property-type-meta';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { PropertyType } from '../../types/property';
 
 interface PropertyPreviewCardProps {
   name: string;
   propertyType: PropertyType;
   address: string;
-  colors: AppColors;
   mode?: 'create' | 'edit';
 }
 
 export function PropertyPreviewCard({
-  name, propertyType, address, colors, mode = 'create',
+  name, propertyType, address, mode = 'create',
 }: PropertyPreviewCardProps) {
-  const meta = getPropertyTypeMeta(propertyType, colors);
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const meta = getPropertyTypeMeta(propertyType, palette);
   const Icon = meta.Icon;
 
   return (
     <View>
-      <Text style={{
-        color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_600SemiBold',
-        letterSpacing: 1, marginBottom: 8, textTransform: 'uppercase',
-      }}>
+      <Text
+        className="text-muted-foreground text-[11px] mb-2 uppercase tracking-[1px]"
+        style={{ fontFamily: 'Inter_600SemiBold' }}
+      >
         Preview
       </Text>
 
-      <View style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, padding: 14,
-      }}>
-        {/* Chip + name/address + type pill */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <View style={{
-            width: 36, height: 36, borderRadius: 10,
-            backgroundColor: meta.iconBg,
-            alignItems: 'center', justifyContent: 'center',
-          }}>
+      <View className="bg-card border border-border rounded-xl p-3.5">
+        <View className="flex-row items-center gap-3 mb-3">
+          <View
+            style={{ backgroundColor: meta.iconBg }}
+            className="size-9 rounded-[10px] items-center justify-center"
+          >
             <Icon size={18} color={meta.iconColor} weight="fill" />
           </View>
-          <View style={{ flex: 1, minWidth: 0 }}>
+          <View className="flex-1 min-w-0">
             <Text
               numberOfLines={1}
-              style={{
-                color: name.trim() ? colors.foreground : colors.mutedFg,
-                fontSize: 14, fontFamily: 'Inter_600SemiBold',
-              }}
+              className={cn(
+                'text-sm',
+                name.trim() ? 'text-foreground' : 'text-muted-foreground',
+              )}
+              style={{ fontFamily: 'Inter_600SemiBold' }}
             >
               {name.trim() || 'Property name'}
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-              <MapPinIcon size={11} color={colors.mutedFg} />
+            <View className="flex-row items-center gap-1 mt-0.5">
+              <MapPinIcon size={11} color={palette.mutedForeground} />
               <Text
                 numberOfLines={1}
-                style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', flex: 1 }}
+                className="text-muted-foreground text-[11px] flex-1"
+                style={{ fontFamily: 'Inter_400Regular' }}
               >
                 {address.trim() || 'Full street address'}
               </Text>
             </View>
           </View>
-          <View style={{
-            borderWidth: 1, borderColor: colors.border,
-            borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2,
-          }}>
-            <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+          <View className="border border-border rounded-full px-2 py-0.5">
+            <Text
+              className="text-muted-foreground text-[11px]"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               {meta.shortLabel}
             </Text>
           </View>
         </View>
 
-        <View style={{ height: 1, backgroundColor: colors.border, marginBottom: 12 }} />
+        <View className="h-px bg-border mb-3" />
 
-        {/* Placeholder occupancy + rent — same as PropertyCard for empty state */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+        <View className="flex-row justify-between items-center mb-1.5">
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             Occupancy
           </Text>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>—</Text>
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
+            —
+          </Text>
         </View>
-        <OccupancyBar occupied={0} total={0} colors={colors} />
+        <OccupancyBar occupied={0} total={0} />
 
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+        <View className="flex-row justify-between items-center mt-2.5">
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             Rent this month
           </Text>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             No tenants yet
           </Text>
         </View>
       </View>
 
-      <Text style={{
-        color: colors.mutedFg, fontSize: 12,
-        fontFamily: 'Inter_400Regular', marginTop: 8, lineHeight: 18,
-      }}>
+      <Text
+        className="text-muted-foreground text-xs mt-2 leading-[18px]"
+        style={{ fontFamily: 'Inter_400Regular' }}
+      >
         {mode === 'edit'
           ? 'Changes here are reflected live — they save when you submit the form.'
           : 'This is how your property will appear in the list after creation.'}

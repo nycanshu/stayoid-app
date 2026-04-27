@@ -1,19 +1,21 @@
 import { View } from 'react-native';
-import type { AppColors } from '../../lib/theme/colors';
+import { cn } from '../../lib/utils';
 
 interface OccupancyBarProps {
   occupied: number;
   total: number;
-  colors: AppColors;
 }
 
-export function OccupancyBar({ occupied, total, colors }: OccupancyBarProps) {
+export function OccupancyBar({ occupied, total }: OccupancyBarProps) {
   const pct = total > 0 ? Math.min((occupied / total) * 100, 100) : 0;
-  const fill = pct >= 80 ? colors.success : pct >= 50 ? colors.warning : colors.danger;
+  const fillClass = pct >= 80 ? 'bg-success' : pct >= 50 ? 'bg-warning' : 'bg-destructive';
 
   return (
-    <View style={{ height: 6, backgroundColor: colors.mutedBg, borderRadius: 99, overflow: 'hidden' }}>
-      <View style={{ height: '100%', width: `${pct}%`, backgroundColor: fill, borderRadius: 99 }} />
+    <View className="h-1.5 bg-muted rounded-full overflow-hidden">
+      <View
+        style={{ width: `${pct}%` }}
+        className={cn('h-full rounded-full', fillClass)}
+      />
     </View>
   );
 }

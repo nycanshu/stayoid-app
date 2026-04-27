@@ -3,9 +3,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
+import { useColorScheme } from 'nativewind';
 import { useDashboard } from '../../lib/hooks/use-dashboard';
-import { useColors } from '../../lib/hooks/use-colors';
 import { useAuthStore } from '../../lib/stores/auth-store';
+import { THEME } from '../../lib/theme';
 import { Entrance } from '../../components/animations';
 import {
   Greeting, SummaryCards, RentCollectionCard, OccupancyChart,
@@ -13,7 +14,8 @@ import {
 } from '../../components/dashboard';
 
 export default function DashboardScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const user = useAuthStore((s) => s.user);
   const { data, isLoading, refetch, isRefetching } = useDashboard();
 
@@ -21,8 +23,6 @@ export default function DashboardScreen() {
   const summary      = data?.summary;
   const currentMonth = data?.current_month;
 
-  // focusTick — every focus event re-mounts the Entrance animations so the
-  // whole dashboard cascades in fresh. Also bumped after a manual refresh.
   const [focusTick, setFocusTick] = useState(0);
 
   useFocusEffect(useCallback(() => {
@@ -35,69 +35,61 @@ export default function DashboardScreen() {
   }, [refetch]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={handleRefresh}
-            tintColor={colors.primary}
+            tintColor={palette.primary}
           />
         }
       >
-        {/* ── Greeting ── */}
         <Entrance trigger={focusTick} delay={0} style={{ marginBottom: 20 }}>
-          <Greeting firstName={firstName} colors={colors} />
+          <Greeting firstName={firstName} />
         </Entrance>
 
-        {/* ── Loading skeleton ── */}
         {isLoading && (
           <Entrance trigger={focusTick} delay={60}>
-            <DashboardSkeleton colors={colors} />
+            <DashboardSkeleton />
           </Entrance>
         )}
 
-        {/* ── Summary stats (4-up) ── */}
         {summary && currentMonth && (
           <Entrance trigger={focusTick} delay={60} style={{ marginBottom: 12 }}>
-            <SummaryCards summary={summary} currentMonth={currentMonth} colors={colors} />
+            <SummaryCards summary={summary} currentMonth={currentMonth} />
           </Entrance>
         )}
 
-        {/* ── Rent collection ── */}
         {currentMonth && (
           <Entrance trigger={focusTick} delay={120} style={{ marginBottom: 12 }}>
-            <RentCollectionCard data={currentMonth} colors={colors} />
+            <RentCollectionCard data={currentMonth} />
           </Entrance>
         )}
 
-        {/* ── Occupancy donut ── */}
         {summary && (
           <Entrance trigger={focusTick} delay={180} style={{ marginBottom: 12 }}>
             <OccupancyChart
               occupied={summary.occupied_slots}
               vacant={summary.vacant_slots}
-              colors={colors}
             />
           </Entrance>
         )}
 
-        {/* ── Properties overview ── */}
         {data?.properties && (
           <Entrance trigger={focusTick} delay={240} style={{ marginBottom: 12 }}>
-            <PropertyOverviewList properties={data.properties} colors={colors} />
+            <PropertyOverviewList properties={data.properties} />
           </Entrance>
         )}
 
-        {/* ── Recent payments ── */}
         {data && (
           <Entrance trigger={focusTick} delay={300} style={{ marginBottom: 12 }}>
-            <RecentPaymentsCard payments={data.recent_payments ?? []} colors={colors} />
+            <RecentPaymentsCard payments={data.recent_payments ?? []} />
           </Entrance>
         )}
       </ScrollView>

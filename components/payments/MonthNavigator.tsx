@@ -1,18 +1,20 @@
 import { View, Text, Pressable } from 'react-native';
 import { CaretLeftIcon, CaretRightIcon, CalendarIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { formatMonthYear } from '../../lib/utils/formatters';
 import { useActionSheet } from '../ui/ActionSheet';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
 
 interface MonthNavigatorProps {
   month: number;
   year: number;
   onChange: (month: number, year: number) => void;
-  colors: AppColors;
 }
 
-export function MonthNavigator({ month, year, onChange, colors }: MonthNavigatorProps) {
+export function MonthNavigator({ month, year, onChange }: MonthNavigatorProps) {
   const { show: showActionSheet } = useActionSheet();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const now = new Date();
   const isCurrent = month === now.getMonth() + 1 && year === now.getFullYear();
 
@@ -27,7 +29,6 @@ export function MonthNavigator({ month, year, onChange, colors }: MonthNavigator
   };
 
   const openMonthPicker = () => {
-    // Build last 12 months — most-recent first
     const months: { label: string; m: number; y: number; isCurrent: boolean }[] = [];
     for (let i = 0; i < 12; i++) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -52,43 +53,34 @@ export function MonthNavigator({ month, year, onChange, colors }: MonthNavigator
   };
 
   return (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, padding: 6,
-    }}>
+    <View className="flex-row items-center gap-1.5 bg-card border border-border rounded-xl p-1.5">
       <Pressable
         onPress={prev}
         android_ripple={null}
         hitSlop={6}
-        style={{
-          width: 36, height: 36, borderRadius: 8,
-          alignItems: 'center', justifyContent: 'center',
-          backgroundColor: colors.mutedBg,
-        }}
+        className="size-9 rounded-lg items-center justify-center bg-muted"
       >
-        <CaretLeftIcon size={16} color={colors.foreground} weight="bold" />
+        <CaretLeftIcon size={16} color={palette.foreground} weight="bold" />
       </Pressable>
 
       <Pressable
         onPress={openMonthPicker}
         android_ripple={null}
-        style={{
-          flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-          paddingVertical: 8,
-        }}
+        className="flex-1 flex-row items-center justify-center gap-2 py-2"
       >
-        <CalendarIcon size={14} color={colors.mutedFg} />
-        <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+        <CalendarIcon size={14} color={palette.mutedForeground} />
+        <Text
+          className="text-foreground text-sm"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {formatMonthYear(month, year)}
         </Text>
         {isCurrent && (
-          <View style={{
-            backgroundColor: colors.successBg, borderRadius: 99,
-            paddingHorizontal: 6, paddingVertical: 1,
-          }}>
-            <Text style={{ color: colors.success, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>
+          <View className="bg-success-bg rounded-full px-1.5 py-px">
+            <Text
+              className="text-success text-[10px]"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               Now
             </Text>
           </View>
@@ -99,13 +91,9 @@ export function MonthNavigator({ month, year, onChange, colors }: MonthNavigator
         onPress={next}
         android_ripple={null}
         hitSlop={6}
-        style={{
-          width: 36, height: 36, borderRadius: 8,
-          alignItems: 'center', justifyContent: 'center',
-          backgroundColor: colors.mutedBg,
-        }}
+        className="size-9 rounded-lg items-center justify-center bg-muted"
       >
-        <CaretRightIcon size={16} color={colors.foreground} weight="bold" />
+        <CaretRightIcon size={16} color={palette.foreground} weight="bold" />
       </Pressable>
     </View>
   );

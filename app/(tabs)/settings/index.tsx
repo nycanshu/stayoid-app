@@ -309,7 +309,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             queryClient.clear();
-            logout();
+            await logout();
             router.replace('/(auth)/login' as never);
           },
         },
@@ -337,7 +337,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <ScrollView

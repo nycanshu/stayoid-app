@@ -1,48 +1,45 @@
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowRightIcon, CreditCardIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { formatCurrency, getInitials } from '../../lib/utils/formatters';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
 import type { DashboardRecentPayment } from '../../types/property';
 
 interface RecentPaymentsCardProps {
   payments: DashboardRecentPayment[];
-  colors: AppColors;
 }
 
-/** Last 5 payments with avatar + tenant name + amount + date. */
-export function RecentPaymentsCard({ payments, colors }: RecentPaymentsCardProps) {
+export function RecentPaymentsCard({ payments }: RecentPaymentsCardProps) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, overflow: 'hidden',
-    }}>
-      <View style={{ padding: 16, paddingBottom: 10 }}>
-        <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+    <View className="bg-card border border-border rounded-xl overflow-hidden">
+      <View className="p-4 pb-2.5">
+        <Text
+          className="text-foreground text-sm"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           Recent Payments
         </Text>
       </View>
 
       {payments.length === 0 ? (
-        <View style={{
-          alignItems: 'center', paddingVertical: 28, paddingHorizontal: 24,
-          borderTopWidth: 1, borderTopColor: colors.border,
-        }}>
-          <View style={{
-            width: 44, height: 44, borderRadius: 22,
-            backgroundColor: colors.mutedBg,
-            alignItems: 'center', justifyContent: 'center', marginBottom: 10,
-          }}>
-            <CreditCardIcon size={20} color={colors.mutedFg} weight="duotone" />
+        <View className="items-center py-7 px-6 border-t border-border">
+          <View className="size-11 rounded-full bg-muted items-center justify-center mb-2.5">
+            <CreditCardIcon size={20} color={palette.mutedForeground} weight="duotone" />
           </View>
-          <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
+          <Text
+            className="text-foreground text-[13px] mb-1"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             No recent payments
           </Text>
-          <Text style={{
-            color: colors.mutedFg, fontSize: 12,
-            fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 18,
-          }}>
+          <Text
+            className="text-muted-foreground text-xs text-center leading-[18px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             Payments will appear here once tenants start paying rent.
           </Text>
         </View>
@@ -53,49 +50,46 @@ export function RecentPaymentsCard({ payments, colors }: RecentPaymentsCardProps
               key={p.id}
               onPress={() => router.push('/(tabs)/payments')}
               android_ripple={null}
-              style={{
-                flexDirection: 'row', alignItems: 'center', gap: 12,
-                paddingHorizontal: 16, paddingVertical: 10,
-                borderTopWidth: 1, borderTopColor: colors.border,
-              }}
+              className="flex-row items-center gap-3 px-4 py-2.5 border-t border-border"
             >
-              <View style={{ position: 'relative' }}>
-                <View style={{
-                  width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: colors.mutedBg,
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_600SemiBold' }}>
+              <View className="relative">
+                <View className="size-9 rounded-full bg-muted items-center justify-center">
+                  <Text
+                    className="text-muted-foreground text-xs"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
                     {getInitials(p.tenant_name)}
                   </Text>
                 </View>
-                {/* Online dot — denotes recent activity */}
-                <View style={{
-                  position: 'absolute', bottom: -1, right: -1,
-                  width: 10, height: 10, borderRadius: 5,
-                  backgroundColor: colors.primary,
-                  borderWidth: 2, borderColor: colors.card,
-                }} />
+                <View className="absolute -bottom-px -right-px size-2.5 rounded-full bg-primary border-2 border-card" />
               </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
+              <View className="flex-1 min-w-0">
                 <Text
                   numberOfLines={1}
-                  style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}
+                  className="text-foreground text-[13px]"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
                 >
                   {p.tenant_name}
                 </Text>
                 <Text
                   numberOfLines={1}
-                  style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}
+                  className="text-muted-foreground text-[11px]"
+                  style={{ fontFamily: 'Inter_400Regular' }}
                 >
                   {p.property_name}
                 </Text>
               </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+              <View className="items-end">
+                <Text
+                  className="text-foreground text-[13px]"
+                  style={{ fontFamily: 'Inter_600SemiBold' }}
+                >
                   {formatCurrency(p.amount)}
                 </Text>
-                <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+                <Text
+                  className="text-muted-foreground text-[11px]"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
                   {new Date(p.payment_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                 </Text>
               </View>
@@ -104,16 +98,15 @@ export function RecentPaymentsCard({ payments, colors }: RecentPaymentsCardProps
           <Pressable
             onPress={() => router.push('/(tabs)/payments')}
             android_ripple={null}
-            style={{
-              padding: 14,
-              flexDirection: 'row', alignItems: 'center', gap: 4,
-              borderTopWidth: 1, borderTopColor: colors.border,
-            }}
+            className="p-3.5 flex-row items-center gap-1 border-t border-border"
           >
-            <Text style={{ color: colors.mutedFg, fontSize: 13, fontFamily: 'Inter_400Regular' }}>
+            <Text
+              className="text-muted-foreground text-[13px]"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               View all payments
             </Text>
-            <ArrowRightIcon size={13} color={colors.mutedFg} />
+            <ArrowRightIcon size={13} color={palette.mutedForeground} />
           </Pressable>
         </>
       )}

@@ -1,18 +1,22 @@
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { CalendarIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { formatCurrency, formatMonthYear } from '../../lib/utils/formatters';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
 import type { Payment, PaymentStatus } from '../../types/payment';
 
-function getStatusMeta(status: PaymentStatus, colors: AppColors) {
-  if (status === 'PAID')    return { label: 'Paid',    bg: colors.successBg, fg: colors.success };
-  if (status === 'PARTIAL') return { label: 'Partial', bg: colors.warningBg, fg: colors.warning };
-  return                          { label: 'Pending', bg: colors.dangerBg,  fg: colors.danger  };
+function getStatusMeta(status: PaymentStatus): { label: string; bgClass: string; fgClass: string } {
+  if (status === 'PAID')    return { label: 'Paid',    bgClass: 'bg-success-bg',     fgClass: 'text-success' };
+  if (status === 'PARTIAL') return { label: 'Partial', bgClass: 'bg-warning-bg',     fgClass: 'text-warning' };
+  return                          { label: 'Pending', bgClass: 'bg-destructive-bg', fgClass: 'text-destructive' };
 }
 
-export function PaymentRow({ payment, colors }: { payment: Payment; colors: AppColors }) {
-  const status = getStatusMeta(payment.payment_status, colors);
+export function PaymentRow({ payment }: { payment: Payment }) {
+  const status = getStatusMeta(payment.payment_status);
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
   const period = payment.month_year_display
     ?? formatMonthYear(payment.payment_for_month, payment.payment_for_year);
 
@@ -20,55 +24,56 @@ export function PaymentRow({ payment, colors }: { payment: Payment; colors: AppC
     <Pressable
       onPress={() => router.push(`/(tabs)/tenants/${payment.tenant_slug}`)}
       android_ripple={null}
-      style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, padding: 14,
-      }}
+      className="bg-card border border-border rounded-xl p-3.5"
     >
-      <View style={{
-        flexDirection: 'row', alignItems: 'flex-start',
-        justifyContent: 'space-between', gap: 12, marginBottom: 8,
-      }}>
-        <View style={{ flex: 1 }}>
+      <View className="flex-row items-start justify-between gap-3 mb-2">
+        <View className="flex-1">
           <Text
             numberOfLines={1}
-            style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
           >
             {payment.tenant_name}
           </Text>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 }}>
+          <Text
+            className="text-muted-foreground text-[11px] mt-0.5"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             {payment.unit_number} · {payment.slot_number}
           </Text>
         </View>
-        <View style={{
-          backgroundColor: status.bg, borderRadius: 99,
-          paddingHorizontal: 8, paddingVertical: 3,
-        }}>
-          <Text style={{ color: status.fg, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>
+        <View className={`${status.bgClass} rounded-full px-2 py-0.5`}>
+          <Text
+            className={`${status.fgClass} text-[10px]`}
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             {status.label}
           </Text>
         </View>
       </View>
 
-      <View style={{
-        height: 1, backgroundColor: colors.border, marginBottom: 8,
-      }} />
+      <View className="h-px bg-border mb-2" />
 
-      <View style={{
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <CalendarIcon size={12} color={colors.mutedFg} />
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+      <View className="flex-row items-center justify-between gap-2">
+        <View className="flex-row items-center gap-1">
+          <CalendarIcon size={12} color={palette.mutedForeground} />
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             {period}
           </Text>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
-            {' · '}
-            {payment.payment_method}
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
+            {' · '}{payment.payment_method}
           </Text>
         </View>
-        <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+        <Text
+          className="text-foreground text-sm"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {formatCurrency(payment.amount)}
         </Text>
       </View>

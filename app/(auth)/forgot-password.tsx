@@ -10,49 +10,57 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState, useEffect } from 'react';
 import { ArrowLeftIcon, EnvelopeIcon, CheckCircleIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import Animated, {
   useSharedValue, useAnimatedStyle,
   withTiming, withSpring, withDelay, withRepeat, withSequence,
   Easing,
 } from 'react-native-reanimated';
 import { authApi } from '../../lib/api/auth';
-import { useColors } from '../../lib/hooks/use-colors';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { TextInputProps } from 'react-native';
 
-// ─── Local components ─────────────────────────────────────────────────────────
-
 function FocusableInput({
-  label, error, colors, ...props
+  label, error, ...props
 }: TextInputProps & {
   label: string;
   error?: string;
-  colors: ReturnType<typeof useColors>;
 }) {
   const [isFocused, setIsFocused] = useState(false);
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  const borderClass = error
+    ? 'border-destructive'
+    : isFocused
+      ? 'border-primary'
+      : 'border-border';
+
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={{ color: colors.mutedFg, fontSize: 13, fontFamily: 'Inter_500Medium', marginBottom: 6 }}>
+    <View className="mb-4">
+      <Text
+        className="text-muted-foreground text-[13px] mb-1.5"
+        style={{ fontFamily: 'Inter_500Medium' }}
+      >
         {label}
       </Text>
       <TextInput
         {...props}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        placeholderTextColor={colors.mutedFg}
-        style={{
-          backgroundColor: colors.card,
-          borderWidth: 1.5,
-          borderColor: error ? colors.danger : isFocused ? colors.primary : colors.border,
-          borderRadius: 12,
-          paddingHorizontal: 16,
-          paddingVertical: 14,
-          color: colors.foreground,
-          fontSize: 15,
-          fontFamily: 'Inter_400Regular',
-        }}
+        placeholderTextColor={palette.mutedForeground}
+        className={cn(
+          'bg-card border-[1.5px] rounded-xl px-4 py-3.5 text-foreground text-[15px]',
+          borderClass,
+        )}
+        style={{ fontFamily: 'Inter_400Regular' }}
       />
       {error && (
-        <Text style={{ color: colors.danger, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 4 }}>
+        <Text
+          className="text-destructive text-xs mt-1"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           {error}
         </Text>
       )}
@@ -61,12 +69,11 @@ function FocusableInput({
 }
 
 function AnimatedButton({
-  onPress, disabled, children, colors,
+  onPress, disabled, children,
 }: {
   onPress: () => void;
   disabled?: boolean;
   children: React.ReactNode;
-  colors: ReturnType<typeof useColors>;
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -78,14 +85,10 @@ function AnimatedButton({
         onPressIn={() => { if (!disabled) scale.value = withSpring(0.97, { damping: 14, stiffness: 220 }); }}
         onPressOut={() => { scale.value = withSpring(1.0, { damping: 12, stiffness: 180 }); }}
         android_ripple={null}
-        style={{
-          backgroundColor: colors.primary,
-          borderRadius: 14,
-          paddingVertical: 15,
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: disabled ? 0.6 : 1,
-        }}
+        className={cn(
+          'bg-primary rounded-2xl py-[15px] items-center justify-center',
+          disabled && 'opacity-60',
+        )}
       >
         {children}
       </Pressable>
@@ -93,9 +96,11 @@ function AnimatedButton({
   );
 }
 
-// ─── Success state ────────────────────────────────────────────────────────────
+function SuccessView({ email }: { email: string }) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const color = palette.success;
 
-function SuccessView({ email, colors }: { email: string; colors: ReturnType<typeof useColors> }) {
   const iconOpacity = useSharedValue(0);
   const iconY = useSharedValue(28);
   const textOpacity = useSharedValue(0);
@@ -155,63 +160,75 @@ function SuccessView({ email, colors }: { email: string; colors: ReturnType<type
     transform: [{ translateY: ctaY.value }],
   }));
 
-  const color = colors.success;
-
   return (
-    <View style={{ alignItems: 'center', paddingHorizontal: 8 }}>
-      <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', marginBottom: 40 }, iconWrapStyle]}>
-        <Animated.View style={[{
-          width: 180, height: 180, borderRadius: 90,
-          backgroundColor: `${color}08`,
-          alignItems: 'center', justifyContent: 'center',
-        }, ring1Style]}>
-          <Animated.View style={[{
-            width: 140, height: 140, borderRadius: 70,
-            backgroundColor: `${color}12`,
-            alignItems: 'center', justifyContent: 'center',
-          }, ring2Style]}>
-            <View style={{
-              width: 100, height: 100, borderRadius: 50,
-              backgroundColor: `${color}20`,
-              borderWidth: 1, borderColor: `${color}40`,
-              alignItems: 'center', justifyContent: 'center',
-            }}>
+    <View className="items-center px-2">
+      <Animated.View style={iconWrapStyle} className="items-center justify-center mb-10">
+        <Animated.View
+          style={[
+            { width: 180, height: 180, borderRadius: 90, backgroundColor: `${color}08` },
+            ring1Style,
+          ]}
+          className="items-center justify-center"
+        >
+          <Animated.View
+            style={[
+              { width: 140, height: 140, borderRadius: 70, backgroundColor: `${color}12` },
+              ring2Style,
+            ]}
+            className="items-center justify-center"
+          >
+            <View
+              style={{
+                width: 100, height: 100, borderRadius: 50,
+                backgroundColor: `${color}20`,
+                borderWidth: 1, borderColor: `${color}40`,
+              }}
+              className="items-center justify-center"
+            >
               <CheckCircleIcon size={42} color={color} weight="duotone" />
             </View>
           </Animated.View>
         </Animated.View>
       </Animated.View>
 
-      <Animated.View style={[{ alignItems: 'center', marginBottom: 36 }, textStyle]}>
-        <Text style={{ color: colors.foreground, fontSize: 22, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.4, paddingRight: 0.4, marginBottom: 10, textAlign: 'center' }}>
+      <Animated.View style={textStyle} className="items-center mb-9">
+        <Text
+          className="text-foreground text-[22px] mb-2.5 text-center tracking-tight"
+          style={{ fontFamily: 'SpaceGrotesk_700Bold', paddingRight: 0.4 }}
+        >
           Check your inbox
         </Text>
-        <Text style={{ color: colors.mutedFg, fontSize: 15, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 }}>
+        <Text
+          className="text-muted-foreground text-[15px] text-center leading-[22px]"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           We sent a password reset link to
         </Text>
-        <Text style={{ color: colors.foreground, fontSize: 15, fontFamily: 'Inter_600SemiBold', marginTop: 4 }}>
+        <Text
+          className="text-foreground text-[15px] mt-1"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {email}
         </Text>
       </Animated.View>
 
-      <Animated.View style={[{ width: '100%', gap: 12 }, ctaStyle]}>
-        <AnimatedButton onPress={() => router.replace('/(auth)/login')} colors={colors}>
-          <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Back to Login</Text>
+      <Animated.View style={ctaStyle} className="w-full gap-3">
+        <AnimatedButton onPress={() => router.replace('/(auth)/login')}>
+          <Text className="text-white text-[15px]" style={{ fontFamily: 'Inter_600SemiBold' }}>
+            Back to Login
+          </Text>
         </AnimatedButton>
       </Animated.View>
     </View>
   );
 }
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
-
 const schema = z.object({ email: z.string().email('Enter a valid email') });
 type FormData = z.infer<typeof schema>;
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
-
 export default function ForgotPasswordScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const [sent, setSent] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
 
@@ -247,39 +264,51 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
       {!sent && (
-        <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+        <View className="px-4 pt-2">
           <Pressable
             onPress={() => router.back()}
             hitSlop={8}
             android_ripple={null}
-            style={{ width: 36, height: 36, borderRadius: 99, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
+            className="size-9 rounded-full bg-card border border-border items-center justify-center"
           >
-            <ArrowLeftIcon size={16} color={colors.foreground} />
+            <ArrowLeftIcon size={16} color={palette.foreground} />
           </Pressable>
         </View>
       )}
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 32 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {sent ? (
-            <SuccessView email={submittedEmail} colors={colors} />
+            <SuccessView email={submittedEmail} />
           ) : (
             <>
-              <Animated.View style={[{ alignItems: 'center', marginBottom: 36 }, headerStyle]}>
-                <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: colors.primary + '15', borderWidth: 1, borderColor: colors.primary + '30', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                  <EnvelopeIcon size={26} color={colors.primary} weight="duotone" />
+              <Animated.View style={headerStyle} className="items-center mb-9">
+                <View
+                  style={{
+                    backgroundColor: palette.primary + '15',
+                    borderColor: palette.primary + '30',
+                  }}
+                  className="size-14 rounded-2xl border items-center justify-center mb-4"
+                >
+                  <EnvelopeIcon size={26} color={palette.primary} weight="duotone" />
                 </View>
-                <Text style={{ color: colors.foreground, fontSize: 22, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.4, paddingRight: 0.4 }}>
+                <Text
+                  className="text-foreground text-[22px] tracking-tight"
+                  style={{ fontFamily: 'SpaceGrotesk_700Bold', paddingRight: 0.4 }}
+                >
                   Forgot Password?
                 </Text>
-                <Text style={{ color: colors.mutedFg, fontSize: 14, fontFamily: 'Inter_400Regular', marginTop: 6, textAlign: 'center', lineHeight: 20 }}>
+                <Text
+                  className="text-muted-foreground text-sm mt-1.5 text-center leading-5"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
                   Enter your email and we'll send{'\n'}you a reset link.
                 </Text>
               </Animated.View>
@@ -298,26 +327,33 @@ export default function ForgotPasswordScreen() {
                       value={value}
                       onChangeText={onChange}
                       error={errors.email?.message}
-                      colors={colors}
                     />
                   )}
                 />
 
-                <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting} colors={colors}>
+                <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
                   {isSubmitting
                     ? <ActivityIndicator color="#fff" size="small" />
-                    : <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Send Reset Link</Text>
+                    : <Text className="text-white text-[15px]" style={{ fontFamily: 'Inter_600SemiBold' }}>Send Reset Link</Text>
                   }
                 </AnimatedButton>
 
                 <Pressable
                   onPress={() => router.back()}
                   android_ripple={null}
-                  style={{ alignItems: 'center', marginTop: 20 }}
+                  className="items-center mt-5"
                 >
-                  <Text style={{ color: colors.mutedFg, fontSize: 14, fontFamily: 'Inter_400Regular' }}>
+                  <Text
+                    className="text-muted-foreground text-sm"
+                    style={{ fontFamily: 'Inter_400Regular' }}
+                  >
                     Back to{' '}
-                    <Text style={{ color: colors.primary, fontFamily: 'Inter_500Medium' }}>Log In</Text>
+                    <Text
+                      className="text-primary"
+                      style={{ fontFamily: 'Inter_500Medium' }}
+                    >
+                      Log In
+                    </Text>
                   </Text>
                 </Pressable>
               </Animated.View>

@@ -95,7 +95,7 @@ export default function PropertiesScreen() {
     : (filteredSorted as Row[]);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <FlatList<Row>

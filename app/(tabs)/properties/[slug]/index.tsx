@@ -320,7 +320,7 @@ export default function PropertyDetailScreen() {
   const isLoading = propertyLoading;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <ScrollView

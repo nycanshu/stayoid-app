@@ -112,7 +112,7 @@ export default function EditPropertyScreen() {
   const goToDetail = () => router.replace(`/(tabs)/properties/${property?.slug ?? slug}`);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <KeyboardAvoidingView

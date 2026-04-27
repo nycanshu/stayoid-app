@@ -1,6 +1,8 @@
 import { View, Text, Pressable, Switch } from 'react-native';
 import { CaretRightIcon } from 'phosphor-react-native';
-import type { AppColors } from '../../lib/theme/colors';
+import { useColorScheme } from 'nativewind';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 
 interface BaseProps {
   Icon?: React.ComponentType<{ size: number; color: string; weight?: any }>;
@@ -11,7 +13,6 @@ interface BaseProps {
   destructive?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
-  colors: AppColors;
 }
 
 interface NavRowProps extends BaseProps {
@@ -34,60 +35,75 @@ interface TextRowProps extends BaseProps {
 type SettingsRowProps = NavRowProps | SwitchRowProps | TextRowProps;
 
 export function SettingsRow(props: SettingsRowProps) {
-  const { Icon, iconBg, iconColor, label, description, destructive, isFirst, isLast, colors } = props;
-  const fg = destructive ? colors.danger : colors.foreground;
+  const { Icon, iconBg, iconColor, label, description, destructive, isFirst } = props;
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
 
   const content = (
-    <View style={{
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingHorizontal: 14, paddingVertical: 12,
-      borderTopWidth: isFirst ? 0 : 1, borderTopColor: colors.border,
-    }}>
+    <View
+      className={cn(
+        'flex-row items-center gap-3 px-3.5 py-3',
+        !isFirst && 'border-t border-border',
+      )}
+    >
       {Icon && (
-        <View style={{
-          width: 32, height: 32, borderRadius: 8,
-          backgroundColor: iconBg ?? colors.mutedBg,
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Icon size={16} color={iconColor ?? colors.mutedFg} weight="duotone" />
+        <View
+          style={iconBg ? { backgroundColor: iconBg } : undefined}
+          className={cn(
+            'size-8 rounded-lg items-center justify-center',
+            !iconBg && 'bg-muted',
+          )}
+        >
+          <Icon size={16} color={iconColor ?? palette.mutedForeground} weight="duotone" />
         </View>
       )}
-      <View style={{ flex: 1, minWidth: 0 }}>
+      <View className="flex-1 min-w-0">
         <Text
           numberOfLines={1}
-          style={{ color: fg, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}
+          className={cn(
+            'text-sm',
+            destructive ? 'text-destructive' : 'text-foreground',
+          )}
+          style={{ fontFamily: 'Inter_600SemiBold' }}
         >
           {label}
         </Text>
         {description && (
           <Text
-            style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 }}
+            className="text-muted-foreground text-[11px] mt-0.5"
+            style={{ fontFamily: 'Inter_400Regular' }}
           >
             {description}
           </Text>
         )}
       </View>
       {props.type === 'nav' && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        <View className="flex-row items-center gap-1.5">
           {props.value && (
-            <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular' }}>
+            <Text
+              className="text-muted-foreground text-xs"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               {props.value}
             </Text>
           )}
-          <CaretRightIcon size={13} color={colors.mutedFg} />
+          <CaretRightIcon size={13} color={palette.mutedForeground} />
         </View>
       )}
       {props.type === 'switch' && (
         <Switch
           value={props.value}
           onValueChange={props.onValueChange}
-          trackColor={{ false: colors.mutedBg, true: `${colors.primary}88` }}
-          thumbColor={props.value ? colors.primary : colors.mutedFg}
-          ios_backgroundColor={colors.mutedBg}
+          trackColor={{ false: palette.muted, true: `${palette.primary}88` }}
+          thumbColor={props.value ? palette.primary : palette.mutedForeground}
+          ios_backgroundColor={palette.muted}
         />
       )}
       {props.type === 'text' && (
-        <Text style={{ color: colors.mutedFg, fontSize: 12, fontFamily: 'Inter_400Regular' }}>
+        <Text
+          className="text-muted-foreground text-xs"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           {props.value}
         </Text>
       )}
@@ -96,17 +112,7 @@ export function SettingsRow(props: SettingsRowProps) {
 
   if (props.type === 'nav') {
     return (
-      <Pressable
-        onPress={props.onPress}
-        android_ripple={null}
-        style={{
-          backgroundColor: 'transparent',
-          borderBottomLeftRadius: isLast ? 11 : 0,
-          borderBottomRightRadius: isLast ? 11 : 0,
-          borderTopLeftRadius: isFirst ? 11 : 0,
-          borderTopRightRadius: isFirst ? 11 : 0,
-        }}
-      >
+      <Pressable onPress={props.onPress} android_ripple={null}>
         {content}
       </Pressable>
     );
@@ -114,26 +120,20 @@ export function SettingsRow(props: SettingsRowProps) {
   return content;
 }
 
-// ── Section card wrapper ──────────────────────────────────────────────────────
 export function SettingsSection({
-  title, colors, children,
-}: { title?: string; colors: AppColors; children: React.ReactNode }) {
+  title, children,
+}: { title?: string; children: React.ReactNode }) {
   return (
-    <View style={{ marginBottom: 16 }}>
+    <View className="mb-4">
       {title && (
-        <Text style={{
-          color: colors.mutedFg, fontSize: 11,
-          fontFamily: 'Inter_600SemiBold', letterSpacing: 1,
-          textTransform: 'uppercase', marginBottom: 8, paddingHorizontal: 4,
-        }}>
+        <Text
+          className="text-muted-foreground text-[11px] uppercase tracking-[1px] mb-2 px-1"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {title}
         </Text>
       )}
-      <View style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, overflow: 'hidden',
-      }}>
+      <View className="bg-card border border-border rounded-xl overflow-hidden">
         {children}
       </View>
     </View>

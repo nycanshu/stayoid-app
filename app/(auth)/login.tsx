@@ -11,31 +11,42 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as SecureStore from 'expo-secure-store';
 import { useState, useEffect } from 'react';
 import { EyeIcon, EyeSlashIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import Animated, {
   useSharedValue, useAnimatedStyle,
   withTiming, withSpring, withDelay,
 } from 'react-native-reanimated';
 import { authApi } from '../../lib/api/auth';
 import { useAuthStore } from '../../lib/stores/auth-store';
-import { useColors } from '../../lib/hooks/use-colors';
 import { StayoidLogo } from '../../components/shared/StayoidLogo';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { TextInputProps } from 'react-native';
 
-// ─── Local components ─────────────────────────────────────────────────────────
-
 function FocusableInput({
-  label, error, showToggle, onToggle, secureTextEntry, colors, ...props
+  label, error, showToggle, onToggle, secureTextEntry, ...props
 }: TextInputProps & {
   label: string;
   error?: string;
   showToggle?: boolean;
   onToggle?: () => void;
-  colors: ReturnType<typeof useColors>;
 }) {
   const [isFocused, setIsFocused] = useState(false);
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  const borderClass = error
+    ? 'border-destructive'
+    : isFocused
+      ? 'border-primary'
+      : 'border-border';
+
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={{ color: colors.mutedFg, fontSize: 13, fontFamily: 'Inter_500Medium', marginBottom: 6 }}>
+    <View className="mb-4">
+      <Text
+        className="text-muted-foreground text-[13px] mb-1.5"
+        style={{ fontFamily: 'Inter_500Medium' }}
+      >
         {label}
       </Text>
       <View>
@@ -44,36 +55,33 @@ function FocusableInput({
           secureTextEntry={secureTextEntry}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholderTextColor={colors.mutedFg}
-          style={{
-            backgroundColor: colors.card,
-            borderWidth: 1.5,
-            borderColor: error ? colors.danger : isFocused ? colors.primary : colors.border,
-            borderRadius: 12,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            paddingRight: showToggle ? 48 : 16,
-            color: colors.foreground,
-            fontSize: 15,
-            fontFamily: 'Inter_400Regular',
-          }}
+          placeholderTextColor={palette.mutedForeground}
+          className={cn(
+            'bg-card border-[1.5px] rounded-xl px-4 py-3.5 text-foreground text-[15px]',
+            borderClass,
+            showToggle && 'pr-12',
+          )}
+          style={{ fontFamily: 'Inter_400Regular' }}
         />
         {showToggle && onToggle && (
           <Pressable
             onPress={onToggle}
             hitSlop={8}
             android_ripple={null}
-            style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
+            className="absolute right-3.5 top-0 bottom-0 justify-center"
           >
             {secureTextEntry
-              ? <EyeIcon size={18} color={colors.mutedFg} />
-              : <EyeSlashIcon size={18} color={colors.mutedFg} />
+              ? <EyeIcon size={18} color={palette.mutedForeground} />
+              : <EyeSlashIcon size={18} color={palette.mutedForeground} />
             }
           </Pressable>
         )}
       </View>
       {error && (
-        <Text style={{ color: colors.danger, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 4 }}>
+        <Text
+          className="text-destructive text-xs mt-1"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           {error}
         </Text>
       )}
@@ -82,13 +90,12 @@ function FocusableInput({
 }
 
 function AnimatedButton({
-  onPress, disabled, children, variant = 'primary', colors,
+  onPress, disabled, children, variant = 'primary',
 }: {
   onPress: () => void;
   disabled?: boolean;
   children: React.ReactNode;
   variant?: 'primary' | 'outline';
-  colors: ReturnType<typeof useColors>;
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -100,16 +107,11 @@ function AnimatedButton({
         onPressIn={() => { if (!disabled) scale.value = withSpring(0.97, { damping: 14, stiffness: 220 }); }}
         onPressOut={() => { scale.value = withSpring(1.0, { damping: 12, stiffness: 180 }); }}
         android_ripple={null}
-        style={{
-          backgroundColor: variant === 'primary' ? colors.primary : 'transparent',
-          borderWidth: variant === 'outline' ? 1.5 : 0,
-          borderColor: variant === 'outline' ? colors.border : undefined,
-          borderRadius: 14,
-          paddingVertical: 15,
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: disabled ? 0.6 : 1,
-        }}
+        className={cn(
+          'rounded-2xl py-[15px] items-center justify-center',
+          variant === 'primary' ? 'bg-primary' : 'bg-transparent border-[1.5px] border-border',
+          disabled && 'opacity-60',
+        )}
       >
         {children}
       </Pressable>
@@ -117,18 +119,13 @@ function AnimatedButton({
   );
 }
 
-// ─── Schema ───────────────────────────────────────────────────────────────────
-
 const schema = z.object({
   email: z.string().email('Enter a valid email'),
   password: z.string().min(1, 'Password is required'),
 });
 type FormData = z.infer<typeof schema>;
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
-
 export default function LoginScreen() {
-  const colors = useColors();
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const setUser = useAuthStore((s) => s.setUser);
@@ -188,27 +185,38 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 48 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Animated.View style={[{ alignItems: 'center', marginBottom: 40 }, logoStyle]}>
+          <Animated.View style={logoStyle} className="items-center mb-10">
             <StayoidLogo size={48} />
-            <Text style={{ color: colors.foreground, fontSize: 26, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.5, paddingRight: 0.5, marginTop: 14 }}>
+            <Text
+              className="text-foreground text-[26px] mt-3.5 tracking-tight"
+              style={{ fontFamily: 'SpaceGrotesk_700Bold', paddingRight: 0.5 }}
+            >
               Stayoid
             </Text>
-            <Text style={{ color: colors.mutedFg, fontSize: 15, fontFamily: 'Inter_400Regular', marginTop: 4 }}>
+            <Text
+              className="text-muted-foreground text-[15px] mt-1"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               Welcome back
             </Text>
           </Animated.View>
 
           {!!apiError && (
-            <View style={{ backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: colors.danger + '50', borderRadius: 12, padding: 12, marginBottom: 16 }}>
-              <Text style={{ color: colors.danger, fontSize: 13, fontFamily: 'Inter_400Regular' }}>{apiError}</Text>
+            <View className="bg-destructive-bg border border-destructive/30 rounded-xl p-3 mb-4">
+              <Text
+                className="text-destructive text-[13px]"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
+                {apiError}
+              </Text>
             </View>
           )}
 
@@ -226,7 +234,6 @@ export default function LoginScreen() {
                   value={value}
                   onChangeText={onChange}
                   error={errors.email?.message}
-                  colors={colors}
                 />
               )}
             />
@@ -244,38 +251,45 @@ export default function LoginScreen() {
                   value={value}
                   onChangeText={onChange}
                   error={errors.password?.message}
-                  colors={colors}
                 />
               )}
             />
 
             <Link href="/(auth)/forgot-password" asChild>
-              <Pressable
-                android_ripple={null}
-                style={{ alignSelf: 'flex-end', marginTop: -8, marginBottom: 28 }}
-              >
-                <Text style={{ color: colors.primary, fontSize: 13, fontFamily: 'Inter_400Regular' }}>
+              <Pressable android_ripple={null} className="self-end -mt-2 mb-7">
+                <Text
+                  className="text-primary text-[13px]"
+                  style={{ fontFamily: 'Inter_400Regular' }}
+                >
                   Forgot Password?
                 </Text>
               </Pressable>
             </Link>
           </Animated.View>
 
-          <Animated.View style={[{ gap: 12 }, ctaStyle]}>
-            <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting} colors={colors}>
+          <Animated.View style={ctaStyle} className="gap-3">
+            <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
               {isSubmitting
                 ? <ActivityIndicator color="#fff" size="small" />
-                : <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Log In</Text>
+                : <Text className="text-white text-[15px]" style={{ fontFamily: 'Inter_600SemiBold' }}>Log In</Text>
               }
             </AnimatedButton>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 8 }}>
-              <Text style={{ color: colors.mutedFg, fontSize: 14, fontFamily: 'Inter_400Regular' }}>
+            <View className="flex-row justify-center mt-2">
+              <Text
+                className="text-muted-foreground text-sm"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 Don't have an account?{' '}
               </Text>
               <Link href="/(auth)/signup" asChild>
                 <Pressable android_ripple={null}>
-                  <Text style={{ color: colors.primary, fontSize: 14, fontFamily: 'Inter_500Medium' }}>Sign up</Text>
+                  <Text
+                    className="text-primary text-sm"
+                    style={{ fontFamily: 'Inter_500Medium' }}
+                  >
+                    Sign up
+                  </Text>
                 </Pressable>
               </Link>
             </View>

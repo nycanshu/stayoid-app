@@ -1,36 +1,33 @@
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { PlusIcon } from 'phosphor-react-native';
-import type { AppColors } from '../../lib/theme/colors';
+import { useColorScheme } from 'nativewind';
+import { THEME } from '../../lib/theme';
 
-export function AddPropertyCard({ colors }: { colors: AppColors }) {
+export function AddPropertyCard() {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
   return (
     <Pressable
       onPress={() => router.push('/(tabs)/properties/new')}
       android_ripple={null}
-      style={{
-        borderWidth: 1.5,
-        borderStyle: 'dashed',
-        borderColor: colors.border,
-        borderRadius: 12,
-        padding: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-      }}
+      className="border-[1.5px] border-dashed border-border rounded-xl p-3.5 flex-row items-center gap-3"
     >
-      <View style={{
-        width: 36, height: 36, borderRadius: 10,
-        backgroundColor: colors.mutedBg,
-        alignItems: 'center', justifyContent: 'center',
-      }}>
-        <PlusIcon size={18} color={colors.mutedFg} weight="bold" />
+      <View className="size-9 rounded-[10px] bg-muted items-center justify-center">
+        <PlusIcon size={18} color={palette.mutedForeground} weight="bold" />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+      <View className="flex-1">
+        <Text
+          className="text-foreground text-sm"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           Add Property
         </Text>
-        <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 2 }}>
+        <Text
+          className="text-muted-foreground text-[11px] mt-0.5"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           Create another PG or flat to manage
         </Text>
       </View>

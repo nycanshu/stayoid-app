@@ -15,7 +15,7 @@ export default function RecordPaymentScreen() {
   const { tenant: tenantSlug } = useLocalSearchParams<{ tenant?: string }>();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <KeyboardAvoidingView

@@ -1,31 +1,32 @@
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { MapPinIcon, HouseIcon, UsersIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { OccupancyBar } from './OccupancyBar';
 import { formatCurrency } from '../../lib/utils/formatters';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
 import type { Property, DashboardProperty } from '../../types/property';
 
-// ── Type meta — pulls from theme tokens, no hardcoded hex ─────────────────────
-function getTypeMeta(type: string, colors: AppColors) {
+function getTypeMeta(type: string, palette: typeof THEME['light']) {
   if (type === 'FLAT') {
-    return { label: 'Flat', Icon: HouseIcon, iconColor: colors.info,    iconBg: colors.infoBg };
+    return { label: 'Flat', Icon: HouseIcon, iconColor: palette.info,    iconBg: palette.infoBg };
   }
   if (type === 'PG') {
-    return { label: 'PG',   Icon: UsersIcon, iconColor: colors.success, iconBg: colors.successBg };
+    return { label: 'PG',   Icon: UsersIcon, iconColor: palette.success, iconBg: palette.successBg };
   }
-  return   { label: type,   Icon: HouseIcon, iconColor: colors.mutedFg, iconBg: colors.mutedBg };
+  return   { label: type,   Icon: HouseIcon, iconColor: palette.mutedForeground, iconBg: palette.muted };
 }
 
 interface PropertyCardProps {
   property: Property;
   stats?: DashboardProperty;
-  colors: AppColors;
 }
 
-export function PropertyCard({ property, stats, colors }: PropertyCardProps) {
-  const meta      = getTypeMeta(property.property_type, colors);
-  const Icon      = meta.Icon;
+export function PropertyCard({ property, stats }: PropertyCardProps) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const meta = getTypeMeta(property.property_type, palette);
+  const Icon = meta.Icon;
   const collected = stats ? Number(stats.collected_rent) : 0;
   const expected  = stats ? Number(stats.expected_rent)  : 0;
   const hasStats  = !!stats;
@@ -34,80 +35,96 @@ export function PropertyCard({ property, stats, colors }: PropertyCardProps) {
     <Pressable
       onPress={() => router.push(`/(tabs)/properties/${property.slug}`)}
       android_ripple={null}
-      style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, padding: 14,
-      }}
+      className="bg-card border border-border rounded-xl p-3.5"
     >
-      {/* ── Top: colored icon chip (matches dashboard StatCard) ── */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <View style={{
-          width: 36, height: 36, borderRadius: 10,
-          backgroundColor: meta.iconBg,
-          alignItems: 'center', justifyContent: 'center',
-        }}>
+      <View className="flex-row items-center gap-3 mb-3">
+        <View
+          style={{ backgroundColor: meta.iconBg }}
+          className="size-9 rounded-[10px] items-center justify-center"
+        >
           <Icon size={18} color={meta.iconColor} weight="fill" />
         </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
+        <View className="flex-1 min-w-0">
           <Text
             numberOfLines={1}
-            style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
           >
             {property.name}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-            <MapPinIcon size={11} color={colors.mutedFg} />
+          <View className="flex-row items-center gap-1 mt-0.5">
+            <MapPinIcon size={11} color={palette.mutedForeground} />
             <Text
               numberOfLines={1}
-              style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', flex: 1 }}
+              className="text-muted-foreground text-[11px] flex-1"
+              style={{ fontFamily: 'Inter_400Regular' }}
             >
               {property.address}
             </Text>
           </View>
         </View>
-        <View style={{
-          borderWidth: 1, borderColor: colors.border,
-          borderRadius: 99, paddingHorizontal: 8, paddingVertical: 2,
-        }}>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+        <View className="border border-border rounded-full px-2 py-0.5">
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             {meta.label}
           </Text>
         </View>
       </View>
 
-      {/* ── Divider ── */}
-      <View style={{ height: 1, backgroundColor: colors.border, marginBottom: 12 }} />
+      <View className="h-px bg-border mb-3" />
 
-      {/* ── Occupancy ── */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-        <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+      <View className="flex-row justify-between items-center mb-1.5">
+        <Text
+          className="text-muted-foreground text-[11px]"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           Occupancy
         </Text>
         {hasStats ? (
-          <Text style={{ color: colors.foreground, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
+          <Text
+            className="text-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             {stats!.occupied}/{stats!.total_slots} slots
           </Text>
         ) : (
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>—</Text>
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
+            —
+          </Text>
         )}
       </View>
-      <OccupancyBar occupied={stats?.occupied ?? 0} total={stats?.total_slots ?? 0} colors={colors} />
+      <OccupancyBar occupied={stats?.occupied ?? 0} total={stats?.total_slots ?? 0} />
 
-      {/* ── Rent this month ── */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-        <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+      <View className="flex-row justify-between items-center mt-2.5">
+        <Text
+          className="text-muted-foreground text-[11px]"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           Rent this month
         </Text>
         {hasStats && expected > 0 ? (
-          <Text style={{ color: colors.foreground, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
+          <Text
+            className="text-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             {formatCurrency(collected)}
-            <Text style={{ color: colors.mutedFg, fontFamily: 'Inter_400Regular' }}>
+            <Text
+              className="text-muted-foreground"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               {' / '}{formatCurrency(expected)}
             </Text>
           </Text>
         ) : (
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             No tenants yet
           </Text>
         )}

@@ -9,9 +9,8 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
 } from 'react-native-reanimated';
 import { useEffect } from 'react';
-import { useColors } from '../../lib/hooks/use-colors';
-
-// ─── Icon map ─────────────────────────────────────────────────────────────────
+import { useColorScheme } from 'nativewind';
+import { THEME } from '../../lib/theme';
 
 const TAB_ICONS: Record<string, any> = {
   index:      HouseIcon,
@@ -20,15 +19,13 @@ const TAB_ICONS: Record<string, any> = {
   settings:   GearSixIcon,
 };
 
-// ─── Single tab item ──────────────────────────────────────────────────────────
-
 function TabItem({
-  routeName, isFocused, onPress, colors,
+  routeName, isFocused, onPress, mutedFg,
 }: {
   routeName: string;
   isFocused: boolean;
   onPress: () => void;
-  colors: ReturnType<typeof useColors>;
+  mutedFg: string;
 }) {
   const Icon = TAB_ICONS[routeName] ?? HouseIcon;
 
@@ -57,20 +54,15 @@ function TabItem({
       android_ripple={null}
       hitSlop={6}
     >
-      <Animated.View style={[{ alignItems: 'center', justifyContent: 'center' }, scaleStyle]}>
-        {/* Pill highlight */}
-        <Animated.View style={[{
-          position: 'absolute',
-          width: 58, height: 44,
-          borderRadius: 22,
-          backgroundColor: colors.primary,
-        }, highlightStyle]} />
-
-        {/* Icon */}
-        <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+      <Animated.View style={scaleStyle} className="items-center justify-center">
+        <Animated.View
+          style={highlightStyle}
+          className="absolute w-[58px] h-11 rounded-[22px] bg-primary"
+        />
+        <View className="px-5 py-3">
           <Icon
             size={21}
-            color={isFocused ? '#fff' : colors.mutedFg}
+            color={isFocused ? '#fff' : mutedFg}
             weight={isFocused ? 'fill' : 'regular'}
           />
         </View>
@@ -79,43 +71,29 @@ function TabItem({
   );
 }
 
-// ─── Floating tab bar ─────────────────────────────────────────────────────────
-
 function FloatingTabBar({ state, navigation }: any) {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
 
   const bottom = Math.max(insets.bottom, 12) + 12;
 
   return (
     <View
       pointerEvents="box-none"
-      style={{
-        position: 'absolute',
-        bottom,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-      }}
+      style={{ bottom }}
+      className="absolute left-0 right-0 items-center"
     >
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.card,
-        borderRadius: 32,
-        borderWidth: 1,
-        borderColor: colors.border,
-        paddingHorizontal: 8,
-        paddingVertical: 8,
-        gap: 4,
-        // iOS shadow
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 12 },
-        shadowOpacity: 0.15,
-        shadowRadius: 28,
-        // Android elevation
-        elevation: 20,
-      }}>
+      <View
+        className="flex-row items-center bg-card border border-border rounded-[32px] px-2 py-2 gap-1"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.15,
+          shadowRadius: 28,
+          elevation: 20,
+        }}
+      >
         {state.routes.map((route: any) => {
           if (!TAB_ICONS[route.name]) return null;
 
@@ -130,8 +108,6 @@ function FloatingTabBar({ state, navigation }: any) {
             if (event.defaultPrevented) return;
 
             if (isFocused) {
-              // Re-tap on the currently focused tab → pop its inner stack to
-              // root and bring the user back to the tab's default screen.
               Haptics.selectionAsync();
               navigation.dispatch({
                 type: 'NAVIGATE',
@@ -149,7 +125,7 @@ function FloatingTabBar({ state, navigation }: any) {
               routeName={route.name}
               isFocused={isFocused}
               onPress={onPress}
-              colors={colors}
+              mutedFg={palette.mutedForeground}
             />
           );
         })}
@@ -157,8 +133,6 @@ function FloatingTabBar({ state, navigation }: any) {
     </View>
   );
 }
-
-// ─── Layout ───────────────────────────────────────────────────────────────────
 
 export default function TabsLayout() {
   return (
@@ -170,7 +144,6 @@ export default function TabsLayout() {
       <Tabs.Screen name="properties" />
       <Tabs.Screen name="payments" />
       <Tabs.Screen name="settings" />
-      {/* Tenants is reachable via deep links + the Settings hub, not the tab bar */}
       <Tabs.Screen name="tenants" options={{ href: null }} />
     </Tabs>
   );

@@ -2,66 +2,63 @@ import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { ArrowRightIcon, BuildingsIcon } from 'phosphor-react-native';
 import { useMemo } from 'react';
+import { useColorScheme } from 'nativewind';
 import { useProperties } from '../../lib/hooks/use-properties';
 import { formatCurrency } from '../../lib/utils/formatters';
-import { getProgressColor } from '../../lib/utils/progress-colors';
-import type { AppColors } from '../../lib/theme/colors';
+import { getProgressHex } from '../../lib/utils/progress-colors';
+import { THEME } from '../../lib/theme';
 import type { DashboardProperty } from '../../types/property';
 
 interface PropertyOverviewListProps {
   properties: DashboardProperty[];
-  colors: AppColors;
 }
 
-/** "Your Properties" — list of property rows with collected rent + occupancy bar.
- *  Each row routes to the property detail using a slug looked up from useProperties. */
-export function PropertyOverviewList({ properties, colors }: PropertyOverviewListProps) {
+export function PropertyOverviewList({ properties }: PropertyOverviewListProps) {
+  const { colorScheme } = useColorScheme();
+  const scheme = colorScheme === 'dark' ? 'dark' : 'light';
+  const palette = THEME[scheme];
   const { data: fullProperties } = useProperties();
 
-  // Build id → slug map so we can navigate from dashboard rows
   const slugById = useMemo(() => {
     const m = new Map<string, string>();
     (fullProperties ?? []).forEach((p) => m.set(p.id, p.slug));
     return m;
   }, [fullProperties]);
 
-  // Empty state
   if (properties.length === 0) {
     return (
-      <View style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderRadius: 12, padding: 16,
-      }}>
-        <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold', marginBottom: 14 }}>
+      <View className="bg-card border border-border rounded-xl p-4">
+        <Text
+          className="text-foreground text-sm mb-3.5"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           Your Properties
         </Text>
-        <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-          <View style={{
-            width: 44, height: 44, borderRadius: 22,
-            backgroundColor: colors.mutedBg,
-            alignItems: 'center', justifyContent: 'center', marginBottom: 10,
-          }}>
-            <BuildingsIcon size={20} color={colors.mutedFg} weight="duotone" />
+        <View className="items-center py-4">
+          <View className="size-11 rounded-full bg-muted items-center justify-center mb-2.5">
+            <BuildingsIcon size={20} color={palette.mutedForeground} weight="duotone" />
           </View>
-          <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold', marginBottom: 4 }}>
+          <Text
+            className="text-foreground text-[13px] mb-1"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             No properties yet
           </Text>
-          <Text style={{
-            color: colors.mutedFg, fontSize: 12,
-            fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 18, marginBottom: 14,
-          }}>
+          <Text
+            className="text-muted-foreground text-xs text-center leading-[18px] mb-3.5"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             Add your first property to start managing rentals.
           </Text>
           <Pressable
             onPress={() => router.push('/(tabs)/properties/new')}
             android_ripple={null}
-            style={{
-              backgroundColor: colors.primary, borderRadius: 10,
-              paddingHorizontal: 14, paddingVertical: 9,
-            }}
+            className="bg-primary rounded-[10px] px-3.5 py-2"
           >
-            <Text style={{ color: '#fff', fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+            <Text
+              className="text-white text-[13px]"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
               Add Property
             </Text>
           </Pressable>
@@ -71,20 +68,19 @@ export function PropertyOverviewList({ properties, colors }: PropertyOverviewLis
   }
 
   return (
-    <View style={{
-      backgroundColor: colors.card,
-      borderWidth: 1, borderColor: colors.border,
-      borderRadius: 12, overflow: 'hidden',
-    }}>
-      <View style={{ padding: 16, paddingBottom: 10 }}>
-        <Text style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>
+    <View className="bg-card border border-border rounded-xl overflow-hidden">
+      <View className="p-4 pb-2.5">
+        <Text
+          className="text-foreground text-sm"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           Your Properties
         </Text>
       </View>
 
       {properties.map((p) => {
         const pct = p.total_slots > 0 ? (p.occupied / p.total_slots) * 100 : 0;
-        const barColor = getProgressColor(pct, colors);
+        const barHex = getProgressHex(pct, scheme);
         const slug = slugById.get(p.id);
         const collected = Number(p.collected_rent);
         return (
@@ -93,37 +89,34 @@ export function PropertyOverviewList({ properties, colors }: PropertyOverviewLis
             onPress={slug ? () => router.push(`/(tabs)/properties/${slug}`) : undefined}
             disabled={!slug}
             android_ripple={null}
-            style={{
-              paddingHorizontal: 16, paddingVertical: 12,
-              borderTopWidth: 1, borderTopColor: colors.border,
-            }}
+            className="px-4 py-3 border-t border-border"
           >
-            <View style={{
-              flexDirection: 'row', alignItems: 'center',
-              justifyContent: 'space-between', marginBottom: 6,
-            }}>
+            <View className="flex-row items-center justify-between mb-1.5">
               <Text
                 numberOfLines={1}
-                style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold', flex: 1 }}
+                className="text-foreground text-[13px] flex-1"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
               >
                 {p.name}
               </Text>
-              <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+              <Text
+                className="text-foreground text-[13px]"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 {formatCurrency(collected)}
               </Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{
-                flex: 1, height: 4,
-                backgroundColor: colors.mutedBg,
-                borderRadius: 99, overflow: 'hidden',
-              }}>
-                <View style={{
-                  height: '100%', width: `${pct}%`,
-                  backgroundColor: barColor, borderRadius: 99,
-                }} />
+            <View className="flex-row items-center gap-2">
+              <View className="flex-1 h-1 bg-muted rounded-full overflow-hidden">
+                <View
+                  style={{ width: `${pct}%`, backgroundColor: barHex }}
+                  className="h-full rounded-full"
+                />
               </View>
-              <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+              <Text
+                className="text-muted-foreground text-[11px]"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 {p.occupied}/{p.total_slots}
               </Text>
             </View>
@@ -134,16 +127,15 @@ export function PropertyOverviewList({ properties, colors }: PropertyOverviewLis
       <Pressable
         onPress={() => router.push('/(tabs)/properties')}
         android_ripple={null}
-        style={{
-          padding: 14,
-          flexDirection: 'row', alignItems: 'center', gap: 4,
-          borderTopWidth: 1, borderTopColor: colors.border,
-        }}
+        className="p-3.5 flex-row items-center gap-1 border-t border-border"
       >
-        <Text style={{ color: colors.mutedFg, fontSize: 13, fontFamily: 'Inter_400Regular' }}>
+        <Text
+          className="text-muted-foreground text-[13px]"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           View all properties
         </Text>
-        <ArrowRightIcon size={13} color={colors.mutedFg} />
+        <ArrowRightIcon size={13} color={palette.mutedForeground} />
       </Pressable>
     </View>
   );

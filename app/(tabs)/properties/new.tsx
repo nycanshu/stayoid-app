@@ -14,7 +14,7 @@ export default function NewPropertyScreen() {
   const colors = useColors();
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <KeyboardAvoidingView

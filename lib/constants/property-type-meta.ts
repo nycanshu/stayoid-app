@@ -1,6 +1,5 @@
 import { HouseIcon, UsersIcon } from 'phosphor-react-native';
 import type { ComponentType } from 'react';
-import type { AppColors } from '../theme/colors';
 import type { PropertyType } from '../../types/property';
 
 export interface PropertyTypeMeta {
@@ -17,9 +16,18 @@ export interface PropertyTypeMeta {
   slotLabelPlural: string;
 }
 
+/** Minimal color shape required to compute a meta entry. Both `AppColors`
+ *  and `THEME.light/dark` from `lib/theme.ts` satisfy this. */
+type ColorTokens = {
+  info: string;
+  infoBg: string;
+  success: string;
+  successBg: string;
+};
+
 export function getPropertyTypeMeta(
   type: string,
-  colors: AppColors,
+  colors: ColorTokens,
 ): PropertyTypeMeta {
   if (type === 'FLAT') {
     return {
@@ -51,6 +59,6 @@ export function getPropertyTypeMeta(
   };
 }
 
-export function getAllPropertyTypeMeta(colors: AppColors): PropertyTypeMeta[] {
+export function getAllPropertyTypeMeta(colors: ColorTokens): PropertyTypeMeta[] {
   return [getPropertyTypeMeta('PG', colors), getPropertyTypeMeta('FLAT', colors)];
 }

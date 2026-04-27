@@ -1,100 +1,115 @@
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { PhoneIcon, MapPinIcon, WarningCircleIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { getInitials, formatCurrency } from '../../lib/utils/formatters';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { Tenant } from '../../types/tenant';
 
-export function TenantCard({ tenant, colors }: { tenant: Tenant; colors: AppColors }) {
+export function TenantCard({ tenant }: { tenant: Tenant }) {
   const isActive  = tenant.is_active;
   const hasUnpaid = !!tenant.has_unpaid && isActive;
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
 
   return (
     <Pressable
       onPress={() => router.push(`/(tabs)/tenants/${tenant.slug}`)}
       android_ripple={null}
-      style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderLeftWidth: hasUnpaid ? 3 : 1,
-        borderLeftColor: hasUnpaid ? colors.warning : colors.border,
-        borderRadius: 12, padding: 14,
-        flexDirection: 'row', alignItems: 'center', gap: 12,
-      }}
+      className={cn(
+        'bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3',
+        hasUnpaid && 'border-l-[3px] border-l-warning',
+      )}
     >
-      <View style={{
-        width: 40, height: 40, borderRadius: 20,
-        backgroundColor: isActive ? colors.mutedBg : colors.mutedBg,
-        alignItems: 'center', justifyContent: 'center',
-        opacity: isActive ? 1 : 0.6,
-      }}>
-        <Text style={{ color: colors.foreground, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>
+      <View
+        className={cn(
+          'size-10 rounded-full bg-muted items-center justify-center',
+          !isActive && 'opacity-60',
+        )}
+      >
+        <Text
+          className="text-foreground text-[13px]"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {getInitials(tenant.name)}
         </Text>
       </View>
 
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+      <View className="flex-1 min-w-0">
+        <View className="flex-row items-center gap-1.5 mb-0.5">
           <Text
             numberOfLines={1}
-            style={{
-              color: isActive ? colors.foreground : colors.mutedFg,
-              fontSize: 14, fontFamily: 'Inter_600SemiBold', flexShrink: 1,
-            }}
+            className={cn(
+              'text-sm shrink',
+              isActive ? 'text-foreground' : 'text-muted-foreground',
+            )}
+            style={{ fontFamily: 'Inter_600SemiBold' }}
           >
             {tenant.name}
           </Text>
           {hasUnpaid && (
-            <View style={{
-              flexDirection: 'row', alignItems: 'center', gap: 3,
-              backgroundColor: colors.warningBg, borderRadius: 99,
-              paddingHorizontal: 6, paddingVertical: 1,
-            }}>
-              <WarningCircleIcon size={9} color={colors.warning} weight="fill" />
-              <Text style={{ color: colors.warning, fontSize: 10, fontFamily: 'Inter_600SemiBold' }}>
+            <View className="flex-row items-center gap-0.5 bg-warning-bg rounded-full px-1.5 py-px">
+              <WarningCircleIcon size={9} color={palette.warning} weight="fill" />
+              <Text
+                className="text-warning text-[10px]"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
                 Unpaid
               </Text>
             </View>
           )}
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 2 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, flexShrink: 1 }}>
-            <MapPinIcon size={10} color={colors.mutedFg} />
+        <View className="flex-row items-center gap-2.5 mb-0.5">
+          <View className="flex-row items-center gap-0.5 shrink">
+            <MapPinIcon size={10} color={palette.mutedForeground} />
             <Text
               numberOfLines={1}
-              style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', flexShrink: 1 }}
+              className="text-muted-foreground text-[11px] shrink"
+              style={{ fontFamily: 'Inter_400Regular' }}
             >
               {tenant.property_name} · {tenant.unit_number} · {tenant.slot_number}
             </Text>
           </View>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <PhoneIcon size={10} color={colors.mutedFg} />
-            <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+        <View className="flex-row items-center gap-2.5">
+          <View className="flex-row items-center gap-0.5">
+            <PhoneIcon size={10} color={palette.mutedForeground} />
+            <Text
+              className="text-muted-foreground text-[11px]"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               {tenant.phone}
             </Text>
           </View>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             ·
           </Text>
-          <Text style={{ color: colors.foreground, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
+          <Text
+            className="text-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
             {formatCurrency(tenant.monthly_rent)}
-            <Text style={{ color: colors.mutedFg, fontFamily: 'Inter_400Regular' }}>/mo</Text>
+            <Text
+              className="text-muted-foreground"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
+              /mo
+            </Text>
           </Text>
         </View>
       </View>
 
-      <View style={{
-        backgroundColor: isActive ? colors.successBg : colors.mutedBg,
-        borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3,
-      }}>
-        <Text style={{
-          color: isActive ? colors.success : colors.mutedFg,
-          fontSize: 10, fontFamily: 'Inter_600SemiBold',
-        }}>
+      <View className={cn('rounded-full px-2 py-0.5', isActive ? 'bg-success-bg' : 'bg-muted')}>
+        <Text
+          className={cn('text-[10px]', isActive ? 'text-success' : 'text-muted-foreground')}
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {isActive ? 'Active' : 'Exited'}
         </Text>
       </View>

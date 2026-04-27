@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as SecureStore from 'expo-secure-store';
 import { useState, useEffect } from 'react';
 import { ArrowLeftIcon, EyeIcon, EyeSlashIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import Animated, {
   useSharedValue, useAnimatedStyle,
   withTiming, withSpring, withDelay,
@@ -18,25 +19,35 @@ import Animated, {
 } from 'react-native-reanimated';
 import { authApi } from '../../lib/api/auth';
 import { useAuthStore } from '../../lib/stores/auth-store';
-import { useColors } from '../../lib/hooks/use-colors';
 import { StayoidLogo } from '../../components/shared/StayoidLogo';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
 import type { TextInputProps } from 'react-native';
 
-// ─── Local components ─────────────────────────────────────────────────────────
-
 function FocusableInput({
-  label, error, showToggle, onToggle, secureTextEntry, colors, ...props
+  label, error, showToggle, onToggle, secureTextEntry, ...props
 }: TextInputProps & {
   label: string;
   error?: string;
   showToggle?: boolean;
   onToggle?: () => void;
-  colors: ReturnType<typeof useColors>;
 }) {
   const [isFocused, setIsFocused] = useState(false);
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  const borderClass = error
+    ? 'border-destructive'
+    : isFocused
+      ? 'border-primary'
+      : 'border-border';
+
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={{ color: colors.mutedFg, fontSize: 13, fontFamily: 'Inter_500Medium', marginBottom: 6 }}>
+    <View className="mb-4">
+      <Text
+        className="text-muted-foreground text-[13px] mb-1.5"
+        style={{ fontFamily: 'Inter_500Medium' }}
+      >
         {label}
       </Text>
       <View>
@@ -45,36 +56,33 @@ function FocusableInput({
           secureTextEntry={secureTextEntry}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholderTextColor={colors.mutedFg}
-          style={{
-            backgroundColor: colors.card,
-            borderWidth: 1.5,
-            borderColor: error ? colors.danger : isFocused ? colors.primary : colors.border,
-            borderRadius: 12,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            paddingRight: showToggle ? 48 : 16,
-            color: colors.foreground,
-            fontSize: 15,
-            fontFamily: 'Inter_400Regular',
-          }}
+          placeholderTextColor={palette.mutedForeground}
+          className={cn(
+            'bg-card border-[1.5px] rounded-xl px-4 py-3.5 text-foreground text-[15px]',
+            borderClass,
+            showToggle && 'pr-12',
+          )}
+          style={{ fontFamily: 'Inter_400Regular' }}
         />
         {showToggle && onToggle && (
           <Pressable
             onPress={onToggle}
             hitSlop={8}
             android_ripple={null}
-            style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
+            className="absolute right-3.5 top-0 bottom-0 justify-center"
           >
             {secureTextEntry
-              ? <EyeIcon size={18} color={colors.mutedFg} />
-              : <EyeSlashIcon size={18} color={colors.mutedFg} />
+              ? <EyeIcon size={18} color={palette.mutedForeground} />
+              : <EyeSlashIcon size={18} color={palette.mutedForeground} />
             }
           </Pressable>
         )}
       </View>
       {error && (
-        <Text style={{ color: colors.danger, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 4 }}>
+        <Text
+          className="text-destructive text-xs mt-1"
+          style={{ fontFamily: 'Inter_400Regular' }}
+        >
           {error}
         </Text>
       )}
@@ -83,12 +91,11 @@ function FocusableInput({
 }
 
 function AnimatedButton({
-  onPress, disabled, children, colors,
+  onPress, disabled, children,
 }: {
   onPress: () => void;
   disabled?: boolean;
   children: React.ReactNode;
-  colors: ReturnType<typeof useColors>;
 }) {
   const scale = useSharedValue(1);
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
@@ -100,14 +107,10 @@ function AnimatedButton({
         onPressIn={() => { if (!disabled) scale.value = withSpring(0.97, { damping: 14, stiffness: 220 }); }}
         onPressOut={() => { scale.value = withSpring(1.0, { damping: 12, stiffness: 180 }); }}
         android_ripple={null}
-        style={{
-          backgroundColor: colors.primary,
-          borderRadius: 14,
-          paddingVertical: 15,
-          alignItems: 'center',
-          justifyContent: 'center',
-          opacity: disabled ? 0.6 : 1,
-        }}
+        className={cn(
+          'bg-primary rounded-2xl py-[15px] items-center justify-center',
+          disabled && 'opacity-60',
+        )}
       >
         {children}
       </Pressable>
@@ -115,11 +118,13 @@ function AnimatedButton({
   );
 }
 
-function StrengthPill({ passed, label, colors }: {
+function StrengthPill({ passed, label }: {
   passed: boolean;
   label: string;
-  colors: ReturnType<typeof useColors>;
 }) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
   const progress = useSharedValue(passed ? 1 : 0);
 
   useEffect(() => {
@@ -127,13 +132,13 @@ function StrengthPill({ passed, label, colors }: {
   }, [passed]);
 
   const pillStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(progress.value, [0, 1], [colors.mutedBg, colors.successBg]),
-    borderColor: interpolateColor(progress.value, [0, 1], [colors.border, colors.success + '60']),
+    backgroundColor: interpolateColor(progress.value, [0, 1], [palette.muted, palette.successBg]),
+    borderColor: interpolateColor(progress.value, [0, 1], [palette.border, palette.success + '60']),
     transform: [{ scale: 0.97 + progress.value * 0.03 }],
   }));
 
   const textStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(progress.value, [0, 1], [colors.mutedFg, colors.success]),
+    color: interpolateColor(progress.value, [0, 1], [palette.mutedForeground, palette.success]),
   }));
 
   return (
@@ -144,8 +149,6 @@ function StrengthPill({ passed, label, colors }: {
     </Animated.View>
   );
 }
-
-// ─── Schema ───────────────────────────────────────────────────────────────────
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -158,10 +161,9 @@ const schema = z.object({
 });
 type FormData = z.infer<typeof schema>;
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
-
 export default function SignupScreen() {
-  const colors = useColors();
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const setUser = useAuthStore((s) => s.setUser);
@@ -221,38 +223,49 @@ export default function SignupScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
-      <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+      <View className="px-4 pt-2">
         <Pressable
           onPress={() => router.replace('/(auth)/login')}
           hitSlop={8}
           android_ripple={null}
-          style={{ width: 36, height: 36, borderRadius: 99, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' }}
+          className="size-9 rounded-full bg-card border border-border items-center justify-center"
         >
-          <ArrowLeftIcon size={16} color={colors.foreground} />
+          <ArrowLeftIcon size={16} color={palette.foreground} />
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 32 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Animated.View style={[{ alignItems: 'center', marginBottom: 36 }, headerStyle]}>
+          <Animated.View style={headerStyle} className="items-center mb-9">
             <StayoidLogo size={48} />
-            <Text style={{ color: colors.foreground, fontSize: 26, fontFamily: 'SpaceGrotesk_700Bold', letterSpacing: -0.5, paddingRight: 0.5, marginTop: 14 }}>
+            <Text
+              className="text-foreground text-[26px] mt-3.5 tracking-tight"
+              style={{ fontFamily: 'SpaceGrotesk_700Bold', paddingRight: 0.5 }}
+            >
               Stayoid
             </Text>
-            <Text style={{ color: colors.mutedFg, fontSize: 15, fontFamily: 'Inter_400Regular', marginTop: 4 }}>
+            <Text
+              className="text-muted-foreground text-[15px] mt-1"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
               Create your account
             </Text>
           </Animated.View>
 
           {!!apiError && (
-            <View style={{ backgroundColor: colors.dangerBg, borderWidth: 1, borderColor: colors.danger + '50', borderRadius: 12, padding: 12, marginBottom: 16 }}>
-              <Text style={{ color: colors.danger, fontSize: 13, fontFamily: 'Inter_400Regular' }}>{apiError}</Text>
+            <View className="bg-destructive-bg border border-destructive/30 rounded-xl p-3 mb-4">
+              <Text
+                className="text-destructive text-[13px]"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
+                {apiError}
+              </Text>
             </View>
           )}
 
@@ -269,7 +282,6 @@ export default function SignupScreen() {
                   value={value}
                   onChangeText={onChange}
                   error={errors.name?.message}
-                  colors={colors}
                 />
               )}
             />
@@ -287,7 +299,6 @@ export default function SignupScreen() {
                   value={value}
                   onChangeText={onChange}
                   error={errors.email?.message}
-                  colors={colors}
                 />
               )}
             />
@@ -305,35 +316,42 @@ export default function SignupScreen() {
                   value={value}
                   onChangeText={onChange}
                   error={errors.password?.message}
-                  colors={colors}
                 />
               )}
             />
 
             {password.length > 0 && (
-              <View style={{ flexDirection: 'row', gap: 8, marginTop: -4, marginBottom: 16, flexWrap: 'wrap' }}>
-                <StrengthPill passed={checks.length} label="8+ characters" colors={colors} />
-                <StrengthPill passed={checks.letter} label="One letter" colors={colors} />
-                <StrengthPill passed={checks.number} label="One number" colors={colors} />
+              <View className="flex-row gap-2 -mt-1 mb-4 flex-wrap">
+                <StrengthPill passed={checks.length} label="8+ characters" />
+                <StrengthPill passed={checks.letter} label="One letter" />
+                <StrengthPill passed={checks.number} label="One number" />
               </View>
             )}
           </Animated.View>
 
-          <Animated.View style={[{ gap: 12 }, ctaStyle]}>
-            <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting} colors={colors}>
+          <Animated.View style={ctaStyle} className="gap-3">
+            <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
               {isSubmitting
                 ? <ActivityIndicator color="#fff" size="small" />
-                : <Text style={{ color: '#fff', fontSize: 15, fontFamily: 'Inter_600SemiBold' }}>Create Account</Text>
+                : <Text className="text-white text-[15px]" style={{ fontFamily: 'Inter_600SemiBold' }}>Create Account</Text>
               }
             </AnimatedButton>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 8 }}>
-              <Text style={{ color: colors.mutedFg, fontSize: 14, fontFamily: 'Inter_400Regular' }}>
+            <View className="flex-row justify-center mt-2">
+              <Text
+                className="text-muted-foreground text-sm"
+                style={{ fontFamily: 'Inter_400Regular' }}
+              >
                 Already have an account?{' '}
               </Text>
               <Link href="/(auth)/login" asChild>
                 <Pressable android_ripple={null}>
-                  <Text style={{ color: colors.primary, fontSize: 14, fontFamily: 'Inter_500Medium' }}>Log in</Text>
+                  <Text
+                    className="text-primary text-sm"
+                    style={{ fontFamily: 'Inter_500Medium' }}
+                  >
+                    Log in
+                  </Text>
                 </Pressable>
               </Link>
             </View>

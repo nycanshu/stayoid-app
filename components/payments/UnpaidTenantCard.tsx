@@ -1,53 +1,55 @@
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { WarningCircleIcon, CaretRightIcon } from 'phosphor-react-native';
+import { useColorScheme } from 'nativewind';
 import { formatCurrency, getInitials } from '../../lib/utils/formatters';
-import type { AppColors } from '../../lib/theme/colors';
+import { THEME } from '../../lib/theme';
 import type { Tenant } from '../../types/tenant';
 
-export function UnpaidTenantCard({ tenant, colors }: { tenant: Tenant; colors: AppColors }) {
+export function UnpaidTenantCard({ tenant }: { tenant: Tenant }) {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
   return (
     <Pressable
       onPress={() => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never)}
       android_ripple={null}
-      style={{
-        backgroundColor: colors.card,
-        borderWidth: 1, borderColor: colors.border,
-        borderLeftWidth: 3, borderLeftColor: colors.warning,
-        borderRadius: 12, padding: 14,
-        flexDirection: 'row', alignItems: 'center', gap: 12,
-      }}
+      className="bg-card border border-border border-l-[3px] border-l-warning rounded-xl p-3.5 flex-row items-center gap-3"
     >
-      <View style={{
-        width: 40, height: 40, borderRadius: 10,
-        backgroundColor: colors.warningBg,
-        alignItems: 'center', justifyContent: 'center',
-      }}>
-        <WarningCircleIcon size={20} color={colors.warning} weight="fill" />
+      <View className="size-10 rounded-[10px] bg-warning-bg items-center justify-center">
+        <WarningCircleIcon size={20} color={palette.warning} weight="fill" />
       </View>
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+      <View className="flex-1">
+        <View className="flex-row items-center gap-1.5 mb-0.5">
           <Text
             numberOfLines={1}
-            style={{ color: colors.foreground, fontSize: 14, fontFamily: 'Inter_600SemiBold', flexShrink: 1 }}
+            className="text-foreground text-sm shrink"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
           >
             {tenant.name}
           </Text>
-          <Text style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular' }}>
+          <Text
+            className="text-muted-foreground text-[11px]"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
             ({getInitials(tenant.name)})
           </Text>
         </View>
         <Text
           numberOfLines={1}
-          style={{ color: colors.mutedFg, fontSize: 11, fontFamily: 'Inter_400Regular', marginBottom: 2 }}
+          className="text-muted-foreground text-[11px] mb-0.5"
+          style={{ fontFamily: 'Inter_400Regular' }}
         >
           {tenant.property_name} · {tenant.unit_number} · {tenant.slot_number}
         </Text>
-        <Text style={{ color: colors.warning, fontSize: 11, fontFamily: 'Inter_600SemiBold' }}>
+        <Text
+          className="text-warning text-[11px]"
+          style={{ fontFamily: 'Inter_600SemiBold' }}
+        >
           {formatCurrency(tenant.monthly_rent)} due
         </Text>
       </View>
-      <CaretRightIcon size={14} color={colors.mutedFg} />
+      <CaretRightIcon size={14} color={palette.mutedForeground} />
     </Pressable>
   );
 }

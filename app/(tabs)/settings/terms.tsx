@@ -58,7 +58,7 @@ function LegalScreen({
   colors: AppColors;
 }) {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
       <ScrollView
         style={{ flex: 1 }}
