@@ -1,37 +1,69 @@
-import { View, Text } from 'react-native';
-import { cn } from '../../lib/utils/cn';
-import { getInitials } from '../../lib/utils/formatters';
+import { cn } from '@/lib/utils';
+import { getInitials } from '@/lib/utils/formatters';
+import * as AvatarPrimitive from '@rn-primitives/avatar';
+import { Text } from '@/components/ui/text';
 
-type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+function Avatar({
+  className,
+  ...props
+}: React.ComponentProps<typeof AvatarPrimitive.Root>) {
+  return (
+    <AvatarPrimitive.Root
+      className={cn('relative flex size-8 shrink-0 overflow-hidden rounded-full', className)}
+      {...props}
+    />
+  );
+}
 
-const sizeStyles: Record<AvatarSize, { container: string; text: string; dim: number }> = {
-  xs: { container: 'w-7 h-7 rounded-full',  text: 'text-xs', dim: 28 },
-  sm: { container: 'w-9 h-9 rounded-full',  text: 'text-sm', dim: 36 },
-  md: { container: 'w-11 h-11 rounded-full', text: 'text-sm', dim: 44 },
-  lg: { container: 'w-14 h-14 rounded-full', text: 'text-lg', dim: 56 },
-  xl: { container: 'w-20 h-20 rounded-full', text: 'text-2xl', dim: 80 },
+function AvatarImage({
+  className,
+  ...props
+}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+  return <AvatarPrimitive.Image className={cn('aspect-square size-full', className)} {...props} />;
+}
+
+function AvatarFallback({
+  className,
+  ...props
+}: React.ComponentProps<typeof AvatarPrimitive.Fallback>) {
+  return (
+    <AvatarPrimitive.Fallback
+      className={cn(
+        'bg-muted flex size-full flex-row items-center justify-center rounded-full',
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+type InitialsAvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+const initialsSize: Record<InitialsAvatarSize, { container: string; text: string }> = {
+  xs: { container: 'size-7', text: 'text-xs' },
+  sm: { container: 'size-9', text: 'text-sm' },
+  md: { container: 'size-11', text: 'text-sm' },
+  lg: { container: 'size-14', text: 'text-lg' },
+  xl: { container: 'size-20', text: 'text-2xl' },
 };
 
-interface AvatarProps {
+interface InitialsAvatarProps {
   name: string;
-  size?: AvatarSize;
-  bg?: string;
+  size?: InitialsAvatarSize;
   className?: string;
 }
 
-export function Avatar({ name, size = 'md', bg = '#4F9D7E', className }: AvatarProps) {
-  const { container, text } = sizeStyles[size];
+function InitialsAvatar({ name, size = 'md', className }: InitialsAvatarProps) {
+  const { container, text } = initialsSize[size];
   return (
-    <View
-      className={cn('items-center justify-center', container, className)}
-      style={{ backgroundColor: bg }}
-    >
-      <Text
-        className={cn('text-white font-semibold', text)}
-        style={{ fontFamily: 'Inter_600SemiBold' }}
-      >
-        {getInitials(name)}
-      </Text>
-    </View>
+    <Avatar className={cn(container, 'bg-primary', className)}>
+      <AvatarFallback className="bg-primary">
+        <Text className={cn('text-primary-foreground font-semibold', text)}>
+          {getInitials(name)}
+        </Text>
+      </AvatarFallback>
+    </Avatar>
   );
 }
+
+export { Avatar, AvatarFallback, AvatarImage, InitialsAvatar };

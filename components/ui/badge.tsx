@@ -1,39 +1,77 @@
-import { View, Text } from 'react-native';
-import { cn } from '../../lib/utils/cn';
+import { TextClassContext } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
+import * as Slot from '@rn-primitives/slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { Platform, View } from 'react-native';
 
-type BadgeVariant = 'success' | 'warning' | 'destructive' | 'muted' | 'info' | 'outline';
+const badgeVariants = cva(
+  cn(
+    'border-border group shrink-0 flex-row items-center justify-center gap-1 overflow-hidden rounded-full border px-2 py-0.5',
+    Platform.select({
+      web: 'focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive w-fit whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] [&>svg]:pointer-events-none [&>svg]:size-3',
+    })
+  ),
+  {
+    variants: {
+      variant: {
+        default: cn(
+          'bg-primary border-transparent',
+          Platform.select({ web: '[a&]:hover:bg-primary/90' })
+        ),
+        secondary: cn(
+          'bg-secondary border-transparent',
+          Platform.select({ web: '[a&]:hover:bg-secondary/90' })
+        ),
+        destructive: cn(
+          'bg-destructive-bg border-transparent',
+          Platform.select({ web: '[a&]:hover:bg-destructive-bg/90' })
+        ),
+        success: 'bg-success-bg border-transparent',
+        warning: 'bg-warning-bg border-transparent',
+        info: 'bg-info-bg border-transparent',
+        muted: 'bg-muted border-transparent',
+        outline: cn(
+          'border-border',
+          Platform.select({ web: '[a&]:hover:bg-accent [a&]:hover:text-accent-foreground' })
+        ),
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
 
-const variantStyles: Record<BadgeVariant, { bg: string; text: string }> = {
-  success:     { bg: 'bg-[#1E3C28]', text: 'text-[#22C55E]' },
-  warning:     { bg: 'bg-[#3C2D0F]', text: 'text-[#F59E0B]' },
-  destructive: { bg: 'bg-[#3C1010]', text: 'text-[#EF4444]' },
-  muted:       { bg: 'bg-[#272727]', text: 'text-[#A3A3A3]' },
-  info:        { bg: 'bg-[#192841]', text: 'text-[#60A5FA]' },
-  outline:     { bg: 'bg-transparent border border-[#272727]', text: 'text-[#A3A3A3]' },
-};
+const badgeTextVariants = cva('text-xs font-medium', {
+  variants: {
+    variant: {
+      default: 'text-primary-foreground',
+      secondary: 'text-secondary-foreground',
+      destructive: 'text-destructive',
+      success: 'text-success',
+      warning: 'text-warning',
+      info: 'text-info',
+      muted: 'text-muted-foreground',
+      outline: 'text-foreground',
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+  },
+});
 
-interface BadgeProps {
-  children: React.ReactNode;
-  variant?: BadgeVariant;
-  className?: string;
-}
+type BadgeProps = React.ComponentProps<typeof View> & {
+    asChild?: boolean;
+  } & VariantProps<typeof badgeVariants>;
 
-export function Badge({ children, variant = 'muted', className }: BadgeProps) {
-  const styles = variantStyles[variant];
+function Badge({ className, variant, asChild, ...props }: BadgeProps) {
+  const Component = asChild ? Slot.View : View;
   return (
-    <View
-      className={cn(
-        'self-start rounded-full px-2.5 py-0.5',
-        styles.bg,
-        className,
-      )}
-    >
-      <Text
-        className={cn('text-xs', styles.text)}
-        style={{ fontFamily: 'Inter_600SemiBold' }}
-      >
-        {children}
-      </Text>
-    </View>
+    <TextClassContext.Provider value={badgeTextVariants({ variant })}>
+      <Component className={cn(badgeVariants({ variant }), className)} {...props} />
+    </TextClassContext.Provider>
   );
 }
+
+export { Badge, badgeTextVariants, badgeVariants };
+export type { BadgeProps };

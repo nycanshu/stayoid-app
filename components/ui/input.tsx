@@ -1,38 +1,29 @@
-import { TextInput, View, Text, TextInputProps } from 'react-native';
-import { cn } from '../../lib/utils/cn';
+import { cn } from '@/lib/utils';
+import { Platform, TextInput } from 'react-native';
 
-interface InputProps extends TextInputProps {
-  label?: string;
-  error?: string;
-  className?: string;
-}
-
-export function Input({ label, error, className, ...props }: InputProps) {
+function Input({ className, ...props }: React.ComponentProps<typeof TextInput>) {
   return (
-    <View className="gap-1.5">
-      {label && (
-        <Text
-          className="text-[#A3A3A3] text-sm"
-          style={{ fontFamily: 'Inter_400Regular' }}
-        >
-          {label}
-        </Text>
+    <TextInput
+      className={cn(
+        'dark:bg-input/30 border-input bg-background text-foreground flex h-10 w-full min-w-0 flex-row items-center rounded-md border px-3 py-1 text-base leading-5 shadow-sm shadow-black/5 sm:h-9',
+        props.editable === false &&
+          cn(
+            'opacity-50',
+            Platform.select({ web: 'disabled:pointer-events-none disabled:cursor-not-allowed' })
+          ),
+        Platform.select({
+          web: cn(
+            'placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground outline-none transition-[color,box-shadow] md:text-sm',
+            'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+            'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
+          ),
+          native: 'placeholder:text-muted-foreground/50',
+        }),
+        className
       )}
-      <TextInput
-        {...props}
-        className={cn(
-          'bg-[#181818] border rounded-xl px-4 py-3 text-[#FAFAFA] text-sm',
-          error ? 'border-[#EF4444]' : 'border-[#272727]',
-          className,
-        )}
-        style={{ fontFamily: 'Inter_400Regular' }}
-        placeholderTextColor="#A3A3A3"
-      />
-      {error && (
-        <Text className="text-[#EF4444] text-xs" style={{ fontFamily: 'Inter_400Regular' }}>
-          {error}
-        </Text>
-      )}
-    </View>
+      {...props}
+    />
   );
 }
+
+export { Input };
