@@ -9,12 +9,13 @@ import { useColorScheme } from 'nativewind';
 import { OccupancyBar } from './OccupancyBar';
 import { UnitFormModal } from './UnitFormModal';
 import { SlotFormModal } from './SlotFormModal';
+import { UnitDetailSheet } from './UnitDetailSheet';
 import { useUnits } from '../../lib/hooks/use-units';
 import { formatFloorName, formatCurrency } from '../../lib/utils/formatters';
 import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
-import type { Slot, PropertyType } from '../../types/property';
+import type { Slot, Unit, PropertyType } from '../../types/property';
 
 interface UnitGroup {
   unit_number: string;
@@ -29,9 +30,11 @@ interface FloorCardProps {
   floorId: string;
   /** Drives label vocabulary: PG → "Room"/"Bed", FLAT → "Flat"/"Room". */
   propertyType?: PropertyType;
-  /** Slugs needed to deep-link to the floor / unit detail pages. */
+  /** Slugs needed to deep-link to the floor detail page. */
   propertySlug?: string;
   floorSlug?: string;
+  /** Property name shown as breadcrumb in the unit-detail sheet. */
+  propertyName?: string;
 }
 
 function getFloorBadgeClasses(floorNumber: number): { bg: string; fg: string } {
@@ -175,7 +178,7 @@ function UnitSection({
 }
 
 export function FloorCard({
-  floorNumber, slots, propertyId, floorId, propertyType, propertySlug, floorSlug,
+  floorNumber, slots, propertyId, floorId, propertyType, propertySlug, floorSlug, propertyName,
 }: FloorCardProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
@@ -185,6 +188,9 @@ export function FloorCard({
   const [slotFormState, setSlotFormState] = useState<
     { open: boolean; unitId: string; unitLabel: string }
   >({ open: false, unitId: '', unitLabel: '' });
+  const [unitSheetState, setUnitSheetState] = useState<{ open: boolean; unit: Unit | null }>(
+    { open: false, unit: null },
+  );
   const badge = getFloorBadgeClasses(floorNumber);
 
   // Fetch units for this floor only when expanded — avoids preloading every floor on screen mount
@@ -285,7 +291,10 @@ export function FloorCard({
           <Pressable
             onPress={(e) => {
               e.stopPropagation();
-              router.push(`/(tabs)/properties/${propertySlug}/floors/${floorSlug}` as never);
+              router.push({
+                pathname: '/(tabs)/floors/[floorSlug]',
+                params: { floorSlug, property: propertySlug },
+              } as never);
             }}
             android_ripple={null}
             hitSlop={6}
@@ -327,14 +336,10 @@ export function FloorCard({
               onAddSlot={openSlotModal}
               unitWord={labels.unitLabel}
               slotWord={labels.slotLabel}
-              onOpen={
-                propertySlug && floorSlug
-                  ? () =>
-                      router.push(
-                        `/(tabs)/properties/${propertySlug}/floors/${floorSlug}/units/${unit.unit_slug}` as never,
-                      )
-                  : undefined
-              }
+              onOpen={() => {
+                const fullUnit = (units ?? []).find((u) => u.slug === unit.unit_slug);
+                if (fullUnit) setUnitSheetState({ open: true, unit: fullUnit });
+              }}
             />
           ))}
 
@@ -370,6 +375,23 @@ export function FloorCard({
         unitLabel={slotFormState.unitLabel}
         propertyType={propertyType}
         onClose={() => setSlotFormState((s) => ({ ...s, open: false }))}
+      />
+
+      <UnitDetailSheet
+        visible={unitSheetState.open}
+        unit={unitSheetState.unit}
+        propertyId={propertyId}
+        floorId={floorId}
+        propertyType={propertyType}
+        propertyName={propertyName}
+        propertySlug={propertySlug}
+        floorNumber={floorNumber}
+        slots={
+          unitSheetState.unit
+            ? slots.filter((s) => s.unit_slug === unitSheetState.unit!.slug)
+            : []
+        }
+        onClose={() => setUnitSheetState({ open: false, unit: null })}
       />
     </View>
   );

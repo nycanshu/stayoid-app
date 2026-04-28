@@ -8,29 +8,34 @@ import { useCallback, useState, useMemo } from 'react';
 import {
   ArrowLeftIcon, DotsThreeVerticalIcon, PencilIcon,
   StackIcon, DoorOpenIcon, BedIcon, UsersIcon, PlusIcon,
+  CaretRightIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
-import { useProperty, useSlots } from '../../../../../../lib/hooks/use-properties';
-import { useFloors, useDeleteFloor } from '../../../../../../lib/hooks/use-floors';
-import { useUnits } from '../../../../../../lib/hooks/use-units';
-import { useActionSheet } from '../../../../../../components/ui/ActionSheet';
-import { OccupancyBar } from '../../../../../../components/properties/OccupancyBar';
-import { FloorFormModal } from '../../../../../../components/properties/FloorFormModal';
-import { UnitFormModal } from '../../../../../../components/properties/UnitFormModal';
-import { SlotFormModal } from '../../../../../../components/properties/SlotFormModal';
-import { Skeleton } from '../../../../../../components/ui/skeleton';
-import { Entrance } from '../../../../../../components/animations';
-import { formatFloorName, formatCurrency } from '../../../../../../lib/utils/formatters';
-import { getPropertyTypeLabels } from '../../../../../../lib/constants/property-type-meta';
-import { THEME } from '../../../../../../lib/theme';
-import { cn } from '../../../../../../lib/utils';
-import type { Slot, Unit } from '../../../../../../types/property';
+import { useProperty, useSlots } from '../../../../lib/hooks/use-properties';
+import { useFloors, useDeleteFloor } from '../../../../lib/hooks/use-floors';
+import { useUnits } from '../../../../lib/hooks/use-units';
+import { useActionSheet } from '../../../../components/ui/ActionSheet';
+import { OccupancyBar } from '../../../../components/properties/OccupancyBar';
+import { FloorFormModal } from '../../../../components/properties/FloorFormModal';
+import { UnitFormModal } from '../../../../components/properties/UnitFormModal';
+import { SlotFormModal } from '../../../../components/properties/SlotFormModal';
+import { UnitDetailSheet } from '../../../../components/properties/UnitDetailSheet';
+import { Skeleton } from '../../../../components/ui/skeleton';
+import { Entrance } from '../../../../components/animations';
+import { formatFloorName, formatCurrency } from '../../../../lib/utils/formatters';
+import { getPropertyTypeLabels } from '../../../../lib/constants/property-type-meta';
+import { THEME } from '../../../../lib/theme';
+import { cn } from '../../../../lib/utils';
+import type { Slot, Unit } from '../../../../types/property';
 
 export default function FloorDetailScreen() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
-  const { slug, floorSlug } = useLocalSearchParams<{ slug: string; floorSlug: string }>();
+  const { floorSlug, property: propertySlugParam } = useLocalSearchParams<{
+    floorSlug: string;
+    property?: string;
+  }>();
   const { show: showActionSheet } = useActionSheet();
 
   const [focusTick, setFocusTick] = useState(0);
@@ -39,12 +44,15 @@ export default function FloorDetailScreen() {
   const [slotFormState, setSlotFormState] = useState<
     { open: boolean; unitId: string; unitLabel: string }
   >({ open: false, unitId: '', unitLabel: '' });
+  const [unitSheetState, setUnitSheetState] = useState<{ open: boolean; unit: Unit | null }>(
+    { open: false, unit: null },
+  );
 
   useFocusEffect(useCallback(() => {
     setFocusTick((t) => t + 1);
   }, []));
 
-  const { data: property, isLoading: propertyLoading, refetch: refetchProperty, isRefetching } = useProperty(slug);
+  const { data: property, isLoading: propertyLoading, refetch: refetchProperty, isRefetching } = useProperty(propertySlugParam ?? '');
   const { data: floors, refetch: refetchFloors } = useFloors(property?.id);
   const { data: slots, refetch: refetchSlots } = useSlots(property?.id);
   const floor = useMemo(() => floors?.find((f) => f.slug === floorSlug), [floors, floorSlug]);
@@ -83,6 +91,14 @@ export default function FloorDetailScreen() {
     : 0;
   const occupancyPct = totalSlots > 0 ? (occupied / totalSlots) * 100 : 0;
 
+  const goBackToProperty = () => {
+    if (property?.slug) {
+      router.replace(`/(tabs)/properties/${property.slug}` as never);
+    } else {
+      router.back();
+    }
+  };
+
   const openMoreActions = () => {
     if (!floor || !property) return;
     showActionSheet({
@@ -107,7 +123,7 @@ export default function FloorDetailScreen() {
                   try {
                     await deleteFloor.mutateAsync({ propertyId: property.id, floorId: floor.id });
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    router.back();
+                    goBackToProperty();
                   } catch {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                   }
@@ -140,7 +156,7 @@ export default function FloorDetailScreen() {
         <Entrance trigger={focusTick} style={{ marginBottom: 16 }}>
           <View className="flex-row items-center mb-3.5">
             <Pressable
-              onPress={() => router.back()}
+              onPress={goBackToProperty}
               android_ripple={null}
               hitSlop={8}
               className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
@@ -193,7 +209,7 @@ export default function FloorDetailScreen() {
                 This floor doesn't exist or has been deleted.
               </Text>
               <Pressable
-                onPress={() => router.back()}
+                onPress={goBackToProperty}
                 android_ripple={null}
                 className="bg-primary rounded-[10px] px-4 py-2.5"
               >
@@ -207,19 +223,28 @@ export default function FloorDetailScreen() {
             </View>
           ) : (
             <>
+              {property && (
+                <Pressable
+                  onPress={goBackToProperty}
+                  android_ripple={null}
+                  hitSlop={6}
+                  className="flex-row items-center gap-1 mb-1.5 self-start"
+                >
+                  <Text
+                    className="text-muted-foreground text-[12px]"
+                    style={{ fontFamily: 'Inter_500Medium' }}
+                  >
+                    {property.name}
+                  </Text>
+                  <CaretRightIcon size={11} color={palette.mutedForeground} weight="bold" />
+                </Pressable>
+              )}
               <Text
                 className="text-foreground text-[22px] tracking-tight"
                 style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
               >
                 {formatFloorName(floor.floor_number)}
                 {floor.name ? ` · ${floor.name}` : ''}
-              </Text>
-              <Text
-                numberOfLines={1}
-                className="text-muted-foreground text-[13px] mt-0.5"
-                style={{ fontFamily: 'Inter_400Regular' }}
-              >
-                {property?.name}
               </Text>
             </>
           )}
@@ -250,7 +275,7 @@ export default function FloorDetailScreen() {
                       className="text-muted-foreground text-[11px] mb-1"
                       style={{ fontFamily: 'Inter_400Regular' }}
                     >
-                      Units
+                      {labels.unitLabelPlural}
                     </Text>
                     <Text
                       className="text-foreground text-base leading-5"
@@ -264,7 +289,7 @@ export default function FloorDetailScreen() {
                       className="text-muted-foreground text-[11px] mb-1"
                       style={{ fontFamily: 'Inter_400Regular' }}
                     >
-                      Slots
+                      {labels.slotLabelPlural}
                     </Text>
                     <Text
                       className="text-foreground text-base leading-5"
@@ -341,13 +366,7 @@ export default function FloorDetailScreen() {
                     return (
                       <Pressable
                         key={unit.id}
-                        onPress={() =>
-                          property
-                            ? router.push(
-                                `/(tabs)/properties/${property.slug}/floors/${floor.slug}/units/${unit.slug}` as never,
-                              )
-                            : undefined
-                        }
+                        onPress={() => setUnitSheetState({ open: true, unit })}
                         android_ripple={null}
                         className="bg-card border border-border rounded-xl p-3.5"
                       >
@@ -477,6 +496,18 @@ export default function FloorDetailScreen() {
             unitLabel={slotFormState.unitLabel}
             propertyType={property.property_type}
             onClose={() => setSlotFormState((s) => ({ ...s, open: false }))}
+          />
+          <UnitDetailSheet
+            visible={unitSheetState.open}
+            unit={unitSheetState.unit}
+            propertyId={property.id}
+            floorId={floor.id}
+            propertyType={property.property_type}
+            propertyName={property.name}
+            propertySlug={property.slug}
+            floorNumber={floor.floor_number}
+            slots={unitSheetState.unit ? slotsByUnitSlug[unitSheetState.unit.slug] ?? [] : []}
+            onClose={() => setUnitSheetState({ open: false, unit: null })}
           />
         </>
       )}

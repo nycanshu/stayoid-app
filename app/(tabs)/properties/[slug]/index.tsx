@@ -487,6 +487,7 @@ export default function PropertyDetailScreen() {
                           propertyType={property.property_type}
                           propertySlug={property.slug}
                           floorSlug={floor.slug}
+                          propertyName={property.name}
                         />
                       </Entrance>
                     );
