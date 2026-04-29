@@ -51,7 +51,7 @@ function SlotRow({ slot }: { slot: Slot }) {
   return (
     <Pressable
       onPress={() => {
-        if (tenant) router.push(`/(tabs)/tenants/${tenant.slug}`);
+        if (tenant) router.push(`/tenants/${tenant.slug}`);
       }}
       android_ripple={null}
       disabled={!tenant}
@@ -292,7 +292,7 @@ export function FloorCard({
             onPress={(e) => {
               e.stopPropagation();
               router.push({
-                pathname: '/(tabs)/floors/[floorSlug]',
+                pathname: '/floors/[floorSlug]',
                 params: { floorSlug, property: propertySlug },
               } as never);
             }}

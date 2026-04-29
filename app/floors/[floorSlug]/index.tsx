@@ -1,33 +1,32 @@
 import {
   View, Text, ScrollView, Pressable, RefreshControl, Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
+import { Stack, useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useCallback, useState, useMemo } from 'react';
 import {
-  ArrowLeftIcon, DotsThreeVerticalIcon, PencilIcon,
+  DotsThreeVerticalIcon, PencilIcon,
   StackIcon, DoorOpenIcon, BedIcon, UsersIcon, PlusIcon,
   CaretRightIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
-import { useProperty, useSlots } from '../../../../lib/hooks/use-properties';
-import { useFloors, useDeleteFloor } from '../../../../lib/hooks/use-floors';
-import { useUnits } from '../../../../lib/hooks/use-units';
-import { useActionSheet } from '../../../../components/ui/ActionSheet';
-import { OccupancyBar } from '../../../../components/properties/OccupancyBar';
-import { FloorFormModal } from '../../../../components/properties/FloorFormModal';
-import { UnitFormModal } from '../../../../components/properties/UnitFormModal';
-import { SlotFormModal } from '../../../../components/properties/SlotFormModal';
-import { UnitDetailSheet } from '../../../../components/properties/UnitDetailSheet';
-import { Skeleton } from '../../../../components/ui/skeleton';
-import { Entrance } from '../../../../components/animations';
-import { formatFloorName, formatCurrency } from '../../../../lib/utils/formatters';
-import { getPropertyTypeLabels } from '../../../../lib/constants/property-type-meta';
-import { THEME } from '../../../../lib/theme';
-import { cn } from '../../../../lib/utils';
-import type { Slot, Unit } from '../../../../types/property';
+import { useProperty, useSlots } from '../../../lib/hooks/use-properties';
+import { useFloors, useDeleteFloor } from '../../../lib/hooks/use-floors';
+import { useUnits } from '../../../lib/hooks/use-units';
+import { useActionSheet } from '../../../components/ui/ActionSheet';
+import { OccupancyBar } from '../../../components/properties/OccupancyBar';
+import { FloorFormModal } from '../../../components/properties/FloorFormModal';
+import { UnitFormModal } from '../../../components/properties/UnitFormModal';
+import { SlotFormModal } from '../../../components/properties/SlotFormModal';
+import { UnitDetailSheet } from '../../../components/properties/UnitDetailSheet';
+import { Skeleton } from '../../../components/ui/skeleton';
+import { Entrance } from '../../../components/animations';
+import { formatFloorName, formatCurrency } from '../../../lib/utils/formatters';
+import { getPropertyTypeLabels } from '../../../lib/constants/property-type-meta';
+import { THEME } from '../../../lib/theme';
+import { cn } from '../../../lib/utils';
+import type { Slot, Unit } from '../../../types/property';
 
 export default function FloorDetailScreen() {
   const { colorScheme } = useColorScheme();
@@ -93,7 +92,7 @@ export default function FloorDetailScreen() {
 
   const goBackToProperty = () => {
     if (property?.slug) {
-      router.replace(`/(tabs)/properties/${property.slug}` as never);
+      router.replace(`/properties/${property.slug}` as never);
     } else {
       router.back();
     }
@@ -138,11 +137,38 @@ export default function FloorDetailScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1 bg-background">
       <StatusBar style="auto" />
+
+      <Stack.Screen
+        options={{
+          title: floor ? formatFloorName(floor.floor_number) : '',
+          headerRight: () => floor ? (
+            <View className="flex-row items-center gap-1">
+              <Pressable
+                onPress={() => setEditFloorOpen(true)}
+                android_ripple={null}
+                hitSlop={8}
+                className="size-9 items-center justify-center"
+              >
+                <PencilIcon size={17} color={palette.foreground} />
+              </Pressable>
+              <Pressable
+                onPress={openMoreActions}
+                android_ripple={null}
+                hitSlop={8}
+                className="size-9 items-center justify-center"
+              >
+                <DotsThreeVerticalIcon size={20} color={palette.foreground} weight="bold" />
+              </Pressable>
+            </View>
+          ) : null,
+        }}
+      />
 
       <ScrollView
         className="flex-1"
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -154,38 +180,6 @@ export default function FloorDetailScreen() {
         }
       >
         <Entrance trigger={focusTick} style={{ marginBottom: 16 }}>
-          <View className="flex-row items-center mb-3.5">
-            <Pressable
-              onPress={goBackToProperty}
-              android_ripple={null}
-              hitSlop={8}
-              className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-            >
-              <ArrowLeftIcon size={18} color={palette.foreground} />
-            </Pressable>
-            <View className="flex-1" />
-            {floor && (
-              <>
-                <Pressable
-                  onPress={() => setEditFloorOpen(true)}
-                  android_ripple={null}
-                  hitSlop={8}
-                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center mr-2"
-                >
-                  <PencilIcon size={16} color={palette.foreground} />
-                </Pressable>
-                <Pressable
-                  onPress={openMoreActions}
-                  android_ripple={null}
-                  hitSlop={8}
-                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-                >
-                  <DotsThreeVerticalIcon size={18} color={palette.foreground} weight="bold" />
-                </Pressable>
-              </>
-            )}
-          </View>
-
           {isLoading ? (
             <View className="gap-2">
               <Skeleton width={180} height={26} />
@@ -511,6 +505,6 @@ export default function FloorDetailScreen() {
           />
         </>
       )}
-    </SafeAreaView>
+    </View>
   );
 }

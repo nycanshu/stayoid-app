@@ -1,8 +1,8 @@
 import { Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
-import { THEME } from '../../../lib/theme';
+import { THEME } from '../../lib/theme';
 
-export default function TenantsLayout() {
+export default function FloorsLayout() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
 
@@ -20,10 +20,7 @@ export default function TenantsLayout() {
         headerBackButtonDisplayMode: 'minimal',
       }}
     >
-      <Stack.Screen name="index"        options={{ headerShown: false }} />
-      <Stack.Screen name="new"          options={{ title: 'Add Tenant' }} />
-      <Stack.Screen name="[slug]/index" options={{ title: '' }} />
-      <Stack.Screen name="[slug]/edit"  options={{ title: 'Edit Tenant' }} />
+      <Stack.Screen name="[floorSlug]/index" options={{ title: '' }} />
     </Stack>
   );
 }

@@ -22,7 +22,7 @@ export function OccupancyChart({ occupied, vacant }: OccupancyChartProps) {
   const circumference = 2 * Math.PI * 40;
   const offset        = circumference - (pct / 100) * circumference;
 
-  const goToProperties = () => router.push('/(tabs)/properties');
+  const goToProperties = () => router.push('/properties');
 
   if (total === 0) {
     return (

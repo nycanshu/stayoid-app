@@ -75,7 +75,7 @@ function UnpaidTenantCardImpl({ tenant, month, year }: UnpaidTenantCardProps) {
         {
           label: 'View Tenant',
           Icon: UserIcon,
-          onPress: () => router.push(`/(tabs)/tenants/${tenant.slug}` as never),
+          onPress: () => router.push(`/tenants/${tenant.slug}` as never),
         },
       ],
     });

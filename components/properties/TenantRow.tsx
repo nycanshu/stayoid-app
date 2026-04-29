@@ -70,7 +70,7 @@ export function TenantRow({ tenant }: { tenant: Tenant }) {
         {
           label: 'Edit Tenant',
           Icon: PencilIcon,
-          onPress: () => router.push(`/(tabs)/tenants/${tenant.slug}/edit` as never),
+          onPress: () => router.push(`/tenants/${tenant.slug}/edit` as never),
         },
       ],
     });
@@ -78,7 +78,7 @@ export function TenantRow({ tenant }: { tenant: Tenant }) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/(tabs)/tenants/${tenant.slug}`)}
+      onPress={() => router.push(`/tenants/${tenant.slug}`)}
       onLongPress={openContextMenu}
       delayLongPress={350}
       android_ripple={null}

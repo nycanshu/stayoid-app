@@ -48,7 +48,7 @@ export function RecentPaymentsCard({ payments }: RecentPaymentsCardProps) {
           {payments.slice(0, 5).map((p) => (
             <Pressable
               key={p.id}
-              onPress={() => router.push('/(tabs)/payments')}
+              onPress={() => router.push('/payments')}
               android_ripple={null}
               className="flex-row items-center gap-3 px-4 py-2.5 border-t border-border"
             >
@@ -96,7 +96,7 @@ export function RecentPaymentsCard({ payments }: RecentPaymentsCardProps) {
             </Pressable>
           ))}
           <Pressable
-            onPress={() => router.push('/(tabs)/payments')}
+            onPress={() => router.push('/payments')}
             android_ripple={null}
             className="p-3.5 flex-row items-center gap-1 border-t border-border"
           >

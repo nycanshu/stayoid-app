@@ -30,7 +30,7 @@ export function SummaryCards({ summary, currentMonth }: SummaryCardsProps) {
           Icon={BuildingsIcon}
           iconBg={palette.infoBg}
           iconColor={palette.info}
-          onPress={() => router.push('/(tabs)/properties')}
+          onPress={() => router.push('/properties')}
         />
       </View>
       <View className="w-[48.5%]">
@@ -42,7 +42,7 @@ export function SummaryCards({ summary, currentMonth }: SummaryCardsProps) {
           iconBg={getProgressBgHex(summary.occupancy_rate, scheme)}
           iconColor={getProgressHex(summary.occupancy_rate, scheme)}
           valueColor={getProgressHex(summary.occupancy_rate, scheme)}
-          onPress={() => router.push('/(tabs)/properties')}
+          onPress={() => router.push('/properties')}
         />
       </View>
       <View className="w-[48.5%]">
@@ -54,7 +54,7 @@ export function SummaryCards({ summary, currentMonth }: SummaryCardsProps) {
           iconBg={getProgressBgHex(currentMonth.collection_rate, scheme)}
           iconColor={getProgressHex(currentMonth.collection_rate, scheme)}
           valueColor={getProgressHex(currentMonth.collection_rate, scheme)}
-          onPress={() => router.push('/(tabs)/payments')}
+          onPress={() => router.push('/payments')}
         />
       </View>
       <View className="w-[48.5%]">
@@ -65,7 +65,7 @@ export function SummaryCards({ summary, currentMonth }: SummaryCardsProps) {
           Icon={UsersIcon}
           iconBg={palette.successBg}
           iconColor={palette.success}
-          onPress={() => router.push('/(tabs)/tenants' as never)}
+          onPress={() => router.push('/tenants' as never)}
         />
       </View>
     </View>

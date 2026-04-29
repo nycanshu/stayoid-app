@@ -34,7 +34,7 @@ function PropertyCardImpl({ property, stats }: PropertyCardProps) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/(tabs)/properties/${property.slug}`)}
+      onPress={() => router.push(`/properties/${property.slug}`)}
       android_ripple={null}
       className="bg-card border border-border rounded-xl p-3.5"
     >

@@ -1,8 +1,6 @@
-import { View, Text, ScrollView, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
-import { ArrowLeftIcon, ShieldCheckIcon } from 'phosphor-react-native';
+import { ShieldCheckIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { Entrance } from '../../../components/animations';
 import { THEME } from '../../../lib/theme';
@@ -51,32 +49,17 @@ export default function PrivacyScreen() {
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1 bg-background">
       <StatusBar style="auto" />
       <ScrollView
         className="flex-1"
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <Entrance trigger={1} style={{ marginBottom: 20 }}>
-          <View className="flex-row items-center mb-3.5">
-            <Pressable
-              onPress={() => router.back()}
-              android_ripple={null}
-              hitSlop={8}
-              className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-            >
-              <ArrowLeftIcon size={18} color={palette.foreground} />
-            </Pressable>
-          </View>
+        <Entrance trigger={1} style={{ marginBottom: 16 }}>
           <Text
-            className="text-foreground text-[22px] tracking-tight"
-            style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
-          >
-            Privacy Policy
-          </Text>
-          <Text
-            className="text-muted-foreground text-[13px] mt-0.5"
+            className="text-muted-foreground text-[13px]"
             style={{ fontFamily: 'Inter_400Regular' }}
           >
             What we collect, why, and how to control it
@@ -139,6 +122,6 @@ export default function PrivacyScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

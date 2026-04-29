@@ -32,7 +32,7 @@ function SlotListRowImpl({ slot }: SlotListRowProps) {
   const { open: openPaymentSheet } = useRecordPaymentSheet();
 
   const goToTenant = () => {
-    if (tenant?.slug) router.push(`/(tabs)/tenants/${tenant.slug}`);
+    if (tenant?.slug) router.push(`/tenants/${tenant.slug}`);
   };
   const assignTenant = () => {
     router.push(`/tenants/new?property=${slot.property_slug}` as never);
@@ -48,7 +48,7 @@ function SlotListRowImpl({ slot }: SlotListRowProps) {
         {
           label: 'View Tenant',
           Icon: UserIcon,
-          onPress: () => router.push(`/(tabs)/tenants/${tenant.slug}` as never),
+          onPress: () => router.push(`/tenants/${tenant.slug}` as never),
         },
         {
           label: 'Record Payment',

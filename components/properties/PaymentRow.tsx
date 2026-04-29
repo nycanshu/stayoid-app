@@ -23,7 +23,7 @@ function PaymentRowImpl({ payment }: { payment: Payment }) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/(tabs)/tenants/${payment.tenant_slug}`)}
+      onPress={() => router.push(`/tenants/${payment.tenant_slug}`)}
       android_ripple={null}
       className="bg-card border border-border rounded-xl p-3.5"
     >

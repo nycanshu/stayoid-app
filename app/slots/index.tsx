@@ -1,27 +1,25 @@
 import {
   View, Text, Pressable, TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
 import { useState, useCallback, useMemo } from 'react';
 import {
-  ArrowLeftIcon, BedIcon, MagnifyingGlassIcon,
+  BedIcon, MagnifyingGlassIcon,
 } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
-import { useInfiniteSlots, useProperties } from '../../../lib/hooks/use-properties';
-import { useDebouncedValue } from '../../../lib/hooks/use-debounced-value';
-import { useTabFocusRefetch } from '../../../lib/hooks/use-tab-focus-refetch';
-import { Skeleton } from '../../../components/ui/skeleton';
-import { InfiniteList } from '../../../components/ui/InfiniteList';
-import { PropertyGroupHeader } from '../../../components/ui/PropertyGroupHeader';
-import { Entrance } from '../../../components/animations';
-import { PropertyFilterBar } from '../../../components/properties/PropertyFilterBar';
-import { SlotListRow } from '../../../components/properties/SlotListRow';
-import type { Slot } from '../../../types/property';
-import { THEME } from '../../../lib/theme';
-import { cn } from '../../../lib/utils';
-import type { SlotFilters } from '../../../lib/api/properties';
+import { useInfiniteSlots, useProperties } from '../../lib/hooks/use-properties';
+import { useDebouncedValue } from '../../lib/hooks/use-debounced-value';
+import { useTabFocusRefetch } from '../../lib/hooks/use-tab-focus-refetch';
+import { Skeleton } from '../../components/ui/skeleton';
+import { InfiniteList } from '../../components/ui/InfiniteList';
+import { PropertyGroupHeader } from '../../components/ui/PropertyGroupHeader';
+import { Entrance } from '../../components/animations';
+import { PropertyFilterBar } from '../../components/properties/PropertyFilterBar';
+import { SlotListRow } from '../../components/properties/SlotListRow';
+import type { Slot } from '../../types/property';
+import { THEME } from '../../lib/theme';
+import { cn } from '../../lib/utils';
+import type { SlotFilters } from '../../lib/api/properties';
 
 type FilterKey = 'all' | 'vacant' | 'occupied';
 const FILTER_LABELS: Record<FilterKey, string> = {
@@ -210,7 +208,7 @@ export default function SlotsScreen() {
   const empty = getEmptyCopy(debouncedQuery, filter);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <InfiniteList<ListItem>
@@ -257,26 +255,9 @@ export default function SlotsScreen() {
         }
         ListHeaderComponent={
           <View>
-            <Entrance trigger={1} style={{ marginBottom: 20 }}>
-              <View className="flex-row items-center mb-3.5">
-                <Pressable
-                  onPress={() => router.back()}
-                  android_ripple={null}
-                  hitSlop={8}
-                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-                >
-                  <ArrowLeftIcon size={18} color={palette.foreground} />
-                </Pressable>
-              </View>
-
+            <Entrance trigger={1} style={{ marginBottom: 16 }}>
               <Text
-                className="text-foreground text-[22px] tracking-tight"
-                style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
-              >
-                Slots
-              </Text>
-              <Text
-                className="text-muted-foreground text-[13px] mt-0.5"
+                className="text-muted-foreground text-[13px]"
                 style={{ fontFamily: 'Inter_400Regular' }}
               >
                 Vacancy and occupancy across all properties
@@ -325,6 +306,6 @@ export default function SlotsScreen() {
           </View>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }

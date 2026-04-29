@@ -1,12 +1,11 @@
 import {
   View, Text, ScrollView, Pressable, RefreshControl, Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
+import { Stack, useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useMemo, useState, useCallback } from 'react';
 import {
-  ArrowLeftIcon, MapPinIcon, DotsThreeVerticalIcon, PencilIcon,
+  MapPinIcon, DotsThreeVerticalIcon, PencilIcon,
   StackIcon, CurrencyCircleDollarIcon,
   PlusIcon,
 } from 'phosphor-react-native';
@@ -248,7 +247,7 @@ export default function PropertyDetailScreen() {
       options: [
         {
           label: 'Edit Property',
-          onPress: () => router.push(`/(tabs)/properties/${slug}/edit` as never),
+          onPress: () => router.push(`/properties/${slug}/edit` as never),
         },
         {
           label: 'Add Tenant Here',
@@ -273,7 +272,7 @@ export default function PropertyDetailScreen() {
                   try {
                     await deleteProperty.mutateAsync(property.slug);
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    router.replace('/(tabs)/properties');
+                    router.replace('/properties');
                   } catch {
                     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                     Alert.alert('Could not delete', 'Please check your connection and try again.');
@@ -291,11 +290,38 @@ export default function PropertyDetailScreen() {
   const isLoading = propertyLoading;
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1 bg-background">
       <StatusBar style="auto" />
+
+      <Stack.Screen
+        options={{
+          title: property?.name ?? '',
+          headerRight: () => (
+            <View className="flex-row items-center gap-1">
+              <Pressable
+                onPress={() => router.push(`/properties/${slug}/edit` as never)}
+                android_ripple={null}
+                hitSlop={8}
+                className="size-9 items-center justify-center"
+              >
+                <PencilIcon size={17} color={palette.foreground} />
+              </Pressable>
+              <Pressable
+                onPress={openMoreActions}
+                android_ripple={null}
+                hitSlop={8}
+                className="size-9 items-center justify-center"
+              >
+                <DotsThreeVerticalIcon size={20} color={palette.foreground} weight="bold" />
+              </Pressable>
+            </View>
+          ),
+        }}
+      />
 
       <ScrollView
         className="flex-1"
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -311,34 +337,6 @@ export default function PropertyDetailScreen() {
             <HeaderSkeleton />
           ) : (
             <>
-              <View className="flex-row items-center mb-3.5">
-                <Pressable
-                  onPress={() => router.back()}
-                  android_ripple={null}
-                  hitSlop={8}
-                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-                >
-                  <ArrowLeftIcon size={18} color={palette.foreground} />
-                </Pressable>
-                <View className="flex-1" />
-                <Pressable
-                  onPress={() => router.push(`/(tabs)/properties/${slug}/edit` as never)}
-                  android_ripple={null}
-                  hitSlop={8}
-                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center mr-2"
-                >
-                  <PencilIcon size={16} color={palette.foreground} />
-                </Pressable>
-                <Pressable
-                  onPress={openMoreActions}
-                  android_ripple={null}
-                  hitSlop={8}
-                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-                >
-                  <DotsThreeVerticalIcon size={18} color={palette.foreground} weight="bold" />
-                </Pressable>
-              </View>
-
               <View className="flex-row items-center gap-2 flex-wrap mb-1.5">
                 <Text
                   className="text-foreground text-[22px] tracking-tight shrink"
@@ -549,6 +547,6 @@ export default function PropertyDetailScreen() {
           onClose={() => setFloorFormOpen(false)}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }

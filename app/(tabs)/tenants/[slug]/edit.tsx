@@ -2,10 +2,9 @@ import {
   View, Text, Pressable, ScrollView,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeftIcon, UserIcon } from 'phosphor-react-native';
+import { UserIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { useTenant } from '../../../../lib/hooks/use-tenants';
 import { TenantForm } from '../../../../components/tenants/TenantForm';
@@ -53,7 +52,7 @@ function NotFound({ mutedFg }: { mutedFg: string }) {
         The tenant you're trying to edit doesn't exist or has been deleted.
       </Text>
       <Pressable
-        onPress={() => router.replace('/(tabs)/tenants')}
+        onPress={() => router.replace('/tenants')}
         android_ripple={null}
         className="bg-primary rounded-[10px] px-4 py-2.5"
       >
@@ -75,7 +74,7 @@ export default function EditTenantScreen() {
   const { data: tenant, isLoading } = useTenant(slug);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <KeyboardAvoidingView
@@ -83,37 +82,17 @@ export default function EditTenantScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
-          <Entrance trigger={1} style={{ marginBottom: 20 }}>
-            <View className="flex-row items-center mb-3.5">
-              <Pressable
-                onPress={() => router.back()}
-                android_ripple={null}
-                hitSlop={8}
-                className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-              >
-                <ArrowLeftIcon size={18} color={palette.foreground} />
-              </Pressable>
-            </View>
-
-            <Text
-              className="text-foreground text-[22px] tracking-tight"
-              style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
-            >
-              Edit Tenant
-            </Text>
-            {isLoading ? (
-              <View className="mt-1">
-                <Skeleton width={200} height={14} />
-              </View>
-            ) : tenant ? (
+          {tenant && (
+            <Entrance trigger={1} style={{ marginBottom: 16 }}>
               <Text
                 numberOfLines={1}
-                className="text-muted-foreground text-[13px] mt-0.5"
+                className="text-muted-foreground text-[13px]"
                 style={{ fontFamily: 'Inter_400Regular' }}
               >
                 Editing{' '}
@@ -124,8 +103,8 @@ export default function EditTenantScreen() {
                   {tenant.name}
                 </Text>
               </Text>
-            ) : null}
-          </Entrance>
+            </Entrance>
+          )}
 
           {isLoading ? (
             <Entrance trigger={1} delay={60}>
@@ -139,12 +118,12 @@ export default function EditTenantScreen() {
             <TenantForm
               mode="edit"
               tenant={tenant}
-              onSuccess={(newSlug) => router.replace(`/(tabs)/tenants/${newSlug}` as never)}
+              onSuccess={(newSlug) => router.replace(`/tenants/${newSlug}` as never)}
               onCancel={() => router.back()}
             />
           )}
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

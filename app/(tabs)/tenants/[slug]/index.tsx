@@ -1,12 +1,11 @@
 import {
   View, Text, ScrollView, Pressable, RefreshControl, Linking,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
+import { Stack, useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
-  ArrowLeftIcon, PhoneIcon, MapPinIcon,
+  PhoneIcon, MapPinIcon,
   PencilIcon, DotsThreeVerticalIcon, UserIcon, BriefcaseIcon,
   IdentificationCardIcon, UsersThreeIcon, HouseIcon, ReceiptIcon,
   PlusIcon, WhatsappLogoIcon, ChatTextIcon,
@@ -151,7 +150,7 @@ function NotFound({ mutedFg }: { mutedFg: string }) {
         This tenant doesn't exist or has been deleted.
       </Text>
       <Pressable
-        onPress={() => router.replace('/(tabs)/tenants')}
+        onPress={() => router.replace('/tenants')}
         android_ripple={null}
         className="bg-primary rounded-[10px] px-4 py-2.5"
       >
@@ -288,11 +287,42 @@ export default function TenantDetailScreen() {
   const isActive = tenant?.is_active;
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1 bg-background">
       <StatusBar style="auto" />
+
+      <Stack.Screen
+        options={{
+          title: tenant?.name ?? '',
+          headerRight: () => (
+            <View className="flex-row items-center gap-1">
+              {tenant && isActive && (
+                <Pressable
+                  onPress={() => router.push(`/tenants/${slug}/edit` as never)}
+                  android_ripple={null}
+                  hitSlop={8}
+                  className="size-9 items-center justify-center"
+                >
+                  <PencilIcon size={17} color={palette.foreground} />
+                </Pressable>
+              )}
+              {tenant && (
+                <Pressable
+                  onPress={openMoreActions}
+                  android_ripple={null}
+                  hitSlop={8}
+                  className="size-9 items-center justify-center"
+                >
+                  <DotsThreeVerticalIcon size={20} color={palette.foreground} weight="bold" />
+                </Pressable>
+              )}
+            </View>
+          ),
+        }}
+      />
 
       <ScrollView
         className="flex-1"
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -303,39 +333,6 @@ export default function TenantDetailScreen() {
           />
         }
       >
-        <Entrance trigger={focusTick} style={{ marginBottom: 16 }}>
-          <View className="flex-row items-center">
-            <Pressable
-              onPress={() => router.back()}
-              android_ripple={null}
-              hitSlop={8}
-              className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-            >
-              <ArrowLeftIcon size={18} color={palette.foreground} />
-            </Pressable>
-            <View className="flex-1" />
-            {tenant && isActive && (
-              <Pressable
-                onPress={() => router.push(`/(tabs)/tenants/${slug}/edit` as never)}
-                android_ripple={null}
-                hitSlop={8}
-                className="size-10 rounded-[10px] border border-border bg-card items-center justify-center mr-2"
-              >
-                <PencilIcon size={16} color={palette.foreground} />
-              </Pressable>
-            )}
-            {tenant && (
-              <Pressable
-                onPress={openMoreActions}
-                android_ripple={null}
-                hitSlop={8}
-                className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-              >
-                <DotsThreeVerticalIcon size={18} color={palette.foreground} weight="bold" />
-              </Pressable>
-            )}
-          </View>
-        </Entrance>
 
         {isLoading ? (
           <Entrance trigger={focusTick} delay={60}><DetailSkeleton /></Entrance>
@@ -620,6 +617,6 @@ export default function TenantDetailScreen() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

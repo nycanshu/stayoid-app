@@ -24,7 +24,7 @@ function PropertyGroupHeaderImpl({
   const Wrapper: typeof Pressable | typeof View = propertySlug ? Pressable : View;
   const wrapperProps = propertySlug
     ? {
-      onPress: () => router.push(`/(tabs)/properties/${propertySlug}` as never),
+      onPress: () => router.push(`/properties/${propertySlug}` as never),
       android_ripple: null,
       hitSlop: 4,
     }

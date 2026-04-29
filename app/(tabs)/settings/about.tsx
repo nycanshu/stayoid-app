@@ -1,9 +1,7 @@
 import { View, Text, ScrollView, Pressable, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { router } from 'expo-router';
 import {
-  ArrowLeftIcon, HeartIcon, RocketIcon, SparkleIcon,
+  HeartIcon, RocketIcon, SparkleIcon,
   GithubLogoIcon, LinkedinLogoIcon, EnvelopeIcon, GlobeIcon,
 } from 'phosphor-react-native';
 import Constants from 'expo-constants';
@@ -115,32 +113,17 @@ export default function AboutScreen() {
   const appVersion = (Constants.expoConfig?.version as string | undefined) ?? '1.0.0';
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <View className="flex-1 bg-background">
       <StatusBar style="auto" />
       <ScrollView
         className="flex-1"
+        contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <Entrance trigger={1} style={{ marginBottom: 20 }}>
-          <View className="flex-row items-center mb-3.5">
-            <Pressable
-              onPress={() => router.back()}
-              android_ripple={null}
-              hitSlop={8}
-              className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-            >
-              <ArrowLeftIcon size={18} color={palette.foreground} />
-            </Pressable>
-          </View>
+        <Entrance trigger={1} style={{ marginBottom: 16 }}>
           <Text
-            className="text-foreground text-[22px] tracking-tight"
-            style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
-          >
-            Meet the developer
-          </Text>
-          <Text
-            className="text-muted-foreground text-[13px] mt-0.5"
+            className="text-muted-foreground text-[13px]"
             style={{ fontFamily: 'Inter_400Regular' }}
           >
             The team behind Stayoid
@@ -237,6 +220,6 @@ export default function AboutScreen() {
           </View>
         </Entrance>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }

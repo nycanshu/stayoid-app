@@ -74,7 +74,7 @@ function TenantCardImpl({ tenant }: { tenant: Tenant }) {
         {
           label: 'Edit Tenant',
           Icon: PencilIcon,
-          onPress: () => router.push(`/(tabs)/tenants/${tenant.slug}/edit` as never),
+          onPress: () => router.push(`/tenants/${tenant.slug}/edit` as never),
         },
       ],
     });
@@ -82,7 +82,7 @@ function TenantCardImpl({ tenant }: { tenant: Tenant }) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/(tabs)/tenants/${tenant.slug}`)}
+      onPress={() => router.push(`/tenants/${tenant.slug}`)}
       onLongPress={openContextMenu}
       delayLongPress={400}
       android_ripple={null}

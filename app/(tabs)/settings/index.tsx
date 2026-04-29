@@ -370,7 +370,7 @@ export default function SettingsScreen() {
               iconColor={palette.primary}
               label="Slots"
               description="Vacancy and occupancy across properties"
-              onPress={() => router.push('/(tabs)/slots' as never)}
+              onPress={() => router.push('/slots' as never)}
               isFirst
               isLast
             />
@@ -490,20 +490,20 @@ export default function SettingsScreen() {
               iconColor={palette.primary}
               label="Meet the developer"
               description="The team behind Stayoid"
-              onPress={() => router.push('/(tabs)/settings/about' as never)}
+              onPress={() => router.push('/settings/about' as never)}
               isFirst
             />
             <SettingsRow
               type="nav"
               Icon={FileTextIcon}
               label="Terms of Service"
-              onPress={() => router.push('/(tabs)/settings/terms' as never)}
+              onPress={() => router.push('/settings/terms' as never)}
             />
             <SettingsRow
               type="nav"
               Icon={ShieldIcon}
               label="Privacy Policy"
-              onPress={() => router.push('/(tabs)/settings/privacy' as never)}
+              onPress={() => router.push('/settings/privacy' as never)}
             />
             <SettingsRow
               type="text"

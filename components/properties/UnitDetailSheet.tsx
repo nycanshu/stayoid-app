@@ -90,7 +90,7 @@ export function UnitDetailSheet({
     onClose();
     setTimeout(() => {
       if (s.active_tenant?.slug) {
-        router.push(`/(tabs)/tenants/${s.active_tenant.slug}` as never);
+        router.push(`/tenants/${s.active_tenant.slug}` as never);
       } else if (propertySlug) {
         router.push(`/tenants/new?property=${propertySlug}` as never);
       }

@@ -86,7 +86,7 @@ export function PropertyOverviewList({ properties }: PropertyOverviewListProps) 
         return (
           <Pressable
             key={p.id}
-            onPress={slug ? () => router.push(`/(tabs)/properties/${slug}`) : undefined}
+            onPress={slug ? () => router.push(`/properties/${slug}`) : undefined}
             disabled={!slug}
             android_ripple={null}
             className="px-4 py-3 border-t border-border"
@@ -125,7 +125,7 @@ export function PropertyOverviewList({ properties }: PropertyOverviewListProps) 
       })}
 
       <Pressable
-        onPress={() => router.push('/(tabs)/properties')}
+        onPress={() => router.push('/properties')}
         android_ripple={null}
         className="p-3.5 flex-row items-center gap-1 border-t border-border"
       >

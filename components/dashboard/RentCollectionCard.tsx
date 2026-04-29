@@ -22,7 +22,7 @@ export function RentCollectionCard({ data }: RentCollectionCardProps) {
   const barHex    = getProgressHex(data.collection_rate, scheme);
   const barTextClass = getProgressClass(data.collection_rate);
 
-  const goToPayments = () => router.push('/(tabs)/payments');
+  const goToPayments = () => router.push('/payments');
 
   if (expected <= 0) {
     return (
