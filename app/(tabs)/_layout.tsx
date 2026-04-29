@@ -108,15 +108,15 @@ function FloatingTabBar({ state, navigation }: any) {
             });
             if (event.defaultPrevented) return;
 
-            if (isFocused) {
-              Haptics.selectionAsync();
-              navigation.dispatch({
-                type: 'NAVIGATE',
-                payload: { name: route.name },
-                target: state.key,
-              });
+            if (isFocused) Haptics.selectionAsync();
+
+            // Always reset the destination tab's nested stack to its `index`
+            // screen — including when switching to a different tab. The Home
+            // tab has no nested stack so we navigate plainly there.
+            if (route.name === 'index') {
+              navigation.navigate(route.name);
             } else {
-              navigation.navigate(route.name, route.params);
+              navigation.navigate(route.name, { screen: 'index' });
             }
           };
 
@@ -140,6 +140,7 @@ export default function TabsLayout() {
     <Tabs
       tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{ headerShown: false }}
+      backBehavior="none"
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="properties" />

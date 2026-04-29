@@ -15,8 +15,10 @@ import { useTabFocusRefetch } from '../../../lib/hooks/use-tab-focus-refetch';
 import { TenantCard } from '../../../components/tenants/TenantCard';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { InfiniteList } from '../../../components/ui/InfiniteList';
+import { PropertyGroupHeader } from '../../../components/ui/PropertyGroupHeader';
 import { Entrance } from '../../../components/animations';
 import { PropertyFilterBar } from '../../../components/properties/PropertyFilterBar';
+import type { Tenant } from '../../../types/tenant';
 import { THEME } from '../../../lib/theme';
 import { cn } from '../../../lib/utils';
 import type { TenantFilters } from '../../../lib/api/tenants';
@@ -153,11 +155,19 @@ export default function TenantsScreen() {
   const [propertyId, setPropertyId] = useState<string | undefined>(undefined);
   const debouncedQuery = useDebouncedValue(query.trim(), 300);
 
+  /**
+   * Auto-group by property when the user is browsing across all properties
+   * (no property filter) on a list that benefits from grouping. Exited tenants
+   * are usually small + chronological, so we keep that flat.
+   */
+  const groupingActive = !propertyId && filter !== 'exited';
+
   const filters = useMemo<Omit<TenantFilters, 'page' | 'page_size'>>(() => ({
     query: debouncedQuery || undefined,
     property_id: propertyId,
     ...filterToParams(filter),
-  }), [debouncedQuery, propertyId, filter]);
+    ordering: groupingActive ? 'property' : undefined,
+  }), [debouncedQuery, propertyId, filter, groupingActive]);
 
   const {
     data, isLoading, isRefetching,
@@ -173,16 +183,67 @@ export default function TenantsScreen() {
   );
   const total = data?.pages?.[0]?.count ?? 0;
 
+  type ListItem =
+    | { kind: 'header'; key: string; propertyName: string; propertySlug?: string; count: number; isFirst: boolean }
+    | { kind: 'tenant'; key: string; tenant: Tenant };
+
+  /**
+   * When grouping is active, walk the property-ordered tenant array and inject
+   * a `header` row whenever `property_name` flips. Header `count` is what's
+   * loaded in this group so far — it grows as more pages arrive.
+   */
+  const listData = useMemo<ListItem[]>(() => {
+    if (!groupingActive) {
+      return tenants.map((t) => ({ kind: 'tenant', key: t.id, tenant: t }));
+    }
+    const out: ListItem[] = [];
+    const counts = new Map<string, number>();
+    for (const t of tenants) {
+      const name = t.property_name;
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    }
+    let seenFirst = false;
+    let lastName: string | null = null;
+    for (const t of tenants) {
+      if (t.property_name !== lastName) {
+        out.push({
+          kind: 'header',
+          key: `h:${t.property_name}`,
+          propertyName: t.property_name,
+          propertySlug: t.property_slug,
+          count: counts.get(t.property_name) ?? 0,
+          isFirst: !seenFirst,
+        });
+        seenFirst = true;
+        lastName = t.property_name;
+      }
+      out.push({ kind: 'tenant', key: t.id, tenant: t });
+    }
+    return out;
+  }, [tenants, groupingActive]);
+
   const handleRefresh = useCallback(() => { refetch(); }, [refetch]);
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
-      <InfiniteList
-        data={tenants}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <TenantCard tenant={item} />}
+      <InfiniteList<ListItem>
+        data={listData}
+        keyExtractor={(item) => item.key}
+        renderItem={({ item }) => {
+          if (item.kind === 'header') {
+            return (
+              <PropertyGroupHeader
+                propertyName={item.propertyName}
+                propertySlug={item.propertySlug}
+                count={item.count}
+                isFirst={item.isFirst}
+              />
+            );
+          }
+          return <TenantCard tenant={item.tenant} />;
+        }}
         isLoading={isLoading}
         isRefetching={isRefetching}
         isFetchingNextPage={isFetchingNextPage}

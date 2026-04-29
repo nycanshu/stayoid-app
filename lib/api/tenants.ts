@@ -11,6 +11,7 @@ export interface TenantFilters {
   year?: number;
   page?: number;
   page_size?: number;
+  ordering?: 'property';
 }
 
 export const tenantsApi = {
