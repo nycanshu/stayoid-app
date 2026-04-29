@@ -11,6 +11,7 @@ import { Entrance } from '../../components/animations';
 import {
   Greeting, SummaryCards, RentCollectionCard, OccupancyChart,
   PropertyOverviewList, RecentPaymentsCard, DashboardSkeleton,
+  QuickActionsRow,
 } from '../../components/dashboard';
 
 export default function DashboardScreen() {
@@ -50,8 +51,12 @@ export default function DashboardScreen() {
           />
         }
       >
-        <Entrance trigger={focusTick} delay={0} style={{ marginBottom: 20 }}>
+        <Entrance trigger={focusTick} delay={0} style={{ marginBottom: 16 }}>
           <Greeting firstName={firstName} />
+        </Entrance>
+
+        <Entrance trigger={focusTick} delay={40} style={{ marginBottom: 16 }}>
+          <QuickActionsRow />
         </Entrance>
 
         {isLoading && (

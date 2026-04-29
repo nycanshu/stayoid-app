@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { router, useFocusEffect } from 'expo-router';
 import { useState, useCallback, useMemo } from 'react';
 import {
-  PlusIcon, MagnifyingGlassIcon, UsersIcon, ArrowLeftIcon,
+  PlusIcon, MagnifyingGlassIcon, UsersIcon,
 } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { useTenants } from '../../../lib/hooks/use-tenants';
@@ -220,17 +220,6 @@ export default function TenantsScreen() {
         ListHeaderComponent={
           <View>
             <Entrance trigger={focusTick} style={{ marginBottom: 20 }}>
-              <View className="flex-row items-center mb-3.5">
-                <Pressable
-                  onPress={() => router.back()}
-                  android_ripple={null}
-                  hitSlop={8}
-                  className="size-10 rounded-[10px] border border-border bg-card items-center justify-center"
-                >
-                  <ArrowLeftIcon size={18} color={palette.foreground} />
-                </Pressable>
-              </View>
-
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 pr-3">
                   <Text

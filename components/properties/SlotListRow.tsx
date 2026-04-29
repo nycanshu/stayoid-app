@@ -1,7 +1,12 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Linking } from 'react-native';
 import { router } from 'expo-router';
-import { BedIcon, MapPinIcon, PlusIcon, LockSimpleIcon } from 'phosphor-react-native';
+import {
+  BedIcon, MapPinIcon, PlusIcon, LockSimpleIcon,
+  PhoneIcon, CurrencyCircleDollarIcon, UserIcon,
+} from 'phosphor-react-native';
+import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
+import { useActionSheet } from '../ui/ActionSheet';
 import { formatCurrency, getInitials } from '../../lib/utils/formatters';
 import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { THEME } from '../../lib/theme';
@@ -19,6 +24,7 @@ export function SlotListRow({ slot }: SlotListRowProps) {
   const occupied = slot.is_occupied;
   const tenant = slot.active_tenant;
   const rent = Number(slot.monthly_rent);
+  const { show: showActionSheet } = useActionSheet();
 
   const goToTenant = () => {
     if (tenant?.slug) router.push(`/(tabs)/tenants/${tenant.slug}`);
@@ -27,9 +33,41 @@ export function SlotListRow({ slot }: SlotListRowProps) {
     router.push(`/(tabs)/tenants/new?property=${slot.property_slug}` as never);
   };
 
+  const openContextMenu = () => {
+    if (!occupied || !tenant) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    showActionSheet({
+      title: tenant.name,
+      message: `${slot.property_name} · ${labels.unitLabel} ${slot.unit_number} · ${labels.slotLabel} ${slot.slot_number}`,
+      options: [
+        {
+          label: 'View Tenant',
+          Icon: UserIcon,
+          onPress: () => router.push(`/(tabs)/tenants/${tenant.slug}` as never),
+        },
+        {
+          label: 'Record Payment',
+          Icon: CurrencyCircleDollarIcon,
+          iconBg: palette.successBg,
+          iconColor: palette.success,
+          onPress: () => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never),
+        },
+        ...(tenant.phone ? [{
+          label: `Call ${tenant.phone}`,
+          Icon: PhoneIcon,
+          iconBg: palette.infoBg,
+          iconColor: palette.info,
+          onPress: () => Linking.openURL(`tel:${tenant.phone}`),
+        }] : []),
+      ],
+    });
+  };
+
   return (
     <Pressable
       onPress={occupied ? goToTenant : assignTenant}
+      onLongPress={occupied ? openContextMenu : undefined}
+      delayLongPress={350}
       android_ripple={null}
       className="bg-card border border-border rounded-xl p-3.5"
     >

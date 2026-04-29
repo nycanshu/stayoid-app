@@ -6,3 +6,4 @@ export { OccupancyChart }        from './OccupancyChart';
 export { PropertyOverviewList }  from './PropertyOverviewList';
 export { RecentPaymentsCard }    from './RecentPaymentsCard';
 export { DashboardSkeleton }     from './DashboardSkeleton';
+export { QuickActionsRow }       from './QuickActionsRow';

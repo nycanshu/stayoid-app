@@ -3,7 +3,7 @@ import { View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import {
-  HouseIcon, BuildingsIcon, CreditCardIcon, GearSixIcon,
+  HouseIcon, BuildingsIcon, UsersThreeIcon, CreditCardIcon, GearSixIcon,
 } from 'phosphor-react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming,
@@ -15,6 +15,7 @@ import { THEME } from '../../lib/theme';
 const TAB_ICONS: Record<string, any> = {
   index:      HouseIcon,
   properties: BuildingsIcon,
+  tenants:    UsersThreeIcon,
   payments:   CreditCardIcon,
   settings:   GearSixIcon,
 };
@@ -142,9 +143,9 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="properties" />
+      <Tabs.Screen name="tenants" />
       <Tabs.Screen name="payments" />
       <Tabs.Screen name="settings" />
-      <Tabs.Screen name="tenants" options={{ href: null }} />
       <Tabs.Screen name="slots" options={{ href: null }} />
       <Tabs.Screen name="floors" options={{ href: null }} />
     </Tabs>

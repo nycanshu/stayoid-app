@@ -1,7 +1,12 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Linking } from 'react-native';
 import { router } from 'expo-router';
-import { PhoneIcon, MapPinIcon, WarningCircleIcon } from 'phosphor-react-native';
+import {
+  PhoneIcon, MapPinIcon, WarningCircleIcon,
+  CurrencyCircleDollarIcon, PencilIcon,
+} from 'phosphor-react-native';
+import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
+import { useActionSheet } from '../ui/ActionSheet';
 import { getInitials, formatCurrency } from '../../lib/utils/formatters';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
@@ -12,10 +17,42 @@ export function TenantCard({ tenant }: { tenant: Tenant }) {
   const hasUnpaid = !!tenant.has_unpaid && isActive;
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { show: showActionSheet } = useActionSheet();
+
+  const openContextMenu = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    showActionSheet({
+      title: tenant.name,
+      message: `${tenant.property_name} · ${tenant.unit_number} · ${tenant.slot_number}`,
+      options: [
+        ...(isActive ? [{
+          label: 'Record Payment',
+          Icon: CurrencyCircleDollarIcon,
+          iconBg: palette.successBg,
+          iconColor: palette.success,
+          onPress: () => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never),
+        }] : []),
+        ...(tenant.phone ? [{
+          label: `Call ${tenant.phone}`,
+          Icon: PhoneIcon,
+          iconBg: palette.infoBg,
+          iconColor: palette.info,
+          onPress: () => Linking.openURL(`tel:${tenant.phone}`),
+        }] : []),
+        {
+          label: 'Edit Tenant',
+          Icon: PencilIcon,
+          onPress: () => router.push(`/(tabs)/tenants/${tenant.slug}/edit` as never),
+        },
+      ],
+    });
+  };
 
   return (
     <Pressable
       onPress={() => router.push(`/(tabs)/tenants/${tenant.slug}`)}
+      onLongPress={openContextMenu}
+      delayLongPress={400}
       android_ripple={null}
       className={cn(
         'bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3',

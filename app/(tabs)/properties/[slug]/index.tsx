@@ -7,14 +7,13 @@ import { useLocalSearchParams, router, useFocusEffect } from 'expo-router';
 import { useMemo, useState, useCallback } from 'react';
 import {
   ArrowLeftIcon, MapPinIcon, DotsThreeVerticalIcon, PencilIcon,
-  StackIcon, UsersIcon, CurrencyCircleDollarIcon,
+  StackIcon, CurrencyCircleDollarIcon,
   PlusIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
 import { useProperty, useSlots, useDeleteProperty } from '../../../../lib/hooks/use-properties';
 import { useFloors } from '../../../../lib/hooks/use-floors';
-import { useTenants } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useDashboard } from '../../../../lib/hooks/use-dashboard';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
@@ -22,7 +21,6 @@ import { getPropertyTypeMeta } from '../../../../lib/constants/property-type-met
 import { PropertyStatsStrip } from '../../../../components/properties/PropertyStatsStrip';
 import { FloorCard } from '../../../../components/properties/FloorCard';
 import { FloorFormModal } from '../../../../components/properties/FloorFormModal';
-import { TenantRow } from '../../../../components/properties/TenantRow';
 import { PaymentRow } from '../../../../components/properties/PaymentRow';
 import { Skeleton } from '../../../../components/ui/skeleton';
 import { Entrance } from '../../../../components/animations';
@@ -30,7 +28,7 @@ import { THEME } from '../../../../lib/theme';
 import { cn } from '../../../../lib/utils';
 import type { Slot } from '../../../../types/property';
 
-type Tab = 'floors' | 'tenants' | 'payments';
+type Tab = 'floors' | 'payments';
 
 function TypeBadge({ type, palette }: { type: string; palette: typeof THEME['light'] }) {
   const meta = getPropertyTypeMeta(type, palette);
@@ -84,11 +82,10 @@ function TabBar({
   active, onChange, counts,
 }: {
   active: Tab; onChange: (t: Tab) => void;
-  counts: { floors?: number; tenants?: number; payments?: number };
+  counts: { floors?: number; payments?: number };
 }) {
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'floors',   label: 'Floors',   count: counts.floors },
-    { key: 'tenants',  label: 'Tenants',  count: counts.tenants },
     { key: 'payments', label: 'Payments', count: counts.payments },
   ];
 
@@ -205,15 +202,14 @@ export default function PropertyDetailScreen() {
   const { data: property, isLoading: propertyLoading, refetch: refetchProp, isRefetching } = useProperty(slug);
   const { data: floors,   isLoading: floorsLoading,   refetch: refetchFloors }             = useFloors(property?.id);
   const { data: slots,    isLoading: slotsLoading,    refetch: refetchSlots }              = useSlots(property?.id);
-  const { data: tenants,  isLoading: tenantsLoading,  refetch: refetchTenants }            = useTenants({ property_id: property?.id, active: true });
   const { data: payments, isLoading: paymentsLoading, refetch: refetchPayments }           = usePayments({ property_id: property?.id });
   const { data: dashboard }                                                                 = useDashboard();
   const deleteProperty = useDeleteProperty();
 
   const handleRefresh = useCallback(() => {
-    refetchProp(); refetchFloors(); refetchSlots(); refetchTenants(); refetchPayments();
+    refetchProp(); refetchFloors(); refetchSlots(); refetchPayments();
     setFocusTick((t) => t + 1);
-  }, [refetchProp, refetchFloors, refetchSlots, refetchTenants, refetchPayments]);
+  }, [refetchProp, refetchFloors, refetchSlots, refetchPayments]);
 
   const propertyStats = useMemo(
     () => dashboard?.properties?.find((p) => p.id === property?.id),
@@ -393,7 +389,6 @@ export default function PropertyDetailScreen() {
             onChange={setActiveTab}
             counts={{
               floors:   sortedFloors.length || undefined,
-              tenants:  occupied || undefined,
               payments: payments?.length || undefined,
             }}
           />
@@ -492,50 +487,6 @@ export default function PropertyDetailScreen() {
                       </Entrance>
                     );
                   })}
-                </View>
-              </>
-            )}
-          </Entrance>
-        )}
-
-        {activeTab === 'tenants' && (
-          <Entrance trigger={`tenants-${focusTick}`} delay={120}>
-            {tenantsLoading ? (
-              <View className="gap-2.5">
-                {[0, 1, 2].map((i) => (
-                  <View
-                    key={i}
-                    className="bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3"
-                  >
-                    <Skeleton width={40} height={40} radius={20} />
-                    <View className="flex-1 gap-1.5">
-                      <Skeleton width="60%" height={13} />
-                      <Skeleton width="80%" height={11} />
-                    </View>
-                  </View>
-                ))}
-              </View>
-            ) : (tenants ?? []).length === 0 ? (
-              <EmptyCard
-                Icon={UsersIcon}
-                title="No tenants yet"
-                description="Active tenants in this property will appear here."
-                mutedFg={palette.mutedForeground}
-              />
-            ) : (
-              <>
-                <TabHeader
-                  count={(tenants ?? []).length}
-                  label={(tenants ?? []).length === 1 ? 'active tenant' : 'active tenants'}
-                  actionLabel="Add Tenant"
-                  onAction={() => router.push(`/(tabs)/tenants/new?property=${slug}` as never)}
-                />
-                <View className="gap-2.5">
-                  {(tenants ?? []).map((tenant, i) => (
-                    <Entrance key={tenant.id} delay={i * 50} trigger={`tenants-${focusTick}`}>
-                      <TenantRow tenant={tenant} />
-                    </Entrance>
-                  ))}
                 </View>
               </>
             )}

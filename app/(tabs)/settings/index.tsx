@@ -11,7 +11,7 @@ import {
   MoonIcon, SunIcon, MonitorIcon,
   VibrateIcon, ArrowsClockwiseIcon, ChatDotsIcon, StarIcon,
   ShareIcon, FileTextIcon, ShieldIcon, HeartIcon, InfoIcon,
-  SignOutIcon, TrashIcon, SmileyIcon, UsersIcon, CalendarIcon,
+  SignOutIcon, TrashIcon, SmileyIcon, CalendarIcon,
   BedIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
@@ -365,22 +365,13 @@ export default function SettingsScreen() {
           <SettingsSection title="Manage">
             <SettingsRow
               type="nav"
-              Icon={UsersIcon}
-              iconBg={palette.successBg}
-              iconColor={palette.success}
-              label="Tenants"
-              description="View, add, and manage tenants"
-              onPress={() => router.push('/(tabs)/tenants' as never)}
-              isFirst
-            />
-            <SettingsRow
-              type="nav"
               Icon={BedIcon}
               iconBg={palette.primaryBg}
               iconColor={palette.primary}
               label="Slots"
               description="Vacancy and occupancy across properties"
               onPress={() => router.push('/(tabs)/slots' as never)}
+              isFirst
               isLast
             />
           </SettingsSection>

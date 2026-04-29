@@ -1,7 +1,11 @@
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Linking } from 'react-native';
 import { router } from 'expo-router';
-import { PhoneIcon, MapPinIcon } from 'phosphor-react-native';
+import {
+  PhoneIcon, MapPinIcon, CurrencyCircleDollarIcon, PencilIcon,
+} from 'phosphor-react-native';
+import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
+import { useActionSheet } from '../ui/ActionSheet';
 import { getInitials } from '../../lib/utils/formatters';
 import { THEME } from '../../lib/theme';
 import type { Tenant } from '../../types/tenant';
@@ -10,10 +14,42 @@ export function TenantRow({ tenant }: { tenant: Tenant }) {
   const hasUnpaid = !!tenant.has_unpaid;
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { show: showActionSheet } = useActionSheet();
+
+  const openContextMenu = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    showActionSheet({
+      title: tenant.name,
+      message: tenant.phone ? `${tenant.unit_number} · ${tenant.slot_number}` : undefined,
+      options: [
+        {
+          label: 'Record Payment',
+          Icon: CurrencyCircleDollarIcon,
+          iconBg: palette.successBg,
+          iconColor: palette.success,
+          onPress: () => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never),
+        },
+        ...(tenant.phone ? [{
+          label: `Call ${tenant.phone}`,
+          Icon: PhoneIcon,
+          iconBg: palette.infoBg,
+          iconColor: palette.info,
+          onPress: () => Linking.openURL(`tel:${tenant.phone}`),
+        }] : []),
+        {
+          label: 'Edit Tenant',
+          Icon: PencilIcon,
+          onPress: () => router.push(`/(tabs)/tenants/${tenant.slug}/edit` as never),
+        },
+      ],
+    });
+  };
 
   return (
     <Pressable
       onPress={() => router.push(`/(tabs)/tenants/${tenant.slug}`)}
+      onLongPress={openContextMenu}
+      delayLongPress={350}
       android_ripple={null}
       className="bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3"
     >
