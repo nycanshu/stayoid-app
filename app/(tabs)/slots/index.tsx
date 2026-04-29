@@ -14,9 +14,11 @@ import { useDebouncedValue } from '../../../lib/hooks/use-debounced-value';
 import { useTabFocusRefetch } from '../../../lib/hooks/use-tab-focus-refetch';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { InfiniteList } from '../../../components/ui/InfiniteList';
+import { PropertyGroupHeader } from '../../../components/ui/PropertyGroupHeader';
 import { Entrance } from '../../../components/animations';
 import { PropertyFilterBar } from '../../../components/properties/PropertyFilterBar';
 import { SlotListRow } from '../../../components/properties/SlotListRow';
+import type { Slot } from '../../../types/property';
 import { THEME } from '../../../lib/theme';
 import { cn } from '../../../lib/utils';
 import type { SlotFilters } from '../../../lib/api/properties';
@@ -145,11 +147,16 @@ export default function SlotsScreen() {
   // Pre-warm property list for the filter bar.
   useProperties();
 
+  // Group slots by property when browsing across all properties — most natural
+  // fit for slots ("rooms in property X"). With one property selected, flat.
+  const groupingActive = !propertyId;
+
   const filters = useMemo<Omit<SlotFilters, 'page' | 'page_size'>>(() => ({
     property_id: propertyId,
     vacant: filterToVacantParam(filter),
     query: debouncedQuery || undefined,
-  }), [propertyId, filter, debouncedQuery]);
+    ordering: groupingActive ? 'property' : undefined,
+  }), [propertyId, filter, debouncedQuery, groupingActive]);
 
   const {
     data, isLoading, isRefetching,
@@ -165,6 +172,39 @@ export default function SlotsScreen() {
   );
   const currentCount = data?.pages?.[0]?.count ?? 0;
 
+  type ListItem =
+    | { kind: 'header'; key: string; propertyName: string; propertySlug?: string; count: number; isFirst: boolean }
+    | { kind: 'slot'; key: string; slot: Slot };
+
+  const listData = useMemo<ListItem[]>(() => {
+    if (!groupingActive) {
+      return slots.map((s) => ({ kind: 'slot', key: s.id, slot: s }));
+    }
+    const out: ListItem[] = [];
+    const counts = new Map<string, number>();
+    for (const s of slots) {
+      counts.set(s.property_name, (counts.get(s.property_name) ?? 0) + 1);
+    }
+    let seenFirst = false;
+    let lastName: string | null = null;
+    for (const s of slots) {
+      if (s.property_name !== lastName) {
+        out.push({
+          kind: 'header',
+          key: `h:${s.property_name}`,
+          propertyName: s.property_name,
+          propertySlug: s.property_slug,
+          count: counts.get(s.property_name) ?? 0,
+          isFirst: !seenFirst,
+        });
+        seenFirst = true;
+        lastName = s.property_name;
+      }
+      out.push({ kind: 'slot', key: s.id, slot: s });
+    }
+    return out;
+  }, [slots, groupingActive]);
+
   const handleRefresh = useCallback(() => { refetch(); }, [refetch]);
 
   const empty = getEmptyCopy(debouncedQuery, filter);
@@ -173,10 +213,22 @@ export default function SlotsScreen() {
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
-      <InfiniteList
-        data={slots}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <SlotListRow slot={item} />}
+      <InfiniteList<ListItem>
+        data={listData}
+        keyExtractor={(item) => item.key}
+        renderItem={({ item }) => {
+          if (item.kind === 'header') {
+            return (
+              <PropertyGroupHeader
+                propertyName={item.propertyName}
+                propertySlug={item.propertySlug}
+                count={item.count}
+                isFirst={item.isFirst}
+              />
+            );
+          }
+          return <SlotListRow slot={item.slot} />;
+        }}
         isLoading={isLoading}
         isRefetching={isRefetching}
         isFetchingNextPage={isFetchingNextPage}

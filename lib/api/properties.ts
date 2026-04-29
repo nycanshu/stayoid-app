@@ -83,6 +83,7 @@ export interface SlotFilters {
   query?: string;
   page?: number;
   page_size?: number;
+  ordering?: 'property';
 }
 
 export const slotsApi = {

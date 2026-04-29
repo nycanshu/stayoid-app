@@ -140,7 +140,7 @@ export default function TabsLayout() {
     <Tabs
       tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{ headerShown: false }}
-      backBehavior="none"
+      backBehavior="initialRoute"
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="properties" />

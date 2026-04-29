@@ -19,6 +19,7 @@ import { PaymentStatsStrip } from '../../../components/payments/PaymentStatsStri
 import { MonthNavigator } from '../../../components/payments/MonthNavigator';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { InfiniteList } from '../../../components/ui/InfiniteList';
+import { PropertyGroupHeader } from '../../../components/ui/PropertyGroupHeader';
 import { Entrance } from '../../../components/animations';
 import { PropertyFilterBar } from '../../../components/properties/PropertyFilterBar';
 import { THEME } from '../../../lib/theme';
@@ -36,7 +37,8 @@ const FILTER_LABELS: Record<FilterKey, string> = {
 type ListItem =
   | { kind: 'unpaid'; tenant: Tenant }
   | { kind: 'payment'; payment: Payment }
-  | { kind: 'show-more'; remaining: number };
+  | { kind: 'show-more'; remaining: number }
+  | { kind: 'group-header'; propertyName: string; propertySlug?: string; count: number; isFirst: boolean };
 
 const UNPAID_PAGE = 5;
 
@@ -190,9 +192,18 @@ export default function PaymentsScreen() {
     setUnpaidLimit(UNPAID_PAGE);
   }, [month, year, propertyId, filter]);
 
+  // Group paid payments by property when the user is browsing across all
+  // properties. With a single property selected, grouping adds noise — keep flat.
+  const groupingActive = !propertyId;
+
   const paymentsFilters = useMemo(
-    () => ({ month, year, property_id: propertyId }),
-    [month, year, propertyId],
+    () => ({
+      month,
+      year,
+      property_id: propertyId,
+      ordering: groupingActive ? ('property' as const) : undefined,
+    }),
+    [month, year, propertyId, groupingActive],
   );
 
   const {
@@ -260,10 +271,36 @@ export default function PaymentsScreen() {
       }
     }
     if (filter === 'all' || filter === 'paid') {
-      payments.forEach((p) => items.push({ kind: 'payment', payment: p }));
+      if (groupingActive) {
+        // Walk the property-ordered payment list and inject a header row each
+        // time `property_name` flips. Group counts are derived from what's
+        // currently loaded — they grow as more pages arrive.
+        const counts = new Map<string, number>();
+        for (const p of payments) {
+          counts.set(p.property_name, (counts.get(p.property_name) ?? 0) + 1);
+        }
+        let seenFirst = false;
+        let lastName: string | null = null;
+        for (const p of payments) {
+          if (p.property_name !== lastName) {
+            items.push({
+              kind: 'group-header',
+              propertyName: p.property_name,
+              propertySlug: p.property_slug,
+              count: counts.get(p.property_name) ?? 0,
+              isFirst: !seenFirst,
+            });
+            seenFirst = true;
+            lastName = p.property_name;
+          }
+          items.push({ kind: 'payment', payment: p });
+        }
+      } else {
+        payments.forEach((p) => items.push({ kind: 'payment', payment: p }));
+      }
     }
     return items;
-  }, [filter, payments, unpaidTenants, unpaidLimit]);
+  }, [filter, payments, unpaidTenants, unpaidLimit, groupingActive]);
 
   const handleShowMore = useCallback(() => {
     setUnpaidLimit((n) => n + UNPAID_PAGE);
@@ -284,9 +321,10 @@ export default function PaymentsScreen() {
       <InfiniteList
         data={listData}
         keyExtractor={(item) => {
-          if (item.kind === 'unpaid')  return `u-${item.tenant.id}`;
-          if (item.kind === 'payment') return `p-${item.payment.id}`;
-          return 'show-more';
+          if (item.kind === 'unpaid')       return `u-${item.tenant.id}`;
+          if (item.kind === 'payment')      return `p-${item.payment.id}`;
+          if (item.kind === 'group-header') return `h-${item.propertyName}`;
+          return `sm-${item.remaining}`;
         }}
         renderItem={({ item }) => {
           if (item.kind === 'unpaid') {
@@ -294,6 +332,16 @@ export default function PaymentsScreen() {
           }
           if (item.kind === 'payment') {
             return <PaymentRow payment={item.payment} />;
+          }
+          if (item.kind === 'group-header') {
+            return (
+              <PropertyGroupHeader
+                propertyName={item.propertyName}
+                propertySlug={item.propertySlug}
+                count={item.count}
+                isFirst={item.isFirst}
+              />
+            );
           }
           return (
             <Pressable

@@ -10,6 +10,7 @@ export interface PaymentFilters {
   status?: string;
   page?: number;
   page_size?: number;
+  ordering?: 'property';
 }
 
 export const paymentsApi = {
