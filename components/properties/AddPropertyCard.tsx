@@ -10,7 +10,7 @@ export function AddPropertyCard() {
 
   return (
     <Pressable
-      onPress={() => router.push('/(tabs)/properties/new')}
+      onPress={() => router.push('/properties/new' as never)}
       android_ripple={null}
       className="border-[1.5px] border-dashed border-border rounded-xl p-3.5 flex-row items-center gap-3"
     >

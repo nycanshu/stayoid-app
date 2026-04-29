@@ -6,6 +6,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
 import { useActionSheet } from '../ui/ActionSheet';
+import { useRecordPaymentSheet } from './RecordPaymentSheet';
 import { formatCurrency, getInitials } from '../../lib/utils/formatters';
 import { THEME } from '../../lib/theme';
 import type { Tenant } from '../../types/tenant';
@@ -14,6 +15,7 @@ export function UnpaidTenantCard({ tenant }: { tenant: Tenant }) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
+  const { open: openPaymentSheet } = useRecordPaymentSheet();
 
   const openContextMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -39,7 +41,7 @@ export function UnpaidTenantCard({ tenant }: { tenant: Tenant }) {
 
   return (
     <Pressable
-      onPress={() => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never)}
+      onPress={() => openPaymentSheet({ tenantSlug: tenant.slug })}
       onLongPress={openContextMenu}
       delayLongPress={400}
       android_ripple={null}

@@ -6,6 +6,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
 import { useActionSheet } from '../ui/ActionSheet';
+import { useRecordPaymentSheet } from '../payments/RecordPaymentSheet';
 import { getInitials } from '../../lib/utils/formatters';
 import { THEME } from '../../lib/theme';
 import type { Tenant } from '../../types/tenant';
@@ -15,6 +16,7 @@ export function TenantRow({ tenant }: { tenant: Tenant }) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
+  const { open: openPaymentSheet } = useRecordPaymentSheet();
 
   const openContextMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -27,7 +29,7 @@ export function TenantRow({ tenant }: { tenant: Tenant }) {
           Icon: CurrencyCircleDollarIcon,
           iconBg: palette.successBg,
           iconColor: palette.success,
-          onPress: () => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never),
+          onPress: () => openPaymentSheet({ tenantSlug: tenant.slug }),
         },
         ...(tenant.phone ? [{
           label: `Call ${tenant.phone}`,

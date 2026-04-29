@@ -17,6 +17,7 @@ import { useTenant, useExitTenant } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
+import { useRecordPaymentSheet } from '../../../../components/payments/RecordPaymentSheet';
 import {
   formatCurrency, formatTenure, formatLongDate,
   GENDER_LABELS, WORK_TYPE_LABELS, ID_PROOF_LABELS, getInitials,
@@ -169,6 +170,7 @@ export default function TenantDetailScreen() {
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const { confirm }               = useConfirmDialog();
+  const { open: openPaymentSheet } = useRecordPaymentSheet();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [focusTick, setFocusTick] = useState(0);
 
@@ -246,7 +248,7 @@ export default function TenantDetailScreen() {
     if (tenant.is_active) {
       opts.push({
         label: 'Record Payment',
-        onPress: () => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never),
+        onPress: () => openPaymentSheet({ tenantSlug: tenant.slug }),
       });
       opts.push({
         label: 'Mark as Exited',
@@ -375,7 +377,7 @@ export default function TenantDetailScreen() {
                   </Pressable>
                   {isActive && (
                     <Pressable
-                      onPress={() => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never)}
+                      onPress={() => openPaymentSheet({ tenantSlug: tenant.slug })}
                       android_ripple={null}
                       className="flex-1 flex-row items-center justify-center gap-1.5 border border-border bg-card rounded-[10px] py-2.5"
                     >
@@ -536,7 +538,7 @@ export default function TenantDetailScreen() {
                 </Text>
                 {isActive && (payments ?? []).length > 0 && (
                   <Pressable
-                    onPress={() => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never)}
+                    onPress={() => openPaymentSheet({ tenantSlug: tenant.slug })}
                     android_ripple={null}
                     hitSlop={6}
                     className="flex-row items-center gap-1 bg-primary rounded-[10px] px-2.5 py-1.5"

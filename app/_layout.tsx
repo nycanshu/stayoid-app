@@ -28,6 +28,7 @@ import { PortalHost } from '@rn-primitives/portal';
 import { useColorScheme } from 'nativewind';
 import { ActionSheetProvider } from '../components/ui/ActionSheet';
 import { ConfirmDialogProvider } from '../components/ui/ConfirmDialog';
+import { RecordPaymentSheetProvider } from '../components/payments/RecordPaymentSheet';
 import { useThemeStore } from '../lib/stores/theme-store';
 import { NAV_THEME } from '../lib/theme';
 
@@ -72,7 +73,9 @@ export default function RootLayout() {
             <StatusBar style={effectiveScheme === 'dark' ? 'light' : 'dark'} />
             <ActionSheetProvider>
               <ConfirmDialogProvider>
-                <Stack screenOptions={{ headerShown: false }} />
+                <RecordPaymentSheetProvider>
+                  <Stack screenOptions={{ headerShown: false }} />
+                </RecordPaymentSheetProvider>
               </ConfirmDialogProvider>
             </ActionSheetProvider>
             <PortalHost />

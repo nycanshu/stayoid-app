@@ -17,6 +17,7 @@ import { useFloors } from '../../../../lib/hooks/use-floors';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useDashboard } from '../../../../lib/hooks/use-dashboard';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
+import { useRecordPaymentSheet } from '../../../../components/payments/RecordPaymentSheet';
 import { getPropertyTypeMeta } from '../../../../lib/constants/property-type-meta';
 import { PropertyStatsStrip } from '../../../../components/properties/PropertyStatsStrip';
 import { FloorCard } from '../../../../components/properties/FloorCard';
@@ -190,6 +191,7 @@ export default function PropertyDetailScreen() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
+  const { open: openPaymentSheet } = useRecordPaymentSheet();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [activeTab, setActiveTab] = useState<Tab>('floors');
   const [focusTick, setFocusTick] = useState(0);
@@ -250,11 +252,11 @@ export default function PropertyDetailScreen() {
         },
         {
           label: 'Add Tenant Here',
-          onPress: () => router.push(`/(tabs)/tenants/new?property=${slug}` as never),
+          onPress: () => router.push(`/tenants/new?property=${slug}` as never),
         },
         {
           label: 'Record Payment',
-          onPress: () => router.push(`/(tabs)/payments/new?property=${slug}` as never),
+          onPress: () => openPaymentSheet(),
         },
         {
           label: 'Delete Property',
@@ -528,7 +530,7 @@ export default function PropertyDetailScreen() {
                   count={(payments ?? []).length}
                   label={(payments ?? []).length === 1 ? 'payment recorded' : 'payments recorded'}
                   actionLabel="Record"
-                  onAction={() => router.push(`/(tabs)/payments/new?property=${slug}` as never)}
+                  onAction={() => openPaymentSheet()}
                 />
                 <View className="gap-2.5">
                   {(payments ?? []).map((payment, i) => (

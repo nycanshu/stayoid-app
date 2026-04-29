@@ -51,7 +51,7 @@ export function PropertyOverviewList({ properties }: PropertyOverviewListProps) 
             Add your first property to start managing rentals.
           </Text>
           <Pressable
-            onPress={() => router.push('/(tabs)/properties/new')}
+            onPress={() => router.push('/properties/new' as never)}
             android_ripple={null}
             className="bg-primary rounded-[10px] px-3.5 py-2"
           >

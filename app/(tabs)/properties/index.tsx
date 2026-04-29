@@ -138,7 +138,7 @@ export default function PropertiesScreen() {
                 </View>
 
                 <Pressable
-                  onPress={() => router.push('/(tabs)/properties/new')}
+                  onPress={() => router.push('/properties/new' as never)}
                   android_ripple={null}
                   hitSlop={8}
                   className="size-10 rounded-[10px] bg-primary items-center justify-center"

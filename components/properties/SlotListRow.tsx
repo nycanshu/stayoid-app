@@ -7,6 +7,7 @@ import {
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
 import { useActionSheet } from '../ui/ActionSheet';
+import { useRecordPaymentSheet } from '../payments/RecordPaymentSheet';
 import { formatCurrency, getInitials } from '../../lib/utils/formatters';
 import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { THEME } from '../../lib/theme';
@@ -25,12 +26,13 @@ export function SlotListRow({ slot }: SlotListRowProps) {
   const tenant = slot.active_tenant;
   const rent = Number(slot.monthly_rent);
   const { show: showActionSheet } = useActionSheet();
+  const { open: openPaymentSheet } = useRecordPaymentSheet();
 
   const goToTenant = () => {
     if (tenant?.slug) router.push(`/(tabs)/tenants/${tenant.slug}`);
   };
   const assignTenant = () => {
-    router.push(`/(tabs)/tenants/new?property=${slot.property_slug}` as never);
+    router.push(`/tenants/new?property=${slot.property_slug}` as never);
   };
 
   const openContextMenu = () => {
@@ -50,7 +52,7 @@ export function SlotListRow({ slot }: SlotListRowProps) {
           Icon: CurrencyCircleDollarIcon,
           iconBg: palette.successBg,
           iconColor: palette.success,
-          onPress: () => router.push(`/(tabs)/payments/new?tenant=${tenant.slug}` as never),
+          onPress: () => openPaymentSheet({ tenantSlug: tenant.slug }),
         },
         ...(tenant.phone ? [{
           label: `Call ${tenant.phone}`,

@@ -4,17 +4,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { ArrowLeftIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
-import { PaymentForm } from '../../../components/payments/PaymentForm';
-import { Entrance } from '../../../components/animations';
-import { THEME } from '../../../lib/theme';
+import { PropertyForm } from '../../components/properties/PropertyForm';
+import { Entrance } from '../../components/animations';
+import { THEME } from '../../lib/theme';
 
-export default function RecordPaymentScreen() {
+export default function NewPropertyScreen() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
-  const { tenant: tenantSlug } = useLocalSearchParams<{ tenant?: string }>();
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -46,22 +45,20 @@ export default function RecordPaymentScreen() {
               className="text-foreground text-[22px] tracking-tight"
               style={{ fontFamily: 'Inter_600SemiBold', paddingRight: 0.3 }}
             >
-              Record Payment
+              Add Property
             </Text>
             <Text
               className="text-muted-foreground text-[13px] mt-0.5"
               style={{ fontFamily: 'Inter_400Regular' }}
             >
-              {tenantSlug
-                ? 'Tenant pre-selected — review and submit'
-                : 'Select a tenant and confirm the details'}
+              Create a new PG or flat to manage
             </Text>
           </Entrance>
 
           <Entrance trigger={1} delay={60}>
-            <PaymentForm
-              preselectedTenantSlug={tenantSlug}
-              onSuccess={() => router.replace('/(tabs)/payments')}
+            <PropertyForm
+              mode="create"
+              onSuccess={(slug) => router.replace(`/(tabs)/properties/${slug}` as never)}
               onCancel={() => router.back()}
             />
           </Entrance>

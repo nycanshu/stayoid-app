@@ -92,7 +92,7 @@ export function UnitDetailSheet({
       if (s.active_tenant?.slug) {
         router.push(`/(tabs)/tenants/${s.active_tenant.slug}` as never);
       } else if (propertySlug) {
-        router.push(`/(tabs)/tenants/new?property=${propertySlug}` as never);
+        router.push(`/tenants/new?property=${propertySlug}` as never);
       }
     }, 240);
   };

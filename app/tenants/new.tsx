@@ -7,9 +7,9 @@ import { StatusBar } from 'expo-status-bar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeftIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
-import { TenantForm } from '../../../components/tenants/TenantForm';
-import { Entrance } from '../../../components/animations';
-import { THEME } from '../../../lib/theme';
+import { TenantForm } from '../../components/tenants/TenantForm';
+import { Entrance } from '../../components/animations';
+import { THEME } from '../../lib/theme';
 
 export default function NewTenantScreen() {
   const { colorScheme } = useColorScheme();

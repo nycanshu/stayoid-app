@@ -5,6 +5,7 @@ import {
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
+import { useRecordPaymentSheet } from '@/components/payments/RecordPaymentSheet';
 import { THEME } from '@/lib/theme';
 
 interface ActionChipProps {
@@ -46,6 +47,7 @@ function ActionChip({ Icon, label, iconBg, iconColor, onPress }: ActionChipProps
 export function QuickActionsRow() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { open: openPaymentSheet } = useRecordPaymentSheet();
 
   return (
     <View className="flex-row gap-2.5">
@@ -54,21 +56,21 @@ export function QuickActionsRow() {
         label="Record Payment"
         iconBg={palette.successBg}
         iconColor={palette.success}
-        onPress={() => router.push('/(tabs)/payments/new' as never)}
+        onPress={() => openPaymentSheet()}
       />
       <ActionChip
         Icon={UserPlusIcon}
         label="Add Tenant"
         iconBg={palette.primaryBg}
         iconColor={palette.primary}
-        onPress={() => router.push('/(tabs)/tenants/new' as never)}
+        onPress={() => router.push('/tenants/new' as never)}
       />
       <ActionChip
         Icon={BuildingsIcon}
         label="Add Property"
         iconBg={palette.infoBg}
         iconColor={palette.info}
-        onPress={() => router.push('/(tabs)/properties/new' as never)}
+        onPress={() => router.push('/properties/new' as never)}
       />
     </View>
   );

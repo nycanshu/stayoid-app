@@ -9,6 +9,7 @@ import {
   PlusIcon, CheckCircleIcon, WarningCircleIcon, ReceiptIcon,
 } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
+import { useRecordPaymentSheet } from '../../../components/payments/RecordPaymentSheet';
 import { usePayments } from '../../../lib/hooks/use-payments';
 import { useTenants } from '../../../lib/hooks/use-tenants';
 import { useDashboard } from '../../../lib/hooks/use-dashboard';
@@ -166,6 +167,7 @@ function ListSkeleton() {
 export default function PaymentsScreen() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { open: openPaymentSheet } = useRecordPaymentSheet();
   const now = new Date();
   const [month, setMonth]   = useState(now.getMonth() + 1);
   const [year, setYear]     = useState(now.getFullYear());
@@ -267,7 +269,7 @@ export default function PaymentsScreen() {
                   </Text>
                 </View>
                 <Pressable
-                  onPress={() => router.push('/(tabs)/payments/new' as never)}
+                  onPress={() => openPaymentSheet()}
                   android_ripple={null}
                   hitSlop={8}
                   className="size-10 rounded-[10px] bg-primary items-center justify-center"
