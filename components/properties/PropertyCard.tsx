@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { MapPinIcon, HouseIcon, UsersIcon } from 'phosphor-react-native';
@@ -22,7 +23,7 @@ interface PropertyCardProps {
   stats?: DashboardProperty;
 }
 
-export function PropertyCard({ property, stats }: PropertyCardProps) {
+function PropertyCardImpl({ property, stats }: PropertyCardProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const meta = getTypeMeta(property.property_type, palette);
@@ -132,3 +133,5 @@ export function PropertyCard({ property, stats }: PropertyCardProps) {
     </Pressable>
   );
 }
+
+export const PropertyCard = memo(PropertyCardImpl);

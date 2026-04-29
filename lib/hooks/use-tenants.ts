@@ -1,4 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  useQuery, useInfiniteQuery, useMutation, useQueryClient,
+} from '@tanstack/react-query';
 import { tenantsApi, type TenantFilters } from '../api/tenants';
 import type { CreateTenantInput } from '../../types/tenant';
 
@@ -6,6 +8,28 @@ export function useTenants(filters?: TenantFilters) {
   return useQuery({
     queryKey: ['tenants', filters],
     queryFn: () => tenantsApi.list(filters),
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+  });
+}
+
+const TENANTS_PAGE_SIZE = 20;
+
+/**
+ * Paginated tenant list. Pages of 20, server-driven filter / search / property
+ * scope go into the queryKey so changing them resets to page 1.
+ */
+export function useInfiniteTenants(filters?: Omit<TenantFilters, 'page' | 'page_size'>) {
+  return useInfiniteQuery({
+    queryKey: ['tenants', 'infinite', filters],
+    queryFn: ({ pageParam }) => tenantsApi.listPaginated({
+      ...filters,
+      page: pageParam,
+      page_size: TENANTS_PAGE_SIZE,
+    }),
+    initialPageParam: 1,
+    getNextPageParam: (last, all) =>
+      last.next ? all.length + 1 : undefined,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
   });

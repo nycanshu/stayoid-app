@@ -1,5 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { propertiesApi, slotsApi } from '../api/properties';
+import {
+  useQuery, useInfiniteQuery, useMutation, useQueryClient,
+} from '@tanstack/react-query';
+import {
+  propertiesApi, slotsApi,
+  type PropertyFilters, type SlotFilters,
+} from '../api/properties';
 import type { Property } from '../../types/property';
 
 export function useProperties() {
@@ -33,6 +38,42 @@ export function useSlots(
     // property detail). With `allowAll: true`, fire even when propertyId is
     // undefined — the global slots page wants every slot across every property.
     enabled: !!propertyId || !!options?.allowAll,
+  });
+}
+
+const SLOTS_PAGE_SIZE = 30;
+
+export function useInfiniteSlots(filters?: Omit<SlotFilters, 'page' | 'page_size'>) {
+  return useInfiniteQuery({
+    queryKey: ['slots', 'infinite', filters],
+    queryFn: ({ pageParam }) => slotsApi.listPaginated({
+      ...filters,
+      page: pageParam,
+      page_size: SLOTS_PAGE_SIZE,
+    }),
+    initialPageParam: 1,
+    getNextPageParam: (last, all) => last.next ? all.length + 1 : undefined,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+  });
+}
+
+const PROPERTIES_PAGE_SIZE = 20;
+
+export function useInfiniteProperties(
+  filters?: Omit<PropertyFilters, 'page' | 'page_size'>,
+) {
+  return useInfiniteQuery({
+    queryKey: ['properties', 'infinite', filters],
+    queryFn: ({ pageParam }) => propertiesApi.listPaginated({
+      ...filters,
+      page: pageParam,
+      page_size: PROPERTIES_PAGE_SIZE,
+    }),
+    initialPageParam: 1,
+    getNextPageParam: (last, all) => last.next ? all.length + 1 : undefined,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
 }
 

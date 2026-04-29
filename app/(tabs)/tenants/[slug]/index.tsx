@@ -9,7 +9,7 @@ import {
   ArrowLeftIcon, PhoneIcon, MapPinIcon,
   PencilIcon, DotsThreeVerticalIcon, UserIcon, BriefcaseIcon,
   IdentificationCardIcon, UsersThreeIcon, HouseIcon, ReceiptIcon,
-  PlusIcon,
+  PlusIcon, WhatsappLogoIcon, ChatTextIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
@@ -18,6 +18,7 @@ import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
 import { useRecordPaymentSheet } from '../../../../components/payments/RecordPaymentSheet';
+import { sendWhatsApp, sendSMS } from '../../../../lib/utils/messaging';
 import {
   formatCurrency, formatTenure, formatLongDate,
   GENDER_LABELS, WORK_TYPE_LABELS, ID_PROOF_LABELS, getInitials,
@@ -210,6 +211,30 @@ export default function TenantDetailScreen() {
     Linking.openURL(`tel:${tenant.phone}`);
   };
 
+  const handleMessage = () => {
+    if (!tenant?.phone) return;
+    showActionSheet({
+      title: tenant.name,
+      message: 'Send a message',
+      options: [
+        {
+          label: 'WhatsApp',
+          Icon: WhatsappLogoIcon,
+          iconBg: palette.successBg,
+          iconColor: palette.success,
+          onPress: () => sendWhatsApp(tenant.phone, `Hi ${tenant.name},\n\n`),
+        },
+        {
+          label: 'SMS',
+          Icon: ChatTextIcon,
+          iconBg: palette.infoBg,
+          iconColor: palette.info,
+          onPress: () => sendSMS(tenant.phone, `Hi ${tenant.name},\n\n`),
+        },
+      ],
+    });
+  };
+
   const confirmExit = useCallback(() => {
     if (!tenant) return;
     const today = new Date();
@@ -375,6 +400,19 @@ export default function TenantDetailScreen() {
                       Call
                     </Text>
                   </Pressable>
+                  <Pressable
+                    onPress={handleMessage}
+                    android_ripple={null}
+                    className="flex-1 flex-row items-center justify-center gap-1.5 border border-border bg-card rounded-[10px] py-2.5"
+                  >
+                    <WhatsappLogoIcon size={14} color={palette.success} weight="fill" />
+                    <Text
+                      className="text-foreground text-[13px]"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
+                      Message
+                    </Text>
+                  </Pressable>
                   {isActive && (
                     <Pressable
                       onPress={() => openPaymentSheet({ tenantSlug: tenant.slug })}
@@ -386,7 +424,7 @@ export default function TenantDetailScreen() {
                         className="text-foreground text-[13px]"
                         style={{ fontFamily: 'Inter_600SemiBold' }}
                       >
-                        Record Payment
+                        Record
                       </Text>
                     </Pressable>
                   )}
@@ -573,10 +611,8 @@ export default function TenantDetailScreen() {
                 </View>
               ) : (
                 <View className="gap-2.5">
-                  {(payments ?? []).map((p, i) => (
-                    <Entrance key={p.id} delay={i * 40} trigger={focusTick}>
-                      <PaymentRow payment={p} />
-                    </Entrance>
+                  {(payments ?? []).map((p) => (
+                    <PaymentRow key={p.id} payment={p} />
                   ))}
                 </View>
               )}

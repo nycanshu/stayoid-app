@@ -1,25 +1,41 @@
-import { View, Text, Pressable, Linking } from 'react-native';
+import { memo } from 'react';
+import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import {
   PhoneIcon, MapPinIcon, WarningCircleIcon,
   CurrencyCircleDollarIcon, PencilIcon,
+  WhatsappLogoIcon, ChatTextIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
 import { useActionSheet } from '../ui/ActionSheet';
 import { useRecordPaymentSheet } from '../payments/RecordPaymentSheet';
 import { getInitials, formatCurrency } from '../../lib/utils/formatters';
+import { sendWhatsApp, sendSMS, callPhone } from '../../lib/utils/messaging';
+import { rentReminderMessage } from '../../lib/constants/message-templates';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
 import type { Tenant } from '../../types/tenant';
 
-export function TenantCard({ tenant }: { tenant: Tenant }) {
+function TenantCardImpl({ tenant }: { tenant: Tenant }) {
   const isActive  = tenant.is_active;
   const hasUnpaid = !!tenant.has_unpaid && isActive;
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const { open: openPaymentSheet } = useRecordPaymentSheet();
+
+  const buildMessage = () => {
+    if (!hasUnpaid) return `Hi ${tenant.name},\n\n`;
+    const today = new Date();
+    return rentReminderMessage({
+      tenantName:   tenant.name,
+      amount:       tenant.monthly_rent,
+      month:        today.getMonth() + 1,
+      year:         today.getFullYear(),
+      propertyName: tenant.property_name,
+    });
+  };
 
   const openContextMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -34,13 +50,27 @@ export function TenantCard({ tenant }: { tenant: Tenant }) {
           iconColor: palette.success,
           onPress: () => openPaymentSheet({ tenantSlug: tenant.slug }),
         }] : []),
-        ...(tenant.phone ? [{
-          label: `Call ${tenant.phone}`,
-          Icon: PhoneIcon,
-          iconBg: palette.infoBg,
-          iconColor: palette.info,
-          onPress: () => Linking.openURL(`tel:${tenant.phone}`),
-        }] : []),
+        ...(tenant.phone ? [
+          {
+            label: hasUnpaid ? 'Send WhatsApp Reminder' : 'Send WhatsApp',
+            Icon: WhatsappLogoIcon,
+            iconBg: palette.successBg,
+            iconColor: palette.success,
+            onPress: () => sendWhatsApp(tenant.phone, buildMessage()),
+          },
+          {
+            label: hasUnpaid ? 'Send SMS Reminder' : 'Send SMS',
+            Icon: ChatTextIcon,
+            iconBg: palette.infoBg,
+            iconColor: palette.info,
+            onPress: () => sendSMS(tenant.phone, buildMessage()),
+          },
+          {
+            label: `Call ${tenant.phone}`,
+            Icon: PhoneIcon,
+            onPress: () => callPhone(tenant.phone),
+          },
+        ] : []),
         {
           label: 'Edit Tenant',
           Icon: PencilIcon,
@@ -56,10 +86,7 @@ export function TenantCard({ tenant }: { tenant: Tenant }) {
       onLongPress={openContextMenu}
       delayLongPress={400}
       android_ripple={null}
-      className={cn(
-        'bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3',
-        hasUnpaid && 'border-l-[3px] border-l-warning',
-      )}
+      className="bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-3"
     >
       <View
         className={cn(
@@ -155,3 +182,5 @@ export function TenantCard({ tenant }: { tenant: Tenant }) {
     </Pressable>
   );
 }
+
+export const TenantCard = memo(TenantCardImpl);

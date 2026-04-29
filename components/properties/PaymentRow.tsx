@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { CalendarIcon } from 'phosphor-react-native';
@@ -12,7 +13,7 @@ function getStatusMeta(status: PaymentStatus): { label: string; bgClass: string;
   return                          { label: 'Pending', bgClass: 'bg-destructive-bg', fgClass: 'text-destructive' };
 }
 
-export function PaymentRow({ payment }: { payment: Payment }) {
+function PaymentRowImpl({ payment }: { payment: Payment }) {
   const status = getStatusMeta(payment.payment_status);
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
@@ -80,3 +81,5 @@ export function PaymentRow({ payment }: { payment: Payment }) {
     </Pressable>
   );
 }
+
+export const PaymentRow = memo(PaymentRowImpl);

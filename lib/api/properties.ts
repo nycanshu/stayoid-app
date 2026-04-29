@@ -1,11 +1,26 @@
 import apiClient from './client';
 import type { Property, Floor, Unit, Slot } from '../../types/property';
+import type { Paginated } from '../../types/api';
+
+export interface PropertyFilters {
+  query?: string;
+  property_type?: 'PG' | 'FLAT';
+  page?: number;
+  page_size?: number;
+}
 
 export const propertiesApi = {
   list: () =>
     apiClient
       .get<{ results: Property[] } | Property[]>('/properties/')
       .then((r) => (Array.isArray(r.data) ? r.data : r.data.results)),
+
+  listPaginated: (params?: PropertyFilters) =>
+    apiClient
+      .get<Paginated<Property> | Property[]>('/properties/', { params })
+      .then((r) => (Array.isArray(r.data)
+        ? { count: r.data.length, next: null, previous: null, results: r.data }
+        : r.data)),
 
   bySlug: (slug: string) =>
     apiClient.get<Property>(`/properties/by-slug/${slug}/`).then((r) => r.data),
@@ -62,11 +77,26 @@ export const unitsApi = {
       .then((r) => r.data),
 };
 
+export interface SlotFilters {
+  property_id?: string;
+  vacant?: boolean;
+  query?: string;
+  page?: number;
+  page_size?: number;
+}
+
 export const slotsApi = {
   list: (params: { property_id?: string; vacant?: boolean }) =>
     apiClient
       .get<{ results: Slot[] } | Slot[]>('/slots/', { params })
       .then((r) => (Array.isArray(r.data) ? r.data : r.data.results)),
+
+  listPaginated: (params?: SlotFilters) =>
+    apiClient
+      .get<Paginated<Slot> | Slot[]>('/slots/', { params })
+      .then((r) => (Array.isArray(r.data)
+        ? { count: r.data.length, next: null, previous: null, results: r.data }
+        : r.data)),
 
   create: (
     propertyId: string,

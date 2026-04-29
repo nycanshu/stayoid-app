@@ -1,124 +1,112 @@
 import {
-  View, Text, TextInput, Pressable, FlatList, RefreshControl,
+  View, Text, TextInput, Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import {
   PlusIcon, MagnifyingGlassIcon, HouseIcon,
-  CaretDownIcon, FunnelSimpleIcon,
 } from 'phosphor-react-native';
 import { useState, useCallback, useMemo } from 'react';
 import { useColorScheme } from 'nativewind';
 import { PropertyCard } from '../../../components/properties/PropertyCard';
 import { PropertyCardSkeleton } from '../../../components/properties/PropertyCardSkeleton';
-import { AddPropertyCard } from '../../../components/properties/AddPropertyCard';
 import { PortfolioStatsStrip } from '../../../components/properties/PortfolioStatsStrip';
 import { Skeleton } from '../../../components/ui/skeleton';
-import { useProperties } from '../../../lib/hooks/use-properties';
+import { InfiniteList } from '../../../components/ui/InfiniteList';
+import { useInfiniteProperties } from '../../../lib/hooks/use-properties';
 import { useDashboard } from '../../../lib/hooks/use-dashboard';
-import { useActionSheet } from '../../../components/ui/ActionSheet';
+import { useDebouncedValue } from '../../../lib/hooks/use-debounced-value';
+import { useTabFocusRefetch } from '../../../lib/hooks/use-tab-focus-refetch';
 import { Entrance } from '../../../components/animations';
 import { THEME } from '../../../lib/theme';
+import type { PropertyFilters } from '../../../lib/api/properties';
 
-type SortKey = 'newest' | 'name' | 'occupancy';
-
-const SORT_LABELS: Record<SortKey, string> = {
-  newest:    'Newest first',
-  name:      'Name (A–Z)',
-  occupancy: 'Occupancy (high)',
-};
+function FirstLoadSkeleton() {
+  return (
+    <View className="gap-3">
+      {[0, 1, 2, 3].map((i) => (
+        <PropertyCardSkeleton key={i} />
+      ))}
+    </View>
+  );
+}
 
 export default function PropertiesScreen() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
-  const { show: showActionSheet } = useActionSheet();
-  const { data: properties, isLoading, refetch, isRefetching } = useProperties();
   const { data: dashboard } = useDashboard();
 
-  const [query, setQuery]         = useState('');
-  const [sort, setSort]           = useState<SortKey>('newest');
-  const [focusTick, setFocusTick] = useState(0);
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(query.trim(), 300);
 
-  useFocusEffect(useCallback(() => {
-    setFocusTick((t) => t + 1);
-  }, []));
+  const filters = useMemo<Omit<PropertyFilters, 'page' | 'page_size'>>(() => ({
+    query: debouncedQuery || undefined,
+  }), [debouncedQuery]);
+
+  const {
+    data, isLoading, isRefetching,
+    isFetchingNextPage, hasNextPage,
+    fetchNextPage, refetch,
+  } = useInfiniteProperties(filters);
+
+  useTabFocusRefetch(refetch);
+
+  const properties = useMemo(
+    () => (data?.pages ?? []).flatMap((p) => p.results),
+    [data],
+  );
+  const total = data?.pages?.[0]?.count ?? 0;
 
   const statsMap = useMemo(
     () => Object.fromEntries((dashboard?.properties ?? []).map((p) => [p.id, p])),
     [dashboard?.properties],
   );
 
-  const filteredSorted = useMemo(() => {
-    const list = properties ?? [];
-    const q = query.trim().toLowerCase();
-    const filtered = q
-      ? list.filter(
-          (p) => p.name.toLowerCase().includes(q) || p.address.toLowerCase().includes(q),
-        )
-      : list;
-
-    const sorted = [...filtered];
-    if (sort === 'name') {
-      sorted.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sort === 'newest') {
-      sorted.sort(
-        (a, b) =>
-          new Date(b.created_at ?? 0).getTime() - new Date(a.created_at ?? 0).getTime(),
-      );
-    } else if (sort === 'occupancy') {
-      sorted.sort((a, b) => {
-        const sa = statsMap[a.id], sb = statsMap[b.id];
-        const ra = sa?.total_slots > 0 ? sa.occupied / sa.total_slots : 0;
-        const rb = sb?.total_slots > 0 ? sb.occupied / sb.total_slots : 0;
-        return rb - ra;
-      });
-    }
-    return sorted;
-  }, [properties, query, sort, statsMap]);
-
-  const openSortPicker = useCallback(() => {
-    showActionSheet({
-      title: 'Sort properties',
-      options: [
-        { label: 'Newest first',     selected: sort === 'newest',    onPress: () => setSort('newest')    },
-        { label: 'Name (A–Z)',       selected: sort === 'name',      onPress: () => setSort('name')      },
-        { label: 'Occupancy (high)', selected: sort === 'occupancy', onPress: () => setSort('occupancy') },
-      ],
-    });
-  }, [sort, showActionSheet]);
-
-  const total = properties?.length ?? 0;
-
-  const SKELETON_KEYS = ['s1', 's2', 's3', 's4'] as const;
-  type Row = { id: string; __skeleton?: true } & Partial<(typeof filteredSorted)[number]>;
-  const rows: Row[] = isLoading
-    ? SKELETON_KEYS.map((k) => ({ id: k, __skeleton: true }))
-    : (filteredSorted as Row[]);
+  const handleRefresh = useCallback(() => { refetch(); }, [refetch]);
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
-      <FlatList<Row>
-        data={rows}
+      <InfiniteList
+        data={properties}
         keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
-        ItemSeparatorComponent={() => <View className="h-3" />}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={() => { refetch(); setFocusTick((t) => t + 1); }}
-            tintColor={palette.primary}
-          />
+        renderItem={({ item }) => (
+          <PropertyCard property={item} stats={statsMap[item.id]} />
+        )}
+        isLoading={isLoading}
+        isRefetching={isRefetching}
+        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={!!hasNextPage}
+        onRefresh={handleRefresh}
+        onEndReached={fetchNextPage}
+        FirstLoadSkeleton={<FirstLoadSkeleton />}
+        itemGap={12}
+        ListEmptyComponent={
+          <View className="bg-card border border-border rounded-xl p-4 items-center mb-3">
+            <View className="size-11 rounded-full bg-muted items-center justify-center mb-2.5">
+              <HouseIcon size={20} color={palette.mutedForeground} weight="duotone" />
+            </View>
+            <Text
+              className="text-foreground text-[13px] mb-1 text-center"
+              style={{ fontFamily: 'Inter_600SemiBold' }}
+            >
+              {debouncedQuery ? `No results for "${debouncedQuery}"` : 'No properties yet'}
+            </Text>
+            <Text
+              className="text-muted-foreground text-xs text-center leading-[18px]"
+              style={{ fontFamily: 'Inter_400Regular' }}
+            >
+              {debouncedQuery
+                ? 'Try a different search term.'
+                : 'Add your first property to start managing.'}
+            </Text>
+          </View>
         }
-
         ListHeaderComponent={
           <View>
-            <Entrance trigger={focusTick} style={{ marginBottom: 20 }}>
+            <Entrance trigger={1} style={{ marginBottom: 20 }}>
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 pr-3">
                   <Text
@@ -136,7 +124,6 @@ export default function PropertiesScreen() {
                       : `${total} ${total === 1 ? 'property' : 'properties'} in your portfolio`}
                   </Text>
                 </View>
-
                 <Pressable
                   onPress={() => router.push('/properties/new' as never)}
                   android_ripple={null}
@@ -148,22 +135,22 @@ export default function PropertiesScreen() {
               </View>
             </Entrance>
 
-            <Entrance trigger={focusTick} delay={40} style={{ marginBottom: 12 }}>
+            <View style={{ marginBottom: 12 }}>
               <PortfolioStatsStrip
                 properties={dashboard?.properties}
                 totalProperties={total}
                 isLoading={isLoading}
               />
-            </Entrance>
+            </View>
 
-            <Entrance trigger={focusTick} delay={60}>
+            <View style={{ marginBottom: 12 }}>
               {isLoading ? (
-                <View className="bg-card border border-border rounded-xl p-3.5 mb-3 flex-row items-center gap-2.5">
+                <View className="bg-card border border-border rounded-xl p-3.5 flex-row items-center gap-2.5">
                   <Skeleton width={16} height={16} radius={4} />
                   <Skeleton width="60%" height={12} />
                 </View>
               ) : (
-                <View className="flex-row items-center gap-2.5 bg-card border border-border rounded-xl p-3.5 mb-3">
+                <View className="flex-row items-center gap-2.5 bg-card border border-border rounded-xl p-3.5">
                   <MagnifyingGlassIcon size={16} color={palette.mutedForeground} />
                   <TextInput
                     value={query}
@@ -192,92 +179,8 @@ export default function PropertiesScreen() {
                   )}
                 </View>
               )}
-            </Entrance>
-
-            <Entrance trigger={focusTick} delay={100}>
-              {isLoading ? (
-                <View className="bg-card border border-border rounded-xl p-3.5 mb-3 flex-row items-center gap-3">
-                  <Skeleton width={36} height={36} radius={10} />
-                  <View className="flex-1 gap-1.5">
-                    <Skeleton width={48} height={9} />
-                    <Skeleton width={120} height={11} />
-                  </View>
-                </View>
-              ) : (
-                <Pressable
-                  onPress={openSortPicker}
-                  android_ripple={null}
-                  className="flex-row items-center gap-3 bg-card border border-border rounded-xl p-3.5 mb-3"
-                >
-                  <View className="size-9 rounded-[10px] bg-muted items-center justify-center">
-                    <FunnelSimpleIcon size={16} color={palette.mutedForeground} weight="bold" />
-                  </View>
-                  <View className="flex-1">
-                    <Text
-                      className="text-muted-foreground text-[11px]"
-                      style={{ fontFamily: 'Inter_400Regular' }}
-                    >
-                      Sort by
-                    </Text>
-                    <Text
-                      className="text-foreground text-[13px] mt-0.5"
-                      style={{ fontFamily: 'Inter_600SemiBold' }}
-                    >
-                      {SORT_LABELS[sort]}
-                    </Text>
-                  </View>
-                  <CaretDownIcon size={14} color={palette.mutedForeground} />
-                </Pressable>
-              )}
-            </Entrance>
-
-            {!isLoading && filteredSorted.length === 0 && (
-              <Entrance trigger={focusTick} delay={140}>
-                <View className="bg-card border border-border rounded-xl p-4 items-center mb-3">
-                  <View className="size-11 rounded-full bg-muted items-center justify-center mb-2.5">
-                    <HouseIcon size={20} color={palette.mutedForeground} weight="duotone" />
-                  </View>
-                  <Text
-                    className="text-foreground text-[13px] mb-1 text-center"
-                    style={{ fontFamily: 'Inter_600SemiBold' }}
-                  >
-                    {query ? `No results for "${query}"` : 'No properties yet'}
-                  </Text>
-                  <Text
-                    className="text-muted-foreground text-xs text-center leading-[18px]"
-                    style={{ fontFamily: 'Inter_400Regular' }}
-                  >
-                    {query
-                      ? 'Try a different search term.'
-                      : 'Add your first property to start managing.'}
-                  </Text>
-                </View>
-              </Entrance>
-            )}
+            </View>
           </View>
-        }
-
-        renderItem={({ item, index }) => (
-          <Entrance delay={index * 55} trigger={focusTick}>
-            {item.__skeleton ? (
-              <PropertyCardSkeleton />
-            ) : (
-              <PropertyCard
-                property={item as (typeof filteredSorted)[number]}
-                stats={statsMap[item.id]}
-              />
-            )}
-          </Entrance>
-        )}
-
-        ListFooterComponent={
-          !isLoading && filteredSorted.length > 0 ? (
-            <Entrance delay={filteredSorted.length * 55 + 55} trigger={focusTick}>
-              <View className="mt-3">
-                <AddPropertyCard />
-              </View>
-            </Entrance>
-          ) : null
         }
       />
     </SafeAreaView>

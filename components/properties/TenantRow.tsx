@@ -1,13 +1,16 @@
-import { View, Text, Pressable, Linking } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import {
   PhoneIcon, MapPinIcon, CurrencyCircleDollarIcon, PencilIcon,
+  WhatsappLogoIcon, ChatTextIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
 import { useActionSheet } from '../ui/ActionSheet';
 import { useRecordPaymentSheet } from '../payments/RecordPaymentSheet';
 import { getInitials } from '../../lib/utils/formatters';
+import { sendWhatsApp, sendSMS, callPhone } from '../../lib/utils/messaging';
+import { rentReminderMessage } from '../../lib/constants/message-templates';
 import { THEME } from '../../lib/theme';
 import type { Tenant } from '../../types/tenant';
 
@@ -17,6 +20,18 @@ export function TenantRow({ tenant }: { tenant: Tenant }) {
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const { open: openPaymentSheet } = useRecordPaymentSheet();
+
+  const buildMessage = () => {
+    if (!hasUnpaid) return `Hi ${tenant.name},\n\n`;
+    const today = new Date();
+    return rentReminderMessage({
+      tenantName:   tenant.name,
+      amount:       tenant.monthly_rent,
+      month:        today.getMonth() + 1,
+      year:         today.getFullYear(),
+      propertyName: tenant.property_name,
+    });
+  };
 
   const openContextMenu = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -31,13 +46,27 @@ export function TenantRow({ tenant }: { tenant: Tenant }) {
           iconColor: palette.success,
           onPress: () => openPaymentSheet({ tenantSlug: tenant.slug }),
         },
-        ...(tenant.phone ? [{
-          label: `Call ${tenant.phone}`,
-          Icon: PhoneIcon,
-          iconBg: palette.infoBg,
-          iconColor: palette.info,
-          onPress: () => Linking.openURL(`tel:${tenant.phone}`),
-        }] : []),
+        ...(tenant.phone ? [
+          {
+            label: hasUnpaid ? 'Send WhatsApp Reminder' : 'Send WhatsApp',
+            Icon: WhatsappLogoIcon,
+            iconBg: palette.successBg,
+            iconColor: palette.success,
+            onPress: () => sendWhatsApp(tenant.phone, buildMessage()),
+          },
+          {
+            label: hasUnpaid ? 'Send SMS Reminder' : 'Send SMS',
+            Icon: ChatTextIcon,
+            iconBg: palette.infoBg,
+            iconColor: palette.info,
+            onPress: () => sendSMS(tenant.phone, buildMessage()),
+          },
+          {
+            label: `Call ${tenant.phone}`,
+            Icon: PhoneIcon,
+            onPress: () => callPhone(tenant.phone),
+          },
+        ] : []),
         {
           label: 'Edit Tenant',
           Icon: PencilIcon,

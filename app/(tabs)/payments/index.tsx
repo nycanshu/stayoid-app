@@ -1,23 +1,24 @@
 import {
-  View, Text, FlatList, Pressable, RefreshControl,
+  View, Text, Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { router, useFocusEffect } from 'expo-router';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
-  PlusIcon, CheckCircleIcon, WarningCircleIcon, ReceiptIcon,
+  PlusIcon, CheckCircleIcon, ReceiptIcon,
 } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { useRecordPaymentSheet } from '../../../components/payments/RecordPaymentSheet';
-import { usePayments } from '../../../lib/hooks/use-payments';
+import { useInfinitePayments } from '../../../lib/hooks/use-payments';
 import { useTenants } from '../../../lib/hooks/use-tenants';
 import { useDashboard } from '../../../lib/hooks/use-dashboard';
+import { useTabFocusRefetch } from '../../../lib/hooks/use-tab-focus-refetch';
 import { PaymentRow } from '../../../components/properties/PaymentRow';
 import { UnpaidTenantCard } from '../../../components/payments/UnpaidTenantCard';
 import { PaymentStatsStrip } from '../../../components/payments/PaymentStatsStrip';
 import { MonthNavigator } from '../../../components/payments/MonthNavigator';
 import { Skeleton } from '../../../components/ui/skeleton';
+import { InfiniteList } from '../../../components/ui/InfiniteList';
 import { Entrance } from '../../../components/animations';
 import { PropertyFilterBar } from '../../../components/properties/PropertyFilterBar';
 import { THEME } from '../../../lib/theme';
@@ -34,7 +35,10 @@ const FILTER_LABELS: Record<FilterKey, string> = {
 
 type ListItem =
   | { kind: 'unpaid'; tenant: Tenant }
-  | { kind: 'payment'; payment: Payment };
+  | { kind: 'payment'; payment: Payment }
+  | { kind: 'show-more'; remaining: number };
+
+const UNPAID_PAGE = 5;
 
 function FilterChips({
   active, counts, onChange,
@@ -92,29 +96,33 @@ function FilterChips({
   );
 }
 
-function EmptyState({
-  filter, palette,
-}: { filter: FilterKey; palette: typeof THEME['light'] }) {
-  const config = filter === 'paid'
-    ? {
-        Icon: CheckCircleIcon,
-        title: 'No payments yet',
-        description: 'Payments recorded for this month will appear here.',
-        iconBg: palette.successBg, iconColor: palette.success,
-      }
-    : filter === 'pending'
-    ? {
-        Icon: CheckCircleIcon,
-        title: 'All caught up',
-        description: 'No unpaid tenants for this month.',
-        iconBg: palette.successBg, iconColor: palette.success,
-      }
-    : {
-        Icon: ReceiptIcon,
-        title: 'Nothing to show',
-        description: 'No payments or unpaid tenants for this month yet.',
-        iconBg: palette.muted, iconColor: palette.mutedForeground,
-      };
+function getEmptyConfig(filter: FilterKey, palette: typeof THEME['light']) {
+  if (filter === 'paid') {
+    return {
+      Icon: CheckCircleIcon,
+      title: 'No payments yet',
+      description: 'Payments recorded for this month will appear here.',
+      iconBg: palette.successBg, iconColor: palette.success,
+    };
+  }
+  if (filter === 'pending') {
+    return {
+      Icon: CheckCircleIcon,
+      title: 'All caught up',
+      description: 'No unpaid tenants for this month.',
+      iconBg: palette.successBg, iconColor: palette.success,
+    };
+  }
+  return {
+    Icon: ReceiptIcon,
+    title: 'Nothing to show',
+    description: 'No payments or unpaid tenants for this month yet.',
+    iconBg: palette.muted, iconColor: palette.mutedForeground,
+  };
+}
+
+function EmptyState({ filter, palette }: { filter: FilterKey; palette: typeof THEME['light'] }) {
+  const config = getEmptyConfig(filter, palette);
   const { Icon } = config;
   return (
     <View className="bg-card border border-border rounded-xl p-7 items-center">
@@ -173,17 +181,27 @@ export default function PaymentsScreen() {
   const [year, setYear]     = useState(now.getFullYear());
   const [filter, setFilter] = useState<FilterKey>('all');
   const [propertyId, setPropertyId] = useState<string | undefined>(undefined);
-  const [focusTick, setFocusTick] = useState(0);
+  // How many unpaid tenants to show on the "All" filter — progressive disclosure
+  // so the top of the screen doesn't get crowded when there are many defaulters.
+  const [unpaidLimit, setUnpaidLimit] = useState(UNPAID_PAGE);
 
-  useFocusEffect(useCallback(() => {
-    setFocusTick((t) => t + 1);
-  }, []));
+  // Reset progressive limit whenever the scope changes.
+  useEffect(() => {
+    setUnpaidLimit(UNPAID_PAGE);
+  }, [month, year, propertyId, filter]);
+
+  const paymentsFilters = useMemo(
+    () => ({ month, year, property_id: propertyId }),
+    [month, year, propertyId],
+  );
 
   const {
-    data: payments, isLoading: paymentsLoading,
+    data: paymentsData, isLoading: paymentsLoading,
     refetch: refetchPayments, isRefetching,
-  } = usePayments({ month, year, property_id: propertyId });
+    isFetchingNextPage, hasNextPage, fetchNextPage,
+  } = useInfinitePayments(paymentsFilters);
 
+  // Unpaid tenants for the month — typically small (<50), kept as a non-paginated query.
   const {
     data: unpaidTenants, isLoading: unpaidLoading,
     refetch: refetchUnpaid,
@@ -191,10 +209,24 @@ export default function PaymentsScreen() {
 
   const { data: dashboard } = useDashboard();
 
+  useTabFocusRefetch(useCallback(() => {
+    refetchPayments();
+    refetchUnpaid();
+  }, [refetchPayments, refetchUnpaid]));
+
   const isCurrentMonth = month === now.getMonth() + 1 && year === now.getFullYear();
 
+  const payments = useMemo(
+    () => (paymentsData?.pages ?? []).flatMap((p) => p.results),
+    [paymentsData],
+  );
+  const totalPaid = paymentsData?.pages?.[0]?.count ?? 0;
+  const totalPending = unpaidTenants?.length ?? 0;
+
+  // Stats strip uses sum-of-loaded-pages for "collected" — close enough for the
+  // current month, fully accurate once the user scrolls through.
   const collected = useMemo(
-    () => (payments ?? []).reduce((sum, p) => sum + Number(p.amount), 0),
+    () => payments.reduce((sum, p) => sum + Number(p.amount), 0),
     [payments],
   );
   const expected = useMemo(() => {
@@ -204,55 +236,92 @@ export default function PaymentsScreen() {
     return collected + (unpaidTenants ?? []).reduce((s, t) => s + Number(t.monthly_rent), 0);
   }, [isCurrentMonth, dashboard?.current_month, collected, unpaidTenants]);
 
-  const handleRefresh = useCallback(() => {
-    refetchPayments();
-    refetchUnpaid();
-    setFocusTick((t) => t + 1);
-  }, [refetchPayments, refetchUnpaid]);
-
   const isLoading = paymentsLoading || unpaidLoading;
+
+  const counts: Record<FilterKey, number> = {
+    all:     totalPaid + totalPending,
+    paid:    totalPaid,
+    pending: totalPending,
+  };
 
   const listData: ListItem[] = useMemo(() => {
     const items: ListItem[] = [];
-    if (filter === 'all' || filter === 'pending') {
-      (unpaidTenants ?? []).forEach((t) => items.push({ kind: 'unpaid', tenant: t }));
+    const allUnpaid = unpaidTenants ?? [];
+    if (filter === 'pending') {
+      // Dedicated pending view — show all of them.
+      allUnpaid.forEach((t) => items.push({ kind: 'unpaid', tenant: t }));
+    } else if (filter === 'all') {
+      // Mixed view — cap the top section so the screen stays scannable.
+      const visible = allUnpaid.slice(0, unpaidLimit);
+      visible.forEach((t) => items.push({ kind: 'unpaid', tenant: t }));
+      const remaining = allUnpaid.length - visible.length;
+      if (remaining > 0) {
+        items.push({ kind: 'show-more', remaining });
+      }
     }
     if (filter === 'all' || filter === 'paid') {
-      (payments ?? []).forEach((p) => items.push({ kind: 'payment', payment: p }));
+      payments.forEach((p) => items.push({ kind: 'payment', payment: p }));
     }
     return items;
-  }, [filter, payments, unpaidTenants]);
+  }, [filter, payments, unpaidTenants, unpaidLimit]);
 
-  const counts: Record<FilterKey, number> = {
-    all:     (payments ?? []).length + (unpaidTenants ?? []).length,
-    paid:    (payments ?? []).length,
-    pending: (unpaidTenants ?? []).length,
-  };
+  const handleShowMore = useCallback(() => {
+    setUnpaidLimit((n) => n + UNPAID_PAGE);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    refetchPayments();
+    refetchUnpaid();
+  }, [refetchPayments, refetchUnpaid]);
+
+  // Only paginate when the payments list is part of the visible filter.
+  const showPaginated = filter === 'all' || filter === 'paid';
 
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar style="auto" />
 
-      <FlatList
+      <InfiniteList
         data={listData}
-        keyExtractor={(item) =>
-          item.kind === 'unpaid' ? `u-${item.tenant.id}` : `p-${item.payment.id}`
-        }
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
-        ItemSeparatorComponent={() => <View className="h-2.5" />}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={handleRefresh}
-            tintColor={palette.primary}
-          />
-        }
-
+        keyExtractor={(item) => {
+          if (item.kind === 'unpaid')  return `u-${item.tenant.id}`;
+          if (item.kind === 'payment') return `p-${item.payment.id}`;
+          return 'show-more';
+        }}
+        renderItem={({ item }) => {
+          if (item.kind === 'unpaid') {
+            return <UnpaidTenantCard tenant={item.tenant} month={month} year={year} />;
+          }
+          if (item.kind === 'payment') {
+            return <PaymentRow payment={item.payment} />;
+          }
+          return (
+            <Pressable
+              onPress={handleShowMore}
+              android_ripple={null}
+              className="bg-card border border-border rounded-xl py-3 items-center"
+            >
+              <Text
+                className="text-primary text-[13px]"
+                style={{ fontFamily: 'Inter_600SemiBold' }}
+              >
+                Show {Math.min(UNPAID_PAGE, item.remaining)} more pending
+                {item.remaining > UNPAID_PAGE ? ` (${item.remaining} left)` : ''}
+              </Text>
+            </Pressable>
+          );
+        }}
+        isLoading={isLoading}
+        isRefetching={isRefetching}
+        isFetchingNextPage={showPaginated ? isFetchingNextPage : false}
+        hasNextPage={showPaginated ? !!hasNextPage : false}
+        onRefresh={handleRefresh}
+        onEndReached={fetchNextPage}
+        FirstLoadSkeleton={<ListSkeleton />}
+        ListEmptyComponent={<EmptyState filter={filter} palette={palette} />}
         ListHeaderComponent={
           <View>
-            <Entrance trigger={focusTick} style={{ marginBottom: 20 }}>
+            <Entrance trigger={1} style={{ marginBottom: 20 }}>
               <View className="flex-row items-center justify-between">
                 <View className="flex-1 pr-3">
                   <Text
@@ -279,19 +348,19 @@ export default function PaymentsScreen() {
               </View>
             </Entrance>
 
-            <Entrance trigger={focusTick} delay={40} style={{ marginBottom: 12 }}>
+            <View style={{ marginBottom: 12 }}>
               <PropertyFilterBar value={propertyId} onChange={setPropertyId} />
-            </Entrance>
+            </View>
 
-            <Entrance trigger={focusTick} delay={60} style={{ marginBottom: 12 }}>
+            <View style={{ marginBottom: 12 }}>
               <MonthNavigator
                 month={month}
                 year={year}
                 onChange={(m, y) => { setMonth(m); setYear(y); }}
               />
-            </Entrance>
+            </View>
 
-            <Entrance trigger={focusTick} delay={100} style={{ marginBottom: 12 }}>
+            <View style={{ marginBottom: 12 }}>
               <PaymentStatsStrip
                 collected={collected}
                 expected={expected}
@@ -299,30 +368,13 @@ export default function PaymentsScreen() {
                 unpaidCount={counts.pending}
                 isLoading={isLoading}
               />
-            </Entrance>
+            </View>
 
-            <Entrance trigger={focusTick} delay={140} style={{ marginBottom: 16 }}>
-              <FilterChips
-                active={filter}
-                counts={counts}
-                onChange={setFilter}
-              />
-            </Entrance>
-
-            {isLoading && <ListSkeleton />}
-            {!isLoading && listData.length === 0 && <EmptyState filter={filter} palette={palette} />}
+            <View style={{ marginBottom: 16 }}>
+              <FilterChips active={filter} counts={counts} onChange={setFilter} />
+            </View>
           </View>
         }
-
-        renderItem={({ item, index }) => (
-          <Entrance delay={index * 45} trigger={focusTick}>
-            {item.kind === 'unpaid' ? (
-              <UnpaidTenantCard tenant={item.tenant} />
-            ) : (
-              <PaymentRow payment={item.payment} />
-            )}
-          </Entrance>
-        )}
       />
     </SafeAreaView>
   );

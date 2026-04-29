@@ -1,14 +1,17 @@
-import { View, Text, Pressable, Linking } from 'react-native';
+import { memo } from 'react';
+import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import {
   BedIcon, MapPinIcon, PlusIcon, LockSimpleIcon,
   PhoneIcon, CurrencyCircleDollarIcon, UserIcon,
+  WhatsappLogoIcon, ChatTextIcon,
 } from 'phosphor-react-native';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from 'nativewind';
 import { useActionSheet } from '../ui/ActionSheet';
 import { useRecordPaymentSheet } from '../payments/RecordPaymentSheet';
 import { formatCurrency, getInitials } from '../../lib/utils/formatters';
+import { sendWhatsApp, sendSMS, callPhone } from '../../lib/utils/messaging';
 import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
@@ -18,7 +21,7 @@ interface SlotListRowProps {
   slot: Slot;
 }
 
-export function SlotListRow({ slot }: SlotListRowProps) {
+function SlotListRowImpl({ slot }: SlotListRowProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const labels = getPropertyTypeLabels(slot.property_type);
@@ -54,13 +57,27 @@ export function SlotListRow({ slot }: SlotListRowProps) {
           iconColor: palette.success,
           onPress: () => openPaymentSheet({ tenantSlug: tenant.slug }),
         },
-        ...(tenant.phone ? [{
-          label: `Call ${tenant.phone}`,
-          Icon: PhoneIcon,
-          iconBg: palette.infoBg,
-          iconColor: palette.info,
-          onPress: () => Linking.openURL(`tel:${tenant.phone}`),
-        }] : []),
+        ...(tenant.phone ? [
+          {
+            label: 'Send WhatsApp',
+            Icon: WhatsappLogoIcon,
+            iconBg: palette.successBg,
+            iconColor: palette.success,
+            onPress: () => sendWhatsApp(tenant.phone!, `Hi ${tenant.name},\n\n`),
+          },
+          {
+            label: 'Send SMS',
+            Icon: ChatTextIcon,
+            iconBg: palette.infoBg,
+            iconColor: palette.info,
+            onPress: () => sendSMS(tenant.phone!, `Hi ${tenant.name},\n\n`),
+          },
+          {
+            label: `Call ${tenant.phone}`,
+            Icon: PhoneIcon,
+            onPress: () => callPhone(tenant.phone!),
+          },
+        ] : []),
       ],
     });
   };
@@ -154,3 +171,5 @@ export function SlotListRow({ slot }: SlotListRowProps) {
     </Pressable>
   );
 }
+
+export const SlotListRow = memo(SlotListRowImpl);

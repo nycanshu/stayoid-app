@@ -471,22 +471,21 @@ export default function PropertyDetailScreen() {
                 </View>
 
                 <View className="gap-2.5">
-                  {sortedFloors.map((floorNum, i) => {
+                  {sortedFloors.map((floorNum) => {
                     const floor = floors?.find((f) => f.floor_number === floorNum);
                     if (!floor || !property) return null;
                     return (
-                      <Entrance key={floorNum} delay={i * 55} trigger={`floors-${focusTick}`}>
-                        <FloorCard
-                          floorNumber={floorNum}
-                          slots={slotsByFloor[floorNum] ?? []}
-                          propertyId={property.id}
-                          floorId={floor.id}
-                          propertyType={property.property_type}
-                          propertySlug={property.slug}
-                          floorSlug={floor.slug}
-                          propertyName={property.name}
-                        />
-                      </Entrance>
+                      <FloorCard
+                        key={floorNum}
+                        floorNumber={floorNum}
+                        slots={slotsByFloor[floorNum] ?? []}
+                        propertyId={property.id}
+                        floorId={floor.id}
+                        propertyType={property.property_type}
+                        propertySlug={property.slug}
+                        floorSlug={floor.slug}
+                        propertyName={property.name}
+                      />
                     );
                   })}
                 </View>
@@ -533,10 +532,8 @@ export default function PropertyDetailScreen() {
                   onAction={() => openPaymentSheet()}
                 />
                 <View className="gap-2.5">
-                  {(payments ?? []).map((payment, i) => (
-                    <Entrance key={payment.id} delay={i * 50} trigger={`payments-${focusTick}`}>
-                      <PaymentRow payment={payment} />
-                    </Entrance>
+                  {(payments ?? []).map((payment) => (
+                    <PaymentRow key={payment.id} payment={payment} />
                   ))}
                 </View>
               </>

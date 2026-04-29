@@ -1,5 +1,6 @@
 import apiClient from './client';
 import type { Tenant, CreateTenantInput } from '../../types/tenant';
+import type { Paginated } from '../../types/api';
 
 export interface TenantFilters {
   query?: string;
@@ -13,10 +14,19 @@ export interface TenantFilters {
 }
 
 export const tenantsApi = {
+  /** Returns a flat array — used by callers that want "give me up to page_size tenants". */
   list: (params?: TenantFilters) =>
     apiClient
       .get<{ results: Tenant[] } | Tenant[]>('/tenants/', { params })
       .then((r) => (Array.isArray(r.data) ? r.data : r.data.results)),
+
+  /** Returns the full paginated envelope — used by useInfiniteTenants. */
+  listPaginated: (params?: TenantFilters) =>
+    apiClient
+      .get<Paginated<Tenant> | Tenant[]>('/tenants/', { params })
+      .then((r) => (Array.isArray(r.data)
+        ? { count: r.data.length, next: null, previous: null, results: r.data }
+        : r.data)),
 
   bySlug: (slug: string) =>
     apiClient.get<Tenant>(`/tenants/${slug}/`).then((r) => r.data),
