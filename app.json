@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Stayoid",
-    "slug": "stayoid-app",
+    "slug": "stayoid",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -38,10 +38,18 @@
           "resizeMode": "contain"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d167144d-3004-4cc1-b1a9-c70717153c35"
+      }
+    },
+    "owner": "okayanshus-organization"
   }
 }

@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as SecureStore from 'expo-secure-store';
 import { useState, useEffect } from 'react';
-import { EyeIcon, EyeSlashIcon } from 'phosphor-react-native';
+import { EyeIcon, EyeSlashIcon, GoogleLogoIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import Animated, {
   useSharedValue, useAnimatedStyle,
@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { authApi } from '../../lib/api/auth';
 import { useAuthStore } from '../../lib/stores/auth-store';
+import { useGoogleSignIn } from '../../lib/hooks/use-google-sign-in';
 import { StayoidLogo } from '../../components/shared/StayoidLogo';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
@@ -126,9 +127,13 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function LoginScreen() {
+  const { colorScheme } = useColorScheme();
+  const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const [showPassword, setShowPassword] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const setUser = useAuthStore((s) => s.setUser);
+
+  const google = useGoogleSignIn();
 
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -209,13 +214,13 @@ export default function LoginScreen() {
             </Text>
           </Animated.View>
 
-          {!!apiError && (
+          {(!!apiError || !!google.error) && (
             <View className="bg-destructive-bg border border-destructive/30 rounded-xl p-3 mb-4">
               <Text
                 className="text-destructive text-[13px]"
                 style={{ fontFamily: 'Inter_400Regular' }}
               >
-                {apiError}
+                {apiError ?? google.error}
               </Text>
             </View>
           )}
@@ -268,11 +273,43 @@ export default function LoginScreen() {
           </Animated.View>
 
           <Animated.View style={ctaStyle} className="gap-3">
-            <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
+            <AnimatedButton onPress={handleSubmit(onSubmit)} disabled={isSubmitting || google.isLoading}>
               {isSubmitting
                 ? <ActivityIndicator color="#fff" size="small" />
                 : <Text className="text-white text-[15px]" style={{ fontFamily: 'Inter_600SemiBold' }}>Log In</Text>
               }
+            </AnimatedButton>
+
+            {/* "or" divider */}
+            <View className="flex-row items-center gap-3 my-1">
+              <View className="flex-1 h-px bg-border" />
+              <Text
+                className="text-muted-foreground text-[11px] uppercase"
+                style={{ fontFamily: 'Inter_500Medium', letterSpacing: 1 }}
+              >
+                or
+              </Text>
+              <View className="flex-1 h-px bg-border" />
+            </View>
+
+            <AnimatedButton
+              variant="outline"
+              onPress={google.signIn}
+              disabled={!google.isReady || google.isLoading || isSubmitting}
+            >
+              {google.isLoading ? (
+                <ActivityIndicator color={palette.foreground} size="small" />
+              ) : (
+                <View className="flex-row items-center justify-center gap-2.5">
+                  <GoogleLogoIcon size={18} color={palette.foreground} weight="bold" />
+                  <Text
+                    className="text-foreground text-[15px]"
+                    style={{ fontFamily: 'Inter_600SemiBold' }}
+                  >
+                    Continue with Google
+                  </Text>
+                </View>
+              )}
             </AnimatedButton>
 
             <View className="flex-row justify-center mt-2">
