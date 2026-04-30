@@ -31,7 +31,7 @@ import { TenantPickerModal } from './TenantPickerModal';
 import { useActionSheet } from '../ui/ActionSheet';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
-import type { PaymentMethod, PaymentStatus } from '../../types/payment';
+import type { PaymentMethod } from '../../types/payment';
 import type { Tenant } from '../../types/tenant';
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
@@ -139,7 +139,7 @@ function formatDisplayDate(s?: string) {
 
 interface PaymentFormProps {
   preselectedTenantSlug?: string;
-  onSuccess: () => void;
+  onSuccess: (payment: import('../../types/payment').Payment) => void;
   onCancel: () => void;
 }
 
@@ -190,7 +190,6 @@ export function PaymentForm({
   const month         = watch('payment_for_month');
   const year          = watch('payment_for_year');
   const method        = watch('payment_method');
-  const status        = watch('payment_status');
   const paymentDate   = watch('payment_date');
 
   const expectedRent = selectedTenant ? Number(selectedTenant.monthly_rent) : 0;
@@ -202,14 +201,8 @@ export function PaymentForm({
     }
   }, [selectedTenant?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (!selectedTenant) return;
-    const n = Number(amount || 0);
-    let suggested: PaymentStatus = 'PENDING';
-    if (n >= expectedRent && n > 0) suggested = 'PAID';
-    else if (n > 0)                 suggested = 'PARTIAL';
-    setValue('payment_status', suggested);
-  }, [amount, expectedRent, selectedTenant?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // MVP: every payment row is a full collection — backend rejects PARTIAL/PENDING.
+  // The status picker is hidden until that constraint is lifted.
 
   const isSubmitting = recordPayment.isPending;
 
@@ -251,18 +244,18 @@ export function PaymentForm({
 
   const onSubmit = async (values: PaymentFormValues) => {
     try {
-      await recordPayment.mutateAsync({
+      const created = await recordPayment.mutateAsync({
         tenant_id:         values.tenant_id,
         amount:            values.amount,
         payment_date:      values.payment_date ?? toISO(today),
         payment_for_month: values.payment_for_month,
         payment_for_year:  values.payment_for_year,
         payment_method:    values.payment_method,
-        payment_status:    values.payment_status,
+        payment_status:    'PAID',
         notes:             values.notes,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      onSuccess();
+      onSuccess(created);
     } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
@@ -271,7 +264,7 @@ export function PaymentForm({
   const submitDisabled = !isValid || !selectedTenant;
 
   const summaryAmount = amount ? formatCurrency(amount) : null;
-  const summaryStatus = getPaymentStatusMetaScheme(status, scheme);
+  const summaryStatus = getPaymentStatusMetaScheme('PAID', scheme);
   const summaryMethod = getPaymentMethodMetaScheme(method, scheme);
 
   const cardClass = 'bg-card border border-border rounded-xl p-4 mb-3';
@@ -522,49 +515,6 @@ export function PaymentForm({
           </Pressable>
         </View>
 
-        <View>
-          <FieldLabel required>Status</FieldLabel>
-          <View className="flex-row gap-2">
-            {(['PAID', 'PARTIAL', 'PENDING'] as PaymentStatus[]).map((s) => {
-              const meta = getPaymentStatusMetaScheme(s, scheme);
-              const selected = status === s;
-              return (
-                <Pressable
-                  key={s}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setValue('payment_status', s);
-                  }}
-                  android_ripple={null}
-                  style={{
-                    borderColor: selected ? meta.color : palette.border,
-                    backgroundColor: selected ? meta.bg : palette.background,
-                  }}
-                  className={cn(
-                    'flex-1 rounded-[10px] py-2.5 items-center',
-                    selected ? 'border-[1.5px]' : 'border',
-                  )}
-                >
-                  <Text
-                    style={{
-                      color: selected ? meta.color : palette.foreground,
-                      fontFamily: 'Inter_600SemiBold',
-                    }}
-                    className="text-xs"
-                  >
-                    {meta.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Text
-            className="text-muted-foreground text-[11px] mt-1.5 leading-4"
-            style={{ fontFamily: 'Inter_400Regular' }}
-          >
-            Auto-suggested from amount vs expected. Override if needed.
-          </Text>
-        </View>
       </View>
 
       <View className="mb-3">

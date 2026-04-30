@@ -9,13 +9,17 @@ import {
   PencilIcon, DotsThreeVerticalIcon, UserIcon, BriefcaseIcon,
   IdentificationCardIcon, UsersThreeIcon, HouseIcon, ReceiptIcon,
   PlusIcon, WhatsappLogoIcon, ChatTextIcon,
+  ArrowCounterClockwiseIcon, LockKeyIcon,
 } from 'phosphor-react-native';
 import * as Haptics from '@/lib/utils/haptics';
 import { useColorScheme } from 'nativewind';
-import { useTenant, useExitTenant } from '../../../../lib/hooks/use-tenants';
+import {
+  useTenant, useExitTenant, useRestoreTenant,
+} from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
+import { useToast } from '../../../../components/ui/Toast';
 import { useRecordPaymentSheet } from '../../../../components/payments/RecordPaymentSheet';
 import { sendWhatsApp, sendSMS } from '../../../../lib/utils/messaging';
 import {
@@ -170,6 +174,7 @@ export default function TenantDetailScreen() {
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const { confirm }               = useConfirmDialog();
+  const { show: showToast }        = useToast();
   const { open: openPaymentSheet } = useRecordPaymentSheet();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [focusTick, setFocusTick] = useState(0);
@@ -186,6 +191,7 @@ export default function TenantDetailScreen() {
   } = usePayments({ tenant_id: tenant?.id });
 
   const exitTenant = useExitTenant();
+  const restoreTenant = useRestoreTenant();
 
   const handleRefresh = useCallback(() => {
     refetchTenant(); refetchPayments();
@@ -258,13 +264,38 @@ export default function TenantDetailScreen() {
             await exitTenant.mutateAsync({ id: tenant.id, exit_date: o.iso });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             refetchTenant();
+            showToast({
+              message: `${tenant.name} marked as exited.`,
+              actionLabel: 'Undo',
+              onAction: async () => {
+                try {
+                  await restoreTenant.mutateAsync(tenant.id);
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  refetchTenant();
+                } catch {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                }
+              },
+            });
           } catch {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           }
         },
       })),
     });
-  }, [tenant, exitTenant, refetchTenant, showActionSheet]);
+  }, [tenant, exitTenant, restoreTenant, refetchTenant, showActionSheet, showToast]);
+
+  const handleRestore = useCallback(async () => {
+    if (!tenant) return;
+    try {
+      await restoreTenant.mutateAsync(tenant.id);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      refetchTenant();
+      showToast({ message: `${tenant.name} restored.` });
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  }, [tenant, restoreTenant, refetchTenant, showToast]);
 
   const openMoreActions = useCallback(() => {
     if (!tenant) return;
@@ -279,10 +310,15 @@ export default function TenantDetailScreen() {
         destructive: true,
         onPress: confirmExit,
       });
+    } else {
+      opts.push({
+        label: 'Restore tenant',
+        onPress: handleRestore,
+      });
     }
     showActionSheet({ title: tenant.name, options: opts });
     void confirm;
-  }, [tenant, confirmExit, showActionSheet, confirm]);
+  }, [tenant, confirmExit, handleRestore, openPaymentSheet, showActionSheet, confirm]);
 
   const isActive = tenant?.is_active;
 
@@ -340,6 +376,44 @@ export default function TenantDetailScreen() {
           <Entrance trigger={focusTick} delay={60}><NotFound mutedFg={palette.mutedForeground} /></Entrance>
         ) : (
           <>
+            {!isActive && tenant.exit_date && (
+              <Entrance trigger={focusTick} delay={40}>
+                <View className="bg-muted border border-border rounded-xl p-3.5 mb-3 flex-row items-center gap-3">
+                  <View className="size-9 rounded-[10px] bg-card items-center justify-center">
+                    <LockKeyIcon size={16} color={palette.mutedForeground} weight="duotone" />
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      className="text-foreground text-[13px] mb-0.5"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
+                      Vacated on {formatLongDate(tenant.exit_date)}
+                    </Text>
+                    <Text
+                      className="text-muted-foreground text-[11px]"
+                      style={{ fontFamily: 'Inter_400Regular' }}
+                    >
+                      Read-only — slot has been freed.
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={handleRestore}
+                    android_ripple={null}
+                    hitSlop={6}
+                    className="flex-row items-center gap-1 bg-card border border-border rounded-[10px] px-2.5 py-1.5"
+                  >
+                    <ArrowCounterClockwiseIcon size={11} color={palette.foreground} weight="bold" />
+                    <Text
+                      className="text-foreground text-[11px]"
+                      style={{ fontFamily: 'Inter_600SemiBold' }}
+                    >
+                      Restore
+                    </Text>
+                  </Pressable>
+                </View>
+              </Entrance>
+            )}
+
             <Entrance trigger={focusTick} delay={60}>
               <View className="bg-card border border-border rounded-xl p-4 mb-3">
                 <View className="flex-row items-center gap-3.5">

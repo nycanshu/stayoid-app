@@ -40,4 +40,7 @@ export const tenantsApi = {
 
   exit: (id: string, exit_date: string) =>
     apiClient.post<Tenant>(`/tenants/${id}/exit/`, { exit_date }).then((r) => r.data),
+
+  restore: (id: string) =>
+    apiClient.post<Tenant>(`/tenants/${id}/restore/`).then((r) => r.data),
 };

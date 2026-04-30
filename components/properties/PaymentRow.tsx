@@ -1,9 +1,12 @@
 import { memo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
-import { CalendarIcon } from 'phosphor-react-native';
+import { CalendarIcon, ShareNetworkIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { formatCurrency, formatMonthYear } from '../../lib/utils/formatters';
+import { useActionSheet } from '../ui/ActionSheet';
+import { useToast } from '../ui/Toast';
+import { shareReceipt } from '../../lib/utils/receipt';
 import { THEME } from '../../lib/theme';
 import type { Payment, PaymentStatus } from '../../types/payment';
 
@@ -17,13 +20,38 @@ function PaymentRowImpl({ payment }: { payment: Payment }) {
   const status = getStatusMeta(payment.payment_status);
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { show: showActionSheet } = useActionSheet();
+  const { show: showToast } = useToast();
 
   const period = payment.month_year_display
     ?? formatMonthYear(payment.payment_for_month, payment.payment_for_year);
 
+  const openMenu = () => {
+    showActionSheet({
+      title: payment.tenant_name,
+      message: `${period} · ${formatCurrency(payment.amount)}`,
+      options: [
+        {
+          label: 'Share receipt',
+          Icon: ShareNetworkIcon,
+          onPress: () => {
+            shareReceipt(payment).catch(() => {
+              showToast({ message: 'Could not generate receipt. Please try again.' });
+            });
+          },
+        },
+        {
+          label: 'View tenant',
+          onPress: () => router.push(`/tenants/${payment.tenant_slug}`),
+        },
+      ],
+    });
+  };
+
   return (
     <Pressable
       onPress={() => router.push(`/tenants/${payment.tenant_slug}`)}
+      onLongPress={openMenu}
       android_ripple={null}
       className="bg-card border border-border rounded-xl p-3.5"
     >

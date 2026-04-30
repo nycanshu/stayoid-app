@@ -86,3 +86,15 @@ export function useExitTenant() {
     },
   });
 }
+
+export function useRestoreTenant() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tenantsApi.restore(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tenants'] });
+      qc.invalidateQueries({ queryKey: ['slots'] });
+      qc.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+}

@@ -5,6 +5,9 @@ import { ReceiptIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { FormSheet } from '../ui/FormSheet';
 import { PaymentForm } from './PaymentForm';
+import { useToast } from '../ui/Toast';
+import { shareReceipt } from '@/lib/utils/receipt';
+import type { Payment } from '@/types/payment';
 import { THEME } from '@/lib/theme';
 
 interface OpenArgs {
@@ -30,6 +33,7 @@ export function useRecordPaymentSheet() {
 export function RecordPaymentSheetProvider({ children }: { children: ReactNode }) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+  const { show: showToast } = useToast();
 
   const [state, setState] = useState<{ visible: boolean; tenantSlug?: string }>(
     { visible: false },
@@ -42,6 +46,20 @@ export function RecordPaymentSheetProvider({ children }: { children: ReactNode }
   const close = useCallback(() => {
     setState((s) => ({ ...s, visible: false }));
   }, []);
+
+  const handleSuccess = useCallback((payment: Payment) => {
+    close();
+    showToast({
+      message: `Payment recorded for ${payment.tenant_name}.`,
+      actionLabel: 'Share receipt',
+      durationMs: 8000,
+      onAction: () => {
+        shareReceipt(payment).catch(() => {
+          showToast({ message: 'Could not generate receipt. Please try again.' });
+        });
+      },
+    });
+  }, [close, showToast]);
 
   return (
     <RecordPaymentSheetContext.Provider value={{ open, close }}>
@@ -61,7 +79,7 @@ export function RecordPaymentSheetProvider({ children }: { children: ReactNode }
       >
         <PaymentForm
           preselectedTenantSlug={state.tenantSlug}
-          onSuccess={close}
+          onSuccess={handleSuccess}
           onCancel={close}
         />
       </FormSheet>
