@@ -7,10 +7,10 @@ import {
   GithubLogoIcon, LinkedinLogoIcon, GlobeIcon,
   LockKeyIcon, FlagIcon, ProhibitIcon, DownloadIcon, CaretRightIcon,
 } from 'phosphor-react-native';
-import Constants from 'expo-constants';
 import { useColorScheme } from 'nativewind';
 import { Entrance } from '../../../components/animations';
 import { THEME } from '../../../lib/theme';
+import { APP_META, mailto } from '../../../lib/constants/app-meta';
 
 const FOUNDERS = [
   {
@@ -23,12 +23,10 @@ const FOUNDERS = [
     links: [
       { kind: 'github',   label: 'GitHub',   url: 'https://github.com/nycanshu' },
       { kind: 'linkedin', label: 'LinkedIn', url: 'https://linkedin.com/in/nycanshu' },
-      { kind: 'email',    label: 'Email',    url: 'mailto:hello.stayoid@gmail.com' },
+      { kind: 'email',    label: 'Email',    url: `mailto:${APP_META.supportEmail}` },
     ],
   },
 ] as const;
-
-const SUPPORT_EMAIL = 'hello.stayoid@gmail.com';
 
 function getLinkIcon(kind: 'github' | 'linkedin' | 'email' | 'web') {
   if (kind === 'github')   return GithubLogoIcon;
@@ -78,7 +76,6 @@ function SectionLabel({ children }: { children: string }) {
 export default function AboutScreen() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
-  const appVersion = (Constants.expoConfig?.version as string | undefined) ?? '1.0.0';
 
   return (
     <View className="flex-1 bg-background">
@@ -263,12 +260,12 @@ export default function AboutScreen() {
                 style={{ fontFamily: 'Inter_600SemiBold' }}
                 selectable
               >
-                {SUPPORT_EMAIL}
+                {APP_META.supportEmail}
               </Text>
-              {' '}and we'll respond within 48 hours.
+              {' '}and we'll respond within {APP_META.policies.responseSla}.
             </Text>
             <Pressable
-              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Stayoid%20Feedback`)}
+              onPress={() => Linking.openURL(mailto('Feedback'))}
               android_ripple={null}
               className="bg-primary rounded-[10px] py-3 flex-row items-center justify-center gap-2"
             >
@@ -291,7 +288,7 @@ export default function AboutScreen() {
                 className="text-foreground text-[12px]"
                 style={{ fontFamily: 'Inter_600SemiBold' }}
               >
-                Stayoid v{appVersion}
+                {APP_META.name} v{APP_META.version}
               </Text>
               <Text
                 className="text-muted-foreground text-[12px]"
@@ -320,7 +317,7 @@ export default function AboutScreen() {
               className="text-muted-foreground text-[10px] mt-0.5"
               style={{ fontFamily: 'Inter_400Regular' }}
             >
-              © 2026 Stayoid
+              © {APP_META.copyrightYear} {APP_META.name}
             </Text>
           </View>
         </Entrance>

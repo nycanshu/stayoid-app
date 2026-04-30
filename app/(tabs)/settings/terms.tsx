@@ -6,8 +6,7 @@ import {
 import { useColorScheme } from 'nativewind';
 import { Entrance } from '../../../components/animations';
 import { THEME } from '../../../lib/theme';
-
-const SUPPORT_EMAIL = 'hello.stayoid@gmail.com';
+import { APP_META, mailto } from '../../../lib/constants/app-meta';
 
 const GROUPS = [
   {
@@ -168,13 +167,13 @@ export default function TermsScreen() {
               >
                 Email{' '}
                 <Text style={{ fontFamily: 'Inter_600SemiBold' }} selectable>
-                  {SUPPORT_EMAIL}
+                  {APP_META.supportEmail}
                 </Text>
                 {' '}— we respond within two business days.
               </Text>
             </View>
             <Pressable
-              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Stayoid%20Terms`)}
+              onPress={() => Linking.openURL(mailto('Terms'))}
               android_ripple={null}
               className="bg-primary rounded-[10px] py-3 flex-row items-center justify-center gap-2"
             >
@@ -194,7 +193,7 @@ export default function TermsScreen() {
             className="text-muted-foreground text-[11px]"
             style={{ fontFamily: 'Inter_400Regular' }}
           >
-            Last updated: April 2026
+            Last updated: {APP_META.policies.lastUpdated}
           </Text>
         </View>
       </ScrollView>

@@ -15,7 +15,6 @@ import {
   BedIcon,
 } from 'phosphor-react-native';
 import * as Haptics from '@/lib/utils/haptics';
-import Constants from 'expo-constants';
 import { useQueryClient } from '@tanstack/react-query';
 import { useColorScheme } from 'nativewind';
 import { useAuthStore } from '../../../lib/stores/auth-store';
@@ -27,8 +26,7 @@ import { SettingsRow, SettingsSection } from '../../../components/settings/Setti
 import { Entrance } from '../../../components/animations';
 import { THEME } from '../../../lib/theme';
 import { cn } from '../../../lib/utils';
-
-const SUPPORT_EMAIL = 'hello.stayoid@gmail.com';
+import { APP_META, mailto } from '../../../lib/constants/app-meta';
 
 /**
  * Renders like a SettingsRow at the top (icon + label + description) so it
@@ -276,7 +274,7 @@ export default function SettingsScreen() {
     forceTick((t) => t + 1);
   }, []));
 
-  const appVersion = (Constants.expoConfig?.version as string | undefined) ?? '1.0.0';
+  const appVersion = APP_META.version;
 
   const handleSync = async () => {
     setSyncing(true);
@@ -293,21 +291,18 @@ export default function SettingsScreen() {
   };
 
   const handleSupport = () => {
-    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Stayoid%20App%20Help`);
+    Linking.openURL(mailto('App Help'));
   };
   const handleFeedback = () => {
-    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Stayoid%20App%20Feedback`);
+    Linking.openURL(mailto('App Feedback'));
   };
   const handleRate = () => {
-    Linking.openURL(Platform.OS === 'ios'
-      ? 'https://apps.apple.com/app/stayoid'
-      : 'https://play.google.com/store/apps/details?id=com.stayoid.app',
-    );
+    Linking.openURL(Platform.OS === 'ios' ? APP_META.appStore.ios : APP_META.appStore.android);
   };
   const handleShare = async () => {
     try {
       await Share.share({
-        message: 'Stayoid — manage your PG/flat rentals from your phone. Try it: https://stayoid.com',
+        message: `${APP_META.name} — manage your PG/flat rentals from your phone. Try it: ${APP_META.marketingUrl}`,
       });
     } catch {/* ignore */}
   };
@@ -342,9 +337,7 @@ export default function SettingsScreen() {
         {
           text: 'Request via email',
           style: 'destructive',
-          onPress: () => Linking.openURL(
-            `mailto:${SUPPORT_EMAIL}?subject=Stayoid%20Account%20Deletion%20Request`,
-          ),
+          onPress: () => Linking.openURL(mailto('Account Deletion Request')),
         },
       ],
       { cancelable: true },
@@ -566,7 +559,7 @@ export default function SettingsScreen() {
               className="text-muted-foreground text-[10px]"
               style={{ fontFamily: 'Inter_400Regular' }}
             >
-              Stayoid v{appVersion}
+              {APP_META.name} v{appVersion}
             </Text>
           </View>
         </Entrance>

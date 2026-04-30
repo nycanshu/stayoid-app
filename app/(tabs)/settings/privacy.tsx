@@ -6,8 +6,7 @@ import {
 import { useColorScheme } from 'nativewind';
 import { Entrance } from '../../../components/animations';
 import { THEME } from '../../../lib/theme';
-
-const SUPPORT_EMAIL = 'hello.stayoid@gmail.com';
+import { APP_META, mailto } from '../../../lib/constants/app-meta';
 
 const GROUPS = [
   {
@@ -45,7 +44,7 @@ const GROUPS = [
     rows: [
       {
         title: 'Your controls',
-        body: 'Edit your profile from Settings → Profile. Change appearance preferences any time. Request a full export or permanent deletion via Settings → Delete account — we process these manually within 48 hours.',
+        body: `Edit your profile from Settings → Profile. Change appearance preferences any time. Request permanent deletion via Settings → Delete account — we process these manually within ${APP_META.policies.responseSla}.`,
       },
       {
         title: 'Children',
@@ -164,13 +163,13 @@ export default function PrivacyScreen() {
               >
                 Email{' '}
                 <Text style={{ fontFamily: 'Inter_600SemiBold' }} selectable>
-                  {SUPPORT_EMAIL}
+                  {APP_META.supportEmail}
                 </Text>
-                {' '}for privacy requests, exports, or deletion.
+                {' '}for privacy requests or account deletion.
               </Text>
             </View>
             <Pressable
-              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Stayoid%20Privacy`)}
+              onPress={() => Linking.openURL(mailto('Privacy'))}
               android_ripple={null}
               className="bg-primary rounded-[10px] py-3 flex-row items-center justify-center gap-2"
             >
@@ -190,7 +189,7 @@ export default function PrivacyScreen() {
             className="text-muted-foreground text-[11px]"
             style={{ fontFamily: 'Inter_400Regular' }}
           >
-            Last updated: April 2026
+            Last updated: {APP_META.policies.lastUpdated}
           </Text>
         </View>
       </ScrollView>
