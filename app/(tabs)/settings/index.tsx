@@ -8,13 +8,13 @@ import { router, useFocusEffect } from 'expo-router';
 import { useState, useCallback } from 'react';
 import {
   EnvelopeIcon, PencilIcon, CheckIcon, XIcon,
-  MoonIcon, SunIcon, MonitorIcon,
+  MoonIcon, SunIcon, MonitorIcon, PaletteIcon,
   VibrateIcon, ArrowsClockwiseIcon, ChatDotsIcon, StarIcon,
   ShareIcon, FileTextIcon, ShieldIcon, HeartIcon, InfoIcon,
   SignOutIcon, TrashIcon, SmileyIcon, CalendarIcon,
   BedIcon,
 } from 'phosphor-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import Constants from 'expo-constants';
 import { useQueryClient } from '@tanstack/react-query';
 import { useColorScheme } from 'nativewind';
@@ -30,7 +30,15 @@ import { cn } from '../../../lib/utils';
 
 const SUPPORT_EMAIL = 'hello.stayoid@gmail.com';
 
-function ThemePicker() {
+/**
+ * Renders like a SettingsRow at the top (icon + label + description) so it
+ * sits naturally alongside the Haptic feedback toggle, then drops the
+ * 3-option segmented control below as the "control" for this row.
+ *
+ * `isFirst` matches the SettingsRow API so the parent can suppress the top
+ * border when this is the first child of a section.
+ */
+function ThemeRow({ isFirst }: { isFirst?: boolean }) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const preference = useThemeStore((s) => s.preference);
@@ -43,19 +51,29 @@ function ThemePicker() {
   ];
 
   return (
-    <View className="px-3.5 py-3.5">
-      <Text
-        className="text-foreground text-sm mb-1"
-        style={{ fontFamily: 'Inter_600SemiBold' }}
-      >
-        Theme
-      </Text>
-      <Text
-        className="text-muted-foreground text-[11px] mb-3"
-        style={{ fontFamily: 'Inter_400Regular' }}
-      >
-        Match your phone's appearance or pick a fixed mode
-      </Text>
+    <View className={cn('px-3.5 py-3', !isFirst && 'border-t border-border')}>
+      {/* Header — matches SettingsRow visual language: icon + label + description */}
+      <View className="flex-row items-center gap-3 mb-3">
+        <View className="size-8 rounded-lg bg-muted items-center justify-center">
+          <PaletteIcon size={16} color={palette.mutedForeground} weight="duotone" />
+        </View>
+        <View className="flex-1 min-w-0">
+          <Text
+            className="text-foreground text-sm"
+            style={{ fontFamily: 'Inter_600SemiBold' }}
+          >
+            Theme
+          </Text>
+          <Text
+            className="text-muted-foreground text-[11px] mt-0.5"
+            style={{ fontFamily: 'Inter_400Regular' }}
+          >
+            Match your phone's appearance or pick a fixed mode
+          </Text>
+        </View>
+      </View>
+
+      {/* Segmented control */}
       <View className="flex-row bg-background border border-border rounded-[10px] p-[3px]">
         {options.map((opt) => {
           const active = preference === opt.value;
@@ -378,13 +396,8 @@ export default function SettingsScreen() {
         </Entrance>
 
         <Entrance trigger={focusTick} delay={100}>
-          <SettingsSection title="Appearance">
-            <ThemePicker />
-          </SettingsSection>
-        </Entrance>
-
-        <Entrance trigger={focusTick} delay={140}>
           <SettingsSection title="Preferences">
+            <ThemeRow isFirst />
             <SettingsRow
               type="switch"
               Icon={VibrateIcon}
@@ -392,10 +405,12 @@ export default function SettingsScreen() {
               description="Subtle vibrations on key actions"
               value={hapticsEnabled}
               onValueChange={(v) => {
-                if (v) Haptics.selectionAsync();
+                // Trigger a feedback ping ONLY when turning haptics on, so
+                // users feel what they just enabled. Turning off should be
+                // silent (the toggle itself is the confirmation).
                 setHapticsEnabled(v);
+                if (v) Haptics.selectionAsync();
               }}
-              isFirst
               isLast
             />
           </SettingsSection>

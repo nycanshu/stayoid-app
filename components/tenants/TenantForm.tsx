@@ -9,7 +9,7 @@ import {
   UsersThreeIcon, HouseIcon, CurrencyInrIcon, MapPinIcon,
   CalendarIcon, CaretDownIcon, PlusIcon, BedIcon,
 } from 'phosphor-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
 } from 'react-native-reanimated';

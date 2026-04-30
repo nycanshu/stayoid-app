@@ -4,7 +4,7 @@ import {
 import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import { DoorOpenIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { FormSheet } from '../ui/FormSheet';

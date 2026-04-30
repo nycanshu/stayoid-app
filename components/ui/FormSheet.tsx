@@ -7,7 +7,7 @@ import {
   Gesture, GestureDetector, GestureHandlerRootView,
 } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring,
   runOnJS, Easing,

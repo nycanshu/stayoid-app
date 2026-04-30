@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import {
   CurrencyCircleDollarIcon, UserPlusIcon, BuildingsIcon,
 } from 'phosphor-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import { useColorScheme } from 'nativewind';
 import { useRecordPaymentSheet } from '@/components/payments/RecordPaymentSheet';
 import { THEME } from '@/lib/theme';

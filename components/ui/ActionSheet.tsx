@@ -6,7 +6,7 @@ import {
   Modal, View, Pressable, ScrollView, Dimensions, StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring,
   runOnJS, Easing,

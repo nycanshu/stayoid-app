@@ -10,7 +10,7 @@ import {
   IdentificationCardIcon, UsersThreeIcon, HouseIcon, ReceiptIcon,
   PlusIcon, WhatsappLogoIcon, ChatTextIcon,
 } from 'phosphor-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import { useColorScheme } from 'nativewind';
 import { useTenant, useExitTenant } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';

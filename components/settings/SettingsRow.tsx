@@ -94,8 +94,10 @@ export function SettingsRow(props: SettingsRowProps) {
         <Switch
           value={props.value}
           onValueChange={props.onValueChange}
-          trackColor={{ false: palette.muted, true: `${palette.primary}88` }}
-          thumbColor={props.value ? palette.primary : palette.mutedForeground}
+          // iOS-native styling: white thumb, solid primary on, neutral muted off.
+          // Solid colors (no alpha) so contrast stays consistent across themes.
+          trackColor={{ false: palette.muted, true: palette.primary }}
+          thumbColor="#ffffff"
           ios_backgroundColor={palette.muted}
         />
       )}

@@ -9,7 +9,7 @@ import {
   StackIcon, DoorOpenIcon, BedIcon, UsersIcon, PlusIcon,
   CaretRightIcon,
 } from 'phosphor-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import { useColorScheme } from 'nativewind';
 import { useProperty, useSlots } from '../../../lib/hooks/use-properties';
 import { useFloors, useDeleteFloor } from '../../../lib/hooks/use-floors';

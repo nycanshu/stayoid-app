@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import {
   WarningCircleIcon, PhoneIcon, UserIcon, WhatsappLogoIcon, ChatTextIcon,
 } from 'phosphor-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import { useColorScheme } from 'nativewind';
 import { useActionSheet } from '../ui/ActionSheet';
 import { useRecordPaymentSheet } from './RecordPaymentSheet';

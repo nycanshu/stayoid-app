@@ -9,7 +9,7 @@ import {
   StackIcon, CurrencyCircleDollarIcon,
   PlusIcon,
 } from 'phosphor-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import { useColorScheme } from 'nativewind';
 import { useProperty, useSlots, useDeleteProperty } from '../../../../lib/hooks/use-properties';
 import { useFloors } from '../../../../lib/hooks/use-floors';

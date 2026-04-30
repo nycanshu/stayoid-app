@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/utils/haptics';
 import {
   HouseIcon, BuildingsIcon, UsersThreeIcon, CreditCardIcon, GearSixIcon,
 } from 'phosphor-react-native';
