@@ -315,7 +315,7 @@ export default function PaymentsScreen() {
   const showPaginated = filter === 'all' || filter === 'paid';
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <InfiniteList
@@ -366,6 +366,7 @@ export default function PaymentsScreen() {
         onRefresh={handleRefresh}
         onEndReached={fetchNextPage}
         FirstLoadSkeleton={<ListSkeleton />}
+        contentTopPadding={0}
         ListEmptyComponent={<EmptyState filter={filter} palette={palette} />}
         ListHeaderComponent={
           <View>

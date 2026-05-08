@@ -66,7 +66,7 @@ export default function PropertiesScreen() {
   const handleRefresh = useCallback(() => { refetch(); }, [refetch]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <InfiniteList
@@ -83,6 +83,7 @@ export default function PropertiesScreen() {
         onEndReached={fetchNextPage}
         FirstLoadSkeleton={<FirstLoadSkeleton />}
         itemGap={12}
+        contentTopPadding={0}
         ListEmptyComponent={
           <View className="bg-card border border-border rounded-xl p-4 items-center mb-3">
             <View className="size-11 rounded-full bg-muted items-center justify-center mb-2.5">

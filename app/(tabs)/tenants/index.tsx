@@ -225,7 +225,7 @@ export default function TenantsScreen() {
   const handleRefresh = useCallback(() => { refetch(); }, [refetch]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-background">
       <StatusBar style="auto" />
 
       <InfiniteList<ListItem>
@@ -251,6 +251,7 @@ export default function TenantsScreen() {
         onRefresh={handleRefresh}
         onEndReached={fetchNextPage}
         FirstLoadSkeleton={<ListSkeleton />}
+        contentTopPadding={0}
         ListEmptyComponent={
           <EmptyState query={debouncedQuery} filter={filter} mutedFg={palette.mutedForeground} />
         }

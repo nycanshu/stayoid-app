@@ -31,10 +31,10 @@ export function OfflineBanner() {
 
   useEffect(() => {
     const unsub = NetInfo.addEventListener((state) => {
-      // `isInternetReachable === false` is the strict check. When null
-      // (probing in progress) we don't toggle yet to avoid flicker.
-      const isOffline = state.isConnected === false || state.isInternetReachable === false;
-      setOffline(isOffline);
+      // Only trust `isConnected` (strict no-network-interface). iOS pauses
+      // reachability probing on app background, which makes `isInternetReachable`
+      // flicker false — so we ignore it and avoid false offline banners.
+      setOffline(state.isConnected === false);
       log.debug('netinfo', { isConnected: state.isConnected, reachable: state.isInternetReachable });
     });
     return () => unsub();

@@ -34,6 +34,9 @@ interface InfiniteListProps<T> {
   itemGap?: number;
   /** Bottom padding (defaults to 110 to clear the floating tab bar). */
   contentBottomPadding?: number;
+  /** Top padding inside the scroll content (defaults to 16). Tab roots pass 0
+   *  so content sits flush under the SafeAreaView's notch inset. */
+  contentTopPadding?: number;
 }
 
 /**
@@ -57,6 +60,7 @@ export function InfiniteList<T>({
   onEndReached,
   itemGap = 10,
   contentBottomPadding = 110,
+  contentTopPadding = 16,
 }: InfiniteListProps<T>): ReactElement {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
@@ -110,7 +114,11 @@ export function InfiniteList<T>({
           tintColor={palette.primary}
         />
       }
-      contentContainerStyle={{ padding: 16, paddingBottom: contentBottomPadding }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: contentTopPadding,
+        paddingBottom: contentBottomPadding,
+      }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
