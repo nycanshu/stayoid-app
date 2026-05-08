@@ -13,6 +13,8 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
 } from 'react-native-reanimated';
 import { useColorScheme } from 'nativewind';
+import { toast } from 'sonner-native';
+import { getApiErrorMessage } from '../../lib/utils/api-error';
 import { useRecordPayment } from '../../lib/hooks/use-payments';
 import { useTenants } from '../../lib/hooks/use-tenants';
 import {
@@ -256,8 +258,9 @@ export function PaymentForm({
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onSuccess(created);
-    } catch {
+    } catch (err) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      toast.error(getApiErrorMessage(err, 'Could not record payment.'));
     }
   };
 

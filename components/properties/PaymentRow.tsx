@@ -3,9 +3,9 @@ import { View, Text, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { CalendarIcon, ShareNetworkIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
+import { toast } from 'sonner-native';
 import { formatCurrency, formatMonthYear } from '../../lib/utils/formatters';
 import { useActionSheet } from '../ui/ActionSheet';
-import { useToast } from '../ui/Toast';
 import { shareReceipt } from '../../lib/utils/receipt';
 import { THEME } from '../../lib/theme';
 import type { Payment, PaymentStatus } from '../../types/payment';
@@ -21,7 +21,6 @@ function PaymentRowImpl({ payment }: { payment: Payment }) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
-  const { show: showToast } = useToast();
 
   const period = payment.month_year_display
     ?? formatMonthYear(payment.payment_for_month, payment.payment_for_year);
@@ -36,7 +35,7 @@ function PaymentRowImpl({ payment }: { payment: Payment }) {
           Icon: ShareNetworkIcon,
           onPress: () => {
             shareReceipt(payment).catch(() => {
-              showToast({ message: 'Could not generate receipt. Please try again.' });
+              toast.error('Could not generate receipt. Please try again.');
             });
           },
         },

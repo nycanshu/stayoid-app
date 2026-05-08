@@ -26,9 +26,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { useColorScheme } from 'nativewind';
+import { Toaster } from 'sonner-native';
 import { ActionSheetProvider } from '../components/ui/ActionSheet';
 import { ConfirmDialogProvider } from '../components/ui/ConfirmDialog';
-import { ToastProvider } from '../components/ui/Toast';
 import { RecordPaymentSheetProvider } from '../components/payments/RecordPaymentSheet';
 import { useThemeStore } from '../lib/stores/theme-store';
 import { NAV_THEME } from '../lib/theme';
@@ -74,14 +74,19 @@ export default function RootLayout() {
             <StatusBar style={effectiveScheme === 'dark' ? 'light' : 'dark'} />
             <ActionSheetProvider>
               <ConfirmDialogProvider>
-                <ToastProvider>
-                  <RecordPaymentSheetProvider>
-                    <Stack screenOptions={{ headerShown: false }} />
-                  </RecordPaymentSheetProvider>
-                </ToastProvider>
+                <RecordPaymentSheetProvider>
+                  <Stack screenOptions={{ headerShown: false }} />
+                </RecordPaymentSheetProvider>
               </ConfirmDialogProvider>
             </ActionSheetProvider>
             <PortalHost />
+            <Toaster
+              theme={effectiveScheme}
+              position="top-center"
+              richColors
+              offset={12}
+              swipeToDismissDirection="up"
+            />
           </ThemeProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

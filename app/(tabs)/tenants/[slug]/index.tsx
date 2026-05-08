@@ -13,13 +13,13 @@ import {
 } from 'phosphor-react-native';
 import * as Haptics from '@/lib/utils/haptics';
 import { useColorScheme } from 'nativewind';
+import { toast } from 'sonner-native';
 import {
   useTenant, useExitTenant, useRestoreTenant,
 } from '../../../../lib/hooks/use-tenants';
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
-import { useToast } from '../../../../components/ui/Toast';
 import { useRecordPaymentSheet } from '../../../../components/payments/RecordPaymentSheet';
 import { sendWhatsApp, sendSMS } from '../../../../lib/utils/messaging';
 import {
@@ -174,7 +174,6 @@ export default function TenantDetailScreen() {
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const { confirm }               = useConfirmDialog();
-  const { show: showToast }        = useToast();
   const { open: openPaymentSheet } = useRecordPaymentSheet();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [focusTick, setFocusTick] = useState(0);
@@ -264,17 +263,19 @@ export default function TenantDetailScreen() {
             await exitTenant.mutateAsync({ id: tenant.id, exit_date: o.iso });
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
             refetchTenant();
-            showToast({
-              message: `${tenant.name} marked as exited.`,
-              actionLabel: 'Undo',
-              onAction: async () => {
-                try {
-                  await restoreTenant.mutateAsync(tenant.id);
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                  refetchTenant();
-                } catch {
-                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                }
+            toast.success(`${tenant.name} marked as exited`, {
+              duration: 8000,
+              action: {
+                label: 'Undo',
+                onClick: async () => {
+                  try {
+                    await restoreTenant.mutateAsync(tenant.id);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    refetchTenant();
+                  } catch {
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                  }
+                },
               },
             });
           } catch {
@@ -283,7 +284,7 @@ export default function TenantDetailScreen() {
         },
       })),
     });
-  }, [tenant, exitTenant, restoreTenant, refetchTenant, showActionSheet, showToast]);
+  }, [tenant, exitTenant, restoreTenant, refetchTenant, showActionSheet]);
 
   const handleRestore = useCallback(async () => {
     if (!tenant) return;
@@ -291,11 +292,11 @@ export default function TenantDetailScreen() {
       await restoreTenant.mutateAsync(tenant.id);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       refetchTenant();
-      showToast({ message: `${tenant.name} restored.` });
+      toast.success(`${tenant.name} restored`);
     } catch {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
-  }, [tenant, restoreTenant, refetchTenant, showToast]);
+  }, [tenant, restoreTenant, refetchTenant]);
 
   const openMoreActions = useCallback(() => {
     if (!tenant) return;

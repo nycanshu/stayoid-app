@@ -3,9 +3,9 @@ import {
 } from 'react';
 import { ReceiptIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
+import { toast } from 'sonner-native';
 import { FormSheet } from '../ui/FormSheet';
 import { PaymentForm } from './PaymentForm';
-import { useToast } from '../ui/Toast';
 import { shareReceipt } from '@/lib/utils/receipt';
 import type { Payment } from '@/types/payment';
 import { THEME } from '@/lib/theme';
@@ -33,7 +33,6 @@ export function useRecordPaymentSheet() {
 export function RecordPaymentSheetProvider({ children }: { children: ReactNode }) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
-  const { show: showToast } = useToast();
 
   const [state, setState] = useState<{ visible: boolean; tenantSlug?: string }>(
     { visible: false },
@@ -49,17 +48,18 @@ export function RecordPaymentSheetProvider({ children }: { children: ReactNode }
 
   const handleSuccess = useCallback((payment: Payment) => {
     close();
-    showToast({
-      message: `Payment recorded for ${payment.tenant_name}.`,
-      actionLabel: 'Share receipt',
-      durationMs: 8000,
-      onAction: () => {
-        shareReceipt(payment).catch(() => {
-          showToast({ message: 'Could not generate receipt. Please try again.' });
-        });
+    toast.success(`Payment recorded for ${payment.tenant_name}`, {
+      duration: 8000,
+      action: {
+        label: 'Share receipt',
+        onClick: () => {
+          shareReceipt(payment).catch(() => {
+            toast.error('Could not generate receipt. Please try again.');
+          });
+        },
       },
     });
-  }, [close, showToast]);
+  }, [close]);
 
   return (
     <RecordPaymentSheetContext.Provider value={{ open, close }}>
