@@ -4,7 +4,7 @@ import {
 import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as Haptics from '@/lib/utils/haptics';
+import { withToast } from '@/lib/utils/toast-action';
 import { BedIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { FormSheet } from '../ui/FormSheet';
@@ -74,17 +74,16 @@ export function SlotFormModal({
       monthly_rent: values.monthly_rent.trim(),
     };
     try {
-      let result: Slot;
-      if (isEdit && slot) {
-        result = await updateSlot.mutateAsync({ propertyId, floorId, unitId, slotId: slot.id, data });
-      } else {
-        result = await createSlot.mutateAsync({ propertyId, floorId, unitId, data });
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const result = await withToast(
+        () => isEdit && slot
+          ? updateSlot.mutateAsync({ propertyId, floorId, unitId, slotId: slot.id, data })
+          : createSlot.mutateAsync({ propertyId, floorId, unitId, data }),
+        { success: isEdit ? `${labels.slotLabel} updated` : `${labels.slotLabel} added` },
+      );
       onSuccess?.(result);
       onClose();
     } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // withToast already surfaced the error.
     }
   };
 

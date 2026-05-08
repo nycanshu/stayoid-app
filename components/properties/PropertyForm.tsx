@@ -6,6 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BuildingsIcon } from 'phosphor-react-native';
 import * as Haptics from '@/lib/utils/haptics';
+import { withToast } from '@/lib/utils/toast-action';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring,
 } from 'react-native-reanimated';
@@ -182,16 +183,20 @@ export function PropertyForm({
   const onSubmit = async (values: PropertyFormValues) => {
     try {
       if (mode === 'create') {
-        const created = await createProperty.mutateAsync(values);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        const created = await withToast(
+          () => createProperty.mutateAsync(values),
+          { success: `${values.name} created` },
+        );
         onSuccess(created.slug);
       } else if (mode === 'edit' && slug) {
-        const updated = await updateProperty.mutateAsync({ slug, data: values });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        const updated = await withToast(
+          () => updateProperty.mutateAsync({ slug, data: values }),
+          { success: 'Property updated' },
+        );
         onSuccess(updated.slug);
       }
     } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // withToast already surfaced the error.
     }
   };
 

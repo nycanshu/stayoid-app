@@ -10,6 +10,7 @@ import {
   PlusIcon,
 } from 'phosphor-react-native';
 import * as Haptics from '@/lib/utils/haptics';
+import { withToast } from '@/lib/utils/toast-action';
 import { useColorScheme } from 'nativewind';
 import { useProperty, useSlots, useDeleteProperty } from '../../../../lib/hooks/use-properties';
 import { useFloors } from '../../../../lib/hooks/use-floors';
@@ -270,12 +271,13 @@ export default function PropertyDetailScreen() {
                 style: 'destructive',
                 onPress: async () => {
                   try {
-                    await deleteProperty.mutateAsync(property.slug);
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    await withToast(
+                      () => deleteProperty.mutateAsync(property.slug),
+                      { success: `"${property.name}" deleted` },
+                    );
                     router.replace('/properties');
                   } catch {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                    Alert.alert('Could not delete', 'Please check your connection and try again.');
+                    // withToast already surfaced the error.
                   }
                 },
               },

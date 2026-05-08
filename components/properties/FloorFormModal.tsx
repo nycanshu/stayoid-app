@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Haptics from '@/lib/utils/haptics';
+import { withToast } from '@/lib/utils/toast-action';
 import { StackIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { FormSheet } from '../ui/FormSheet';
@@ -62,17 +63,16 @@ export function FloorFormModal({
       name:         values.name?.trim() || undefined,
     };
     try {
-      let result: Floor;
-      if (isEdit && floor) {
-        result = await updateFloor.mutateAsync({ propertyId, floorId: floor.id, data });
-      } else {
-        result = await createFloor.mutateAsync({ propertyId, data });
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const result = await withToast(
+        () => isEdit && floor
+          ? updateFloor.mutateAsync({ propertyId, floorId: floor.id, data })
+          : createFloor.mutateAsync({ propertyId, data }),
+        { success: isEdit ? 'Floor updated' : 'Floor added' },
+      );
       onSuccess?.(result);
       onClose();
     } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // withToast already surfaced the error.
     }
   };
 

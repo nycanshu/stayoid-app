@@ -10,6 +10,7 @@ import {
   CaretRightIcon,
 } from 'phosphor-react-native';
 import * as Haptics from '@/lib/utils/haptics';
+import { withToast } from '@/lib/utils/toast-action';
 import { useColorScheme } from 'nativewind';
 import { useProperty, useSlots } from '../../../lib/hooks/use-properties';
 import { useFloors, useDeleteFloor } from '../../../lib/hooks/use-floors';
@@ -120,11 +121,13 @@ export default function FloorDetailScreen() {
                 style: 'destructive',
                 onPress: async () => {
                   try {
-                    await deleteFloor.mutateAsync({ propertyId: property.id, floorId: floor.id });
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                    await withToast(
+                      () => deleteFloor.mutateAsync({ propertyId: property.id, floorId: floor.id }),
+                      { success: 'Floor deleted' },
+                    );
                     goBackToProperty();
                   } catch {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                    // withToast already surfaced the error.
                   }
                 },
               },

@@ -22,7 +22,7 @@ import {
 } from '@expo-google-fonts/space-grotesk';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
 import { useColorScheme } from 'nativewind';
@@ -30,6 +30,8 @@ import { Toaster } from 'sonner-native';
 import { ActionSheetProvider } from '../components/ui/ActionSheet';
 import { ConfirmDialogProvider } from '../components/ui/ConfirmDialog';
 import { DatePickerProvider } from '../components/ui/DatePickerSheet';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
+import { OfflineBanner } from '../components/ui/OfflineBanner';
 import { RecordPaymentSheetProvider } from '../components/payments/RecordPaymentSheet';
 import { useThemeStore } from '../lib/stores/theme-store';
 import { NAV_THEME, THEME } from '../lib/theme';
@@ -37,6 +39,23 @@ import { NAV_THEME, THEME } from '../lib/theme';
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+/**
+ * Toaster wrapper that pushes toasts below the status bar / notch via the
+ * safe-area inset. Has to be a child of <SafeAreaProvider> to read insets.
+ */
+function SafeToaster({ theme }: { theme: 'light' | 'dark' }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <Toaster
+      theme={theme}
+      position="top-center"
+      richColors
+      offset={insets.top + 8}
+      swipeToDismissDirection="up"
+    />
+  );
+}
 
 export default function RootLayout() {
   const [interLoaded] = useInterFonts({
@@ -85,12 +104,13 @@ export default function RootLayout() {
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider value={NAV_THEME[effectiveScheme]}>
-            <StatusBar style={effectiveScheme === 'dark' ? 'light' : 'dark'} />
-            <ActionSheetProvider>
+    <ErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider value={NAV_THEME[effectiveScheme]}>
+              <StatusBar style={effectiveScheme === 'dark' ? 'light' : 'dark'} />
+              <ActionSheetProvider>
               <ConfirmDialogProvider>
                 <DatePickerProvider>
                   <RecordPaymentSheetProvider>
@@ -111,17 +131,13 @@ export default function RootLayout() {
                 </DatePickerProvider>
               </ConfirmDialogProvider>
             </ActionSheetProvider>
-            <PortalHost />
-            <Toaster
-              theme={effectiveScheme}
-              position="top-center"
-              richColors
-              offset={12}
-              swipeToDismissDirection="up"
-            />
-          </ThemeProvider>
-        </QueryClientProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+              <PortalHost />
+              <OfflineBanner />
+              <SafeToaster theme={effectiveScheme} />
+            </ThemeProvider>
+          </QueryClientProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </ErrorBoundary>
   );
 }

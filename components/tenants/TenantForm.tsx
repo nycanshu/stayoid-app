@@ -10,6 +10,7 @@ import {
   CalendarIcon, CaretDownIcon, PlusIcon, BedIcon,
 } from 'phosphor-react-native';
 import * as Haptics from '@/lib/utils/haptics';
+import { withToast } from '@/lib/utils/toast-action';
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring,
 } from 'react-native-reanimated';
@@ -307,29 +308,9 @@ export function TenantForm({
   const onSubmit = async (values: TenantFormValues) => {
     try {
       if (mode === 'create') {
-        const created = await createTenant.mutateAsync({
-          slot_id:                 values.slot_id,
-          name:                    values.name,
-          phone:                   values.phone,
-          gender:                  values.gender as Gender,
-          permanent_address:       values.permanent_address,
-          join_date:               values.join_date,
-          deposit_amount:          values.deposit_amount,
-          email:                   values.email || undefined,
-          work_type:               (values.work_type || undefined) as WorkType | undefined,
-          work_location:           values.work_location || undefined,
-          id_proof_type:           (values.id_proof_type || undefined) as IdProofType | undefined,
-          id_proof_number:         values.id_proof_number || undefined,
-          emergency_contact_name:  values.emergency_contact_name || undefined,
-          emergency_contact_phone: values.emergency_contact_phone || undefined,
-        });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        onSuccess(created.slug);
-      } else if (tenant) {
-        const slotChanged = values.slot_id && values.slot_id !== 'KEEP_CURRENT';
-        const updated = await updateTenant.mutateAsync({
-          id: tenant.id,
-          data: {
+        const created = await withToast(
+          () => createTenant.mutateAsync({
+            slot_id:                 values.slot_id,
             name:                    values.name,
             phone:                   values.phone,
             gender:                  values.gender as Gender,
@@ -343,14 +324,38 @@ export function TenantForm({
             id_proof_number:         values.id_proof_number || undefined,
             emergency_contact_name:  values.emergency_contact_name || undefined,
             emergency_contact_phone: values.emergency_contact_phone || undefined,
-            ...(slotChanged ? { slot_id: values.slot_id } : {}),
-          },
-        });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }),
+          { success: `${values.name} added` },
+        );
+        onSuccess(created.slug);
+      } else if (tenant) {
+        const slotChanged = values.slot_id && values.slot_id !== 'KEEP_CURRENT';
+        const updated = await withToast(
+          () => updateTenant.mutateAsync({
+            id: tenant.id,
+            data: {
+              name:                    values.name,
+              phone:                   values.phone,
+              gender:                  values.gender as Gender,
+              permanent_address:       values.permanent_address,
+              join_date:               values.join_date,
+              deposit_amount:          values.deposit_amount,
+              email:                   values.email || undefined,
+              work_type:               (values.work_type || undefined) as WorkType | undefined,
+              work_location:           values.work_location || undefined,
+              id_proof_type:           (values.id_proof_type || undefined) as IdProofType | undefined,
+              id_proof_number:         values.id_proof_number || undefined,
+              emergency_contact_name:  values.emergency_contact_name || undefined,
+              emergency_contact_phone: values.emergency_contact_phone || undefined,
+              ...(slotChanged ? { slot_id: values.slot_id } : {}),
+            },
+          }),
+          { success: 'Tenant updated' },
+        );
         onSuccess(updated.slug);
       }
     } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // withToast already showed the error toast and fired the haptic.
     }
   };
 

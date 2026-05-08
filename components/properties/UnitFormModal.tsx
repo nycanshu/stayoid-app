@@ -4,7 +4,7 @@ import {
 import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as Haptics from '@/lib/utils/haptics';
+import { withToast } from '@/lib/utils/toast-action';
 import { DoorOpenIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
 import { FormSheet } from '../ui/FormSheet';
@@ -71,17 +71,16 @@ export function UnitFormModal({
       capacity:    values.capacity,
     };
     try {
-      let result: Unit;
-      if (isEdit && unit) {
-        result = await updateUnit.mutateAsync({ propertyId, floorId, unitId: unit.id, data });
-      } else {
-        result = await createUnit.mutateAsync({ propertyId, floorId, data });
-      }
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const result = await withToast(
+        () => isEdit && unit
+          ? updateUnit.mutateAsync({ propertyId, floorId, unitId: unit.id, data })
+          : createUnit.mutateAsync({ propertyId, floorId, data }),
+        { success: isEdit ? 'Unit updated' : 'Unit added' },
+      );
       onSuccess?.(result);
       onClose();
     } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      // withToast already surfaced the error.
     }
   };
 
