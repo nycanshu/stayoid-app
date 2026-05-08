@@ -28,7 +28,7 @@ apiClient.interceptors.response.use(
         if (!refresh) throw new Error('No refresh token');
 
         const { data } = await axios.post(
-          `${process.env.EXPO_PUBLIC_API_URL}/auth/refresh`,
+          `${process.env.EXPO_PUBLIC_API_URL}/auth/refresh/`,
           { refresh },
         );
         await SecureStore.setItemAsync('access_token', data.access);

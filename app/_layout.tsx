@@ -29,6 +29,7 @@ import { useColorScheme } from 'nativewind';
 import { Toaster } from 'sonner-native';
 import { ActionSheetProvider } from '../components/ui/ActionSheet';
 import { ConfirmDialogProvider } from '../components/ui/ConfirmDialog';
+import { DatePickerProvider } from '../components/ui/DatePickerSheet';
 import { RecordPaymentSheetProvider } from '../components/payments/RecordPaymentSheet';
 import { useThemeStore } from '../lib/stores/theme-store';
 import { NAV_THEME } from '../lib/theme';
@@ -74,9 +75,11 @@ export default function RootLayout() {
             <StatusBar style={effectiveScheme === 'dark' ? 'light' : 'dark'} />
             <ActionSheetProvider>
               <ConfirmDialogProvider>
-                <RecordPaymentSheetProvider>
-                  <Stack screenOptions={{ headerShown: false }} />
-                </RecordPaymentSheetProvider>
+                <DatePickerProvider>
+                  <RecordPaymentSheetProvider>
+                    <Stack screenOptions={{ headerShown: false }} />
+                  </RecordPaymentSheetProvider>
+                </DatePickerProvider>
               </ConfirmDialogProvider>
             </ActionSheetProvider>
             <PortalHost />

@@ -24,7 +24,7 @@ import {
 } from '../../lib/utils/formatters';
 import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { SlotPickerModal } from './SlotPickerModal';
-import { useActionSheet } from '../ui/ActionSheet';
+import { useDatePicker } from '../ui/DatePickerSheet';
 import { Entrance } from '../animations';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
@@ -230,36 +230,6 @@ function SubmitButton({
   );
 }
 
-type ShowActionSheet = ReturnType<typeof useActionSheet>['show'];
-
-function pickDate(
-  title: string,
-  selected: string | undefined,
-  onPick: (iso: string) => void,
-  show: ShowActionSheet,
-) {
-  const today = new Date();
-  const days = [0, 7, 14, 30, 60, 90, 180, 365];
-  const opts = days.map((d) => {
-    const dt = new Date(today.getFullYear(), today.getMonth(), today.getDate() - d);
-    return {
-      label: d === 0 ? 'Today'
-        : d === 1 ? 'Yesterday'
-        : d < 30 ? `${d} days ago`
-        : d < 365 ? `${Math.round(d / 30)} months ago`
-        : `${Math.round(d / 365)} year${d >= 730 ? 's' : ''} ago`,
-      iso: toISO(dt),
-    };
-  });
-  show({
-    title,
-    options: opts.map((o) => ({
-      label:    o.label,
-      selected: o.iso === selected,
-      onPress:  () => onPick(o.iso),
-    })),
-  });
-}
 
 interface TenantFormProps {
   mode: 'create' | 'edit';
@@ -274,7 +244,7 @@ export function TenantForm({
 }: TenantFormProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
-  const { show: showActionSheet } = useActionSheet();
+  const { pickDate } = useDatePicker();
   const createTenant = useCreateTenant();
   const updateTenant = useUpdateTenant();
 
@@ -719,12 +689,14 @@ export function TenantForm({
           <View className="mb-4">
             <FieldLabel required>Join date</FieldLabel>
             <Pressable
-              onPress={() => pickDate(
-                'Join date',
-                joinDate,
-                (iso) => setValue('join_date', iso, { shouldValidate: true, shouldDirty: true }),
-                showActionSheet,
-              )}
+              onPress={async () => {
+                const iso = await pickDate({
+                  title: 'Join date',
+                  value: joinDate,
+                  maxDate: toISO(new Date()),
+                });
+                if (iso) setValue('join_date', iso, { shouldValidate: true, shouldDirty: true });
+              }}
               android_ripple={null}
               className={cn(
                 'flex-row items-center gap-2.5 bg-background border rounded-[10px] px-3.5 h-[46px]',

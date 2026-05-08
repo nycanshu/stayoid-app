@@ -20,6 +20,7 @@ import {
 import { usePayments } from '../../../../lib/hooks/use-payments';
 import { useActionSheet } from '../../../../components/ui/ActionSheet';
 import { useConfirmDialog } from '../../../../components/ui/ConfirmDialog';
+import { useDatePicker } from '../../../../components/ui/DatePickerSheet';
 import { useRecordPaymentSheet } from '../../../../components/payments/RecordPaymentSheet';
 import { sendWhatsApp, sendSMS } from '../../../../lib/utils/messaging';
 import {
@@ -174,6 +175,7 @@ export default function TenantDetailScreen() {
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
   const { show: showActionSheet } = useActionSheet();
   const { confirm }               = useConfirmDialog();
+  const { pickDate }               = useDatePicker();
   const { open: openPaymentSheet } = useRecordPaymentSheet();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [focusTick, setFocusTick] = useState(0);
@@ -239,52 +241,45 @@ export default function TenantDetailScreen() {
     });
   };
 
-  const confirmExit = useCallback(() => {
+  const confirmExit = useCallback(async () => {
     if (!tenant) return;
-    const today = new Date();
-    const opts = [0, 1, 2, 3, 7].map((d) => {
-      const dt = new Date(today.getFullYear(), today.getMonth(), today.getDate() - d);
-      const y  = dt.getFullYear();
-      const m  = String(dt.getMonth() + 1).padStart(2, '0');
-      const dd = String(dt.getDate()).padStart(2, '0');
-      return {
-        label: d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d} days ago`,
-        iso:   `${y}-${m}-${dd}`,
-      };
+    const todayIso = (() => {
+      const t = new Date();
+      const y = t.getFullYear();
+      const m = String(t.getMonth() + 1).padStart(2, '0');
+      const d = String(t.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    })();
+    const iso = await pickDate({
+      title: 'Mark as exited',
+      value: todayIso,
+      minDate: tenant.join_date,
+      maxDate: todayIso,
     });
-    showActionSheet({
-      title:   'Mark as exited',
-      message: `When did ${tenant.name} move out? This will free up their slot.`,
-      options: opts.map((o) => ({
-        label: o.label,
-        destructive: true,
-        onPress: async () => {
-          try {
-            await exitTenant.mutateAsync({ id: tenant.id, exit_date: o.iso });
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            refetchTenant();
-            toast.success(`${tenant.name} marked as exited`, {
-              duration: 8000,
-              action: {
-                label: 'Undo',
-                onClick: async () => {
-                  try {
-                    await restoreTenant.mutateAsync(tenant.id);
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    refetchTenant();
-                  } catch {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                  }
-                },
-              },
-            });
-          } catch {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          }
+    if (!iso) return;
+    try {
+      await exitTenant.mutateAsync({ id: tenant.id, exit_date: iso });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      refetchTenant();
+      toast.success(`${tenant.name} marked as exited`, {
+        duration: 8000,
+        action: {
+          label: 'Undo',
+          onClick: async () => {
+            try {
+              await restoreTenant.mutateAsync(tenant.id);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              refetchTenant();
+            } catch {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            }
+          },
         },
-      })),
-    });
-  }, [tenant, exitTenant, restoreTenant, refetchTenant, showActionSheet]);
+      });
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  }, [tenant, exitTenant, restoreTenant, refetchTenant, pickDate]);
 
   const handleRestore = useCallback(async () => {
     if (!tenant) return;

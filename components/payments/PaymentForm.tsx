@@ -30,7 +30,7 @@ import {
   formatCurrency, formatMonthYear, getInitials,
 } from '../../lib/utils/formatters';
 import { TenantPickerModal } from './TenantPickerModal';
-import { useActionSheet } from '../ui/ActionSheet';
+import { useDatePicker } from '../ui/DatePickerSheet';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
 import type { PaymentMethod } from '../../types/payment';
@@ -102,20 +102,6 @@ function SubmitButton({
   );
 }
 
-function buildLast12Months(): { month: number; year: number; label: string }[] {
-  const out: { month: number; year: number; label: string }[] = [];
-  const now = new Date();
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    out.push({
-      month: d.getMonth() + 1,
-      year:  d.getFullYear(),
-      label: formatMonthYear(d.getMonth() + 1, d.getFullYear()),
-    });
-  }
-  return out;
-}
-
 function toISO(d: Date) {
   const y  = d.getFullYear();
   const m  = String(d.getMonth() + 1).padStart(2, '0');
@@ -152,7 +138,7 @@ export function PaymentForm({
   const scheme = colorScheme === 'dark' ? 'dark' : 'light';
   const palette = THEME[scheme];
 
-  const { show: showActionSheet } = useActionSheet();
+  const { pickDate, pickMonth } = useDatePicker();
   const recordPayment = useRecordPayment();
 
   const { data: allTenants } = useTenants({ active: true, page_size: 100 });
@@ -208,40 +194,27 @@ export function PaymentForm({
 
   const isSubmitting = recordPayment.isPending;
 
-  const openPeriodPicker = () => {
-    const opts = buildLast12Months();
-    showActionSheet({
-      title:   'Period',
-      message: 'For which month is this payment?',
-      options: opts.map((o) => ({
-        label:    o.label,
-        selected: o.month === month && o.year === year,
-        onPress:  () => {
-          setValue('payment_for_month', o.month);
-          setValue('payment_for_year',  o.year);
-        },
-      })),
+  const openPeriodPicker = async () => {
+    const join = selectedTenant?.join_date ? new Date(selectedTenant.join_date) : null;
+    const result = await pickMonth({
+      title: 'Rent for which month',
+      month, year,
+      minMonth: join ? join.getMonth() + 1 : undefined,
+      minYear:  join ? join.getFullYear()   : undefined,
     });
+    if (result) {
+      setValue('payment_for_month', result.month);
+      setValue('payment_for_year',  result.year);
+    }
   };
 
-  const openDatePicker = () => {
-    const now = new Date();
-    const opts = [0, 1, 2, 3, 7].map((d) => {
-      const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - d);
-      return {
-        label: d === 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d} days ago`,
-        iso:   toISO(dt),
-      };
+  const openDatePicker = async () => {
+    const iso = await pickDate({
+      title: 'Paid on',
+      value: paymentDate,
+      maxDate: toISO(new Date()),
     });
-    showActionSheet({
-      title:   'Paid on',
-      message: 'When was the payment received?',
-      options: opts.map((o) => ({
-        label:    o.label,
-        selected: o.iso === paymentDate,
-        onPress:  () => setValue('payment_date', o.iso),
-      })),
-    });
+    if (iso) setValue('payment_date', iso);
   };
 
   const onSubmit = async (values: PaymentFormValues) => {
