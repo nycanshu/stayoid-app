@@ -2,6 +2,12 @@ import { Stack } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { THEME } from '../../../lib/theme';
 
+// Ensures cross-tab pushes (e.g. from /slots → /properties/[slug]) land on top
+// of the tab's index, so the native stack header always renders a back button.
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
+
 export default function PropertiesLayout() {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];

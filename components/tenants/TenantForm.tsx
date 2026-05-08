@@ -24,7 +24,7 @@ import {
 } from '../../lib/utils/formatters';
 import { getPropertyTypeLabels } from '../../lib/constants/property-type-meta';
 import { SlotPickerModal } from './SlotPickerModal';
-import { useDatePicker } from '../ui/DatePickerSheet';
+import { useDatePickerScoped } from '../ui/DatePickerSheet';
 import { Entrance } from '../animations';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
@@ -244,7 +244,7 @@ export function TenantForm({
 }: TenantFormProps) {
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
-  const { pickDate } = useDatePicker();
+  const { pickDate } = useDatePickerScoped();
   const createTenant = useCreateTenant();
   const updateTenant = useUpdateTenant();
 

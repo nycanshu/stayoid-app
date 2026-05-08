@@ -36,7 +36,7 @@ export const tenantsApi = {
     apiClient.post<Tenant>('/tenants/', data).then((r) => r.data),
 
   update: (id: string, data: Partial<CreateTenantInput>) =>
-    apiClient.patch<Tenant>(`/tenants/${id}/`, data).then((r) => r.data),
+    apiClient.put<Tenant>(`/tenants/${id}/`, data).then((r) => r.data),
 
   exit: (id: string, exit_date: string) =>
     apiClient.post<Tenant>(`/tenants/${id}/exit/`, { exit_date }).then((r) => r.data),

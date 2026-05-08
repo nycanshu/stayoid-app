@@ -32,7 +32,7 @@ import { ConfirmDialogProvider } from '../components/ui/ConfirmDialog';
 import { DatePickerProvider } from '../components/ui/DatePickerSheet';
 import { RecordPaymentSheetProvider } from '../components/payments/RecordPaymentSheet';
 import { useThemeStore } from '../lib/stores/theme-store';
-import { NAV_THEME } from '../lib/theme';
+import { NAV_THEME, THEME } from '../lib/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -66,6 +66,23 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   const effectiveScheme = colorScheme ?? 'light';
+  const palette = THEME[effectiveScheme];
+
+  // Shared native-stack header style for top-level routes (slots, floors)
+  // pushed from inside (tabs). The native back chevron renders automatically
+  // because the previous screen — (tabs) — is in the same stack.
+  const nativeHeaderOptions = {
+    headerShown: true,
+    headerStyle: { backgroundColor: palette.background },
+    headerTitleStyle: {
+      color: palette.foreground,
+      fontFamily: 'Inter_600SemiBold',
+      fontSize: 17,
+    },
+    headerTintColor: palette.primary,
+    headerShadowVisible: false,
+    headerBackButtonDisplayMode: 'minimal' as const,
+  };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -77,7 +94,19 @@ export default function RootLayout() {
               <ConfirmDialogProvider>
                 <DatePickerProvider>
                   <RecordPaymentSheetProvider>
-                    <Stack screenOptions={{ headerShown: false }} />
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(auth)" />
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="onboarding" />
+                      <Stack.Screen
+                        name="slots/index"
+                        options={{ ...nativeHeaderOptions, title: 'Slots' }}
+                      />
+                      <Stack.Screen
+                        name="floors/[floorSlug]/index"
+                        options={{ ...nativeHeaderOptions, title: '' }}
+                      />
+                    </Stack>
                   </RecordPaymentSheetProvider>
                 </DatePickerProvider>
               </ConfirmDialogProvider>

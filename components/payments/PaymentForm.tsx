@@ -30,7 +30,7 @@ import {
   formatCurrency, formatMonthYear, getInitials,
 } from '../../lib/utils/formatters';
 import { TenantPickerModal } from './TenantPickerModal';
-import { useDatePicker } from '../ui/DatePickerSheet';
+import { useDatePickerScoped } from '../ui/DatePickerSheet';
 import { THEME } from '../../lib/theme';
 import { cn } from '../../lib/utils';
 import type { PaymentMethod } from '../../types/payment';
@@ -138,7 +138,7 @@ export function PaymentForm({
   const scheme = colorScheme === 'dark' ? 'dark' : 'light';
   const palette = THEME[scheme];
 
-  const { pickDate, pickMonth } = useDatePicker();
+  const { pickDate, pickMonth } = useDatePickerScoped();
   const recordPayment = useRecordPayment();
 
   const { data: allTenants } = useTenants({ active: true, page_size: 100 });

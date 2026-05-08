@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode, type ComponentType } from 'react';
+import { useEffect, useId, useMemo, useState, type ReactNode, type ComponentType } from 'react';
 import {
   Modal, View, Pressable, ScrollView, Dimensions, StyleSheet,
   KeyboardAvoidingView, Platform,
@@ -14,8 +14,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { XIcon } from 'phosphor-react-native';
 import { useColorScheme } from 'nativewind';
+import { PortalHost } from '@rn-primitives/portal';
 import { Text } from '@/components/ui/text';
 import { THEME } from '@/lib/theme';
+import { OverlayHostContext } from '@/components/ui/OverlayHost';
 
 const { height: SCREEN_H } = Dimensions.get('window');
 const SHEET_MAX_H = SCREEN_H * 0.9;
@@ -46,6 +48,13 @@ export function FormSheet({
   const insets = useSafeAreaInsets();
   const { colorScheme } = useColorScheme();
   const palette = THEME[colorScheme === 'dark' ? 'dark' : 'light'];
+
+  // Unique PortalHost per FormSheet instance — children that need to render
+  // overlays (date pickers, etc.) target this host so their content lives
+  // inside the same native Modal layer as the form (no nested Modals).
+  const sheetId = useId();
+  const overlayHostName = useMemo(() => `form-sheet-${sheetId}`, [sheetId]);
+  const overlayCtx = useMemo(() => ({ hostName: overlayHostName }), [overlayHostName]);
 
   const backdrop = useSharedValue(0);
   const translate = useSharedValue(SCREEN_H);
@@ -189,7 +198,9 @@ export function FormSheet({
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ padding: 16 }}
             >
-              {children}
+              <OverlayHostContext.Provider value={overlayCtx}>
+                {children}
+              </OverlayHostContext.Provider>
             </ScrollView>
 
             {footer && (
@@ -198,6 +209,10 @@ export function FormSheet({
               </View>
             )}
           </Animated.View>
+
+          {/* Overlay layer for nested pickers — renders ABOVE the form
+              content and footer so the picker doesn't get clipped. */}
+          <PortalHost name={overlayHostName} />
         </KeyboardAvoidingView>
       </GestureHandlerRootView>
     </Modal>
