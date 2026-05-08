@@ -97,7 +97,14 @@ apiClient.interceptors.response.use(
       }
       const newAccess = await refreshPromise;
 
-      originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+      // axios 1.x stores headers as AxiosHeaders; direct property assignment
+      // doesn't always propagate to the internal map once the config has been
+      // through dispatchRequest. `.set()` is the supported mutation API.
+      if (typeof (originalRequest.headers as any)?.set === 'function') {
+        (originalRequest.headers as any).set('Authorization', `Bearer ${newAccess}`);
+      } else {
+        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+      }
       log.debug(`↻ retrying ${originalRequest.method?.toUpperCase()} ${url}`);
       return apiClient(originalRequest);
     } catch (refreshErr) {

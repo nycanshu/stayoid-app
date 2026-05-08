@@ -16,9 +16,11 @@ export function formatFloorName(floorNumber: number): string {
 
 export function getInitials(name: string): string {
   return name
-    .split(' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
     .slice(0, 2)
-    .map((n) => n[0])
+    .map((n) => n[0] ?? '')
     .join('')
     .toUpperCase();
 }
