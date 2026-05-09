@@ -6,6 +6,8 @@
 module.exports = {
   preset: 'jest-expo',
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
+  // Shared helpers like __tests__/api/_helpers.ts must not be treated as test files.
+  testPathIgnorePatterns: ['/node_modules/', '/__tests__/.*/_.*'],
   setupFiles: ['<rootDir>/jest.setup.ts'],
   // jest-expo's default transformIgnorePatterns already covers expo + RN modules.
   // We only test pure-logic files, but client.ts imports expo-secure-store which
